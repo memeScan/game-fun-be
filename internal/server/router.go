@@ -65,8 +65,6 @@ func NewRouter() *gin.Engine {
 	// v1 路由
 	v1 := r.Group("/api/v1")
 	{
-		v1.GET("user/message", api.GetMessage)
-		v1.POST("user/wallet-login", api.WalletLogin)
 		v1.GET(":chainType/:tradeType/get_swap_route", api.GetSwapRoute)
 		v1.GET("token_launchpad_info/:chainType/:tokenAddress", api.GetTokenLaunchpadInfo)
 		v1.GET("token_pool_info_sol/:chainType/:tokenAddress", api.GetMarketInfo)
@@ -89,14 +87,24 @@ func NewRouter() *gin.Engine {
 		v1.GET("token_check_info/:chainType/:tokenAddress/:tokenPool", api.GetTokenCheckInfo)
 		v1.GET("token_market_analytics_search/:chainType/:tokenAddress", api.GetTokenMarketQuery)
 		v1.GET("pairs/:chainType/new_pair_ranks", api.GetNewPairRanks)
-		// 代币信息同步
 		v1.GET("tools/token_info_sync", api.TokenInfoSyncJob)
+
+		// POST
+		v1.POST("user/login", api.Login)
+
+		// GET
+		v1.GET("tickers", api.Tickers)
+		v1.GET("tickers/{token_symbol}", api.GetTicker)
+
+		// v1.GET("tickers/swap_histories/{tickers_id}", api.GetMessage)
+		// v1.GET("tickers/token_distribution/{tickers_id}", api.GetMessage)
+
+		// v1.GET("global/balance", api.GetMessage)
+		// v1.GET("global/sol_usd_price", api.GetMessage)
+
 		auth := v1.Group("")
 		auth.Use(interceptor.AuthRequired())
 		auth.Use(interceptor.CurrentUser())
-		{
-			auth.GET("user/getuser", api.UserMe)
-		}
 
 		// WebSocket 路由
 		v1.GET("ws/kline/:tokenAddress", ws.HandleKlineWS)

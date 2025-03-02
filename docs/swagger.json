@@ -9,428 +9,29 @@
     "host": "8.218.102.112:4880",
     "basePath": "/api/v1",
     "paths": {
-        "/api/v1/user/me": {
+        "/health": {
             "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Get details of the currently authenticated user",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "Check if the service is healthy",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "user"
+                    "system"
                 ],
-                "summary": "Get user details",
+                "summary": "Health check endpoint",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "ok",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/chains/:chainType/gas_fee": {
-            "get": {
-                "description": "Get the current gas fee for Solana blockchain",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "on-chain-data"
-                ],
-                "summary": "Get Solana gas fee",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Type of the token (e.g., sol, eth)",
-                        "name": "chainType",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/httpRespone.GasFee"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/chains/:chainType/sol_price": {
-            "get": {
-                "description": "Get the current real-time price for Solana",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "on-chain-data"
-                ],
-                "summary": "Get Solana real-time price",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Type of the token (e.g., sol, eth)",
-                        "name": "chainType",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "number"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/pool_info/{address}": {
-            "get": {
-                "description": "Retrieve pool information for a specific token",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "pool"
-                ],
-                "summary": "Get pool info",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Address of the token",
-                        "name": "address",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/response.PoolResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/rank/sol/new_pairs": {
-            "get": {
-                "description": "Get the dump rank for SOL tokens",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "pump"
-                ],
-                "summary": "Get SOL dump rank",
-                "parameters": [
-                    {
-                        "enum": [
-                            "1m",
-                            "5m",
-                            "1h",
-                            "6h",
-                            "24h"
-                        ],
-                        "type": "string",
-                        "description": "Time range",
-                        "name": "time",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "minimum": 1,
-                        "type": "integer",
-                        "description": "Limit of results",
-                        "name": "limit",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "enum": [
-                            "progress",
-                            "created_timestamp",
-                            "price_change_percent5m",
-                            "price_change_percent1h",
-                            "liquidity",
-                            "creator_balance",
-                            "holder_count",
-                            "swaps_1h",
-                            "volume_1h",
-                            "reply_count",
-                            "usd_market_cap",
-                            "last_trade_timestamp",
-                            "koth_duration",
-                            "time_since_koth",
-                            "market_cap_1m",
-                            "market_cap_5m"
-                        ],
-                        "type": "string",
-                        "description": "Order by field",
-                        "name": "orderby",
-                        "in": "query"
-                    },
-                    {
-                        "enum": [
-                            "asc",
-                            "desc"
-                        ],
-                        "type": "string",
-                        "description": "Sort direction",
-                        "name": "direction",
-                        "in": "query"
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Filter for completed projects",
-                        "name": "completed",
-                        "in": "query"
-                    },
-                    {
-                        "type": "array",
-                        "items": {
                             "type": "string"
-                        },
-                        "collectionFormat": "csv",
-                        "description": "Additional filters",
-                        "name": "filters[]",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Minimum creation time",
-                        "name": "min_created",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Maximum creation time",
-                        "name": "max_created",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Minimum holder count",
-                        "name": "min_holder_count",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Maximum holder count",
-                        "name": "max_holder_count",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Minimum swaps",
-                        "name": "min_swaps",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Maximum swaps",
-                        "name": "max_swaps",
-                        "in": "query"
-                    },
-                    {
-                        "type": "number",
-                        "description": "Minimum market cap",
-                        "name": "min_marketcap",
-                        "in": "query"
-                    },
-                    {
-                        "type": "number",
-                        "description": "Maximum market cap",
-                        "name": "max_marketcap",
-                        "in": "query"
-                    },
-                    {
-                        "type": "number",
-                        "description": "Minimum volume",
-                        "name": "min_volume",
-                        "in": "query"
-                    },
-                    {
-                        "type": "number",
-                        "description": "Maximum volume",
-                        "name": "max_volume",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Minimum reply count",
-                        "name": "min_reply",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Time to reach 1/2 crown",
-                        "name": "koth_duration",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Time to reach 2/2 rocket",
-                        "name": "time_since_koth",
-                        "in": "query"
-                    },
-                    {
-                        "type": "number",
-                        "description": "Minimum initial liquidity",
-                        "name": "min_init_liquidity",
-                        "in": "query"
-                    },
-                    {
-                        "type": "number",
-                        "description": "Maximum initial liquidity",
-                        "name": "max_init_liquidity",
-                        "in": "query"
-                    },
-                    {
-                        "type": "number",
-                        "description": "Minimum quote USD",
-                        "name": "min_quote_usd",
-                        "in": "query"
-                    },
-                    {
-                        "type": "number",
-                        "description": "Maximum quote USD",
-                        "name": "max_quote_usd",
-                        "in": "query"
-                    },
-                    {
-                        "type": "number",
-                        "description": "Minimum liquidity",
-                        "name": "min_liquidity",
-                        "in": "query"
-                    },
-                    {
-                        "type": "number",
-                        "description": "Maximum liquidity",
-                        "name": "max_liquidity",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
                         }
                     }
                 }
             }
         },
-        "/rank/sol/pump": {
+        "/tickers": {
             "get": {
-                "description": "Get the pump rank for SOL tokens",
+                "description": "根据排序、分页和搜索条件获取市场行情数据",
                 "consumes": [
                     "application/json"
                 ],
@@ -438,191 +39,68 @@
                     "application/json"
                 ],
                 "tags": [
-                    "pump"
+                    "市场行情"
                 ],
-                "summary": "Get SOL pump rank",
+                "summary": "获取市场行情数据",
                 "parameters": [
                     {
-                        "enum": [
-                            "1m",
-                            "5m",
-                            "1h",
-                            "6h",
-                            "24h"
-                        ],
                         "type": "string",
-                        "description": "Time range",
-                        "name": "time",
-                        "in": "query",
-                        "required": true
+                        "example": "\"INITIALIZE_AT\"",
+                        "description": "排序字段，支持以下值：MARKET_CAP, PRICE_CHANGE_5M, PRICE_CHANGE_1H, PRICE_CHANGE_24H, NATIVE_VOLUME_1H, NATIVE_VOLUME_24H, TX_COUNT_24H, HOLDERS, INITIALIZE_AT, Links",
+                        "name": "sorted_by",
+                        "in": "query"
                     },
                     {
-                        "minimum": 1,
+                        "type": "string",
+                        "example": "\"DESC\"",
+                        "description": "排序方向，支持以下值：DESC, ASC",
+                        "name": "sort_direction",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "\"\"",
+                        "description": "分页游标，用于分页查询",
+                        "name": "page_cursor",
+                        "in": "query"
+                    },
+                    {
                         "type": "integer",
-                        "description": "Limit of results",
+                        "example": 50,
+                        "description": "每页返回的数据条数",
                         "name": "limit",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "enum": [
-                            "progress",
-                            "created_timestamp",
-                            "creator_balance",
-                            "holder_count",
-                            "swaps_1h",
-                            "volume_1h",
-                            "reply_count",
-                            "usd_market_cap",
-                            "last_trade_timestamp",
-                            "koth_duration",
-                            "time_since_koth",
-                            "market_cap_1m",
-                            "market_cap_5m"
-                        ],
-                        "type": "string",
-                        "description": "Order by field",
-                        "name": "orderby",
-                        "in": "query"
-                    },
-                    {
-                        "enum": [
-                            "asc",
-                            "desc"
-                        ],
-                        "type": "string",
-                        "description": "Sort direction",
-                        "name": "direction",
-                        "in": "query"
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Filter for new creations",
-                        "name": "new_creation",
-                        "in": "query"
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Filter for completing projects",
-                        "name": "completing",
-                        "in": "query"
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Filter for projects about to pump",
-                        "name": "pump",
-                        "in": "query"
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Filter for soaring projects",
-                        "name": "soaring",
-                        "in": "query"
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "collectionFormat": "csv",
-                        "description": "Additional filters",
-                        "name": "filters[]",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Minimum creation time",
-                        "name": "min_created",
+                        "example": "\"\"",
+                        "description": "搜索关键字，用于筛选数据",
+                        "name": "search",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Maximum creation time",
-                        "name": "max_created",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Minimum holder count",
-                        "name": "min_holder_count",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Maximum holder count",
-                        "name": "max_holder_count",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Minimum swaps",
-                        "name": "min_swaps",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Maximum swaps",
-                        "name": "max_swaps",
-                        "in": "query"
-                    },
-                    {
-                        "type": "number",
-                        "description": "Minimum market cap",
-                        "name": "min_marketcap",
-                        "in": "query"
-                    },
-                    {
-                        "type": "number",
-                        "description": "Maximum market cap",
-                        "name": "max_marketcap",
-                        "in": "query"
-                    },
-                    {
-                        "type": "number",
-                        "description": "Minimum volume",
-                        "name": "min_volume",
-                        "in": "query"
-                    },
-                    {
-                        "type": "number",
-                        "description": "Maximum volume",
-                        "name": "max_volume",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Minimum reply count",
-                        "name": "min_reply",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Time to reach 1/2 crown",
-                        "name": "koth_duration",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Time to reach 2/2 rocket",
-                        "name": "time_since_koth",
+                        "example": "\"1D\"",
+                        "description": "新交易对的时间分辨率，例如 1D（1 天）",
+                        "name": "new_pairs_resolution",
                         "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "成功返回市场行情数据",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/response.TickersResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "参数错误",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "服务器内部错误",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -630,9 +108,9 @@
                 }
             }
         },
-        "/token_balance/{chainType}/{owner}/{token}": {
+        "/tickers/{token_symbol}": {
             "get": {
-                "description": "Get the balance of a token for a given owner",
+                "description": "根据 token_symbol 获取 Ticker 的详细信息",
                 "consumes": [
                     "application/json"
                 ],
@@ -640,444 +118,34 @@
                     "application/json"
                 ],
                 "tags": [
-                    "on-chain-data"
+                    "市场行情"
                 ],
-                "summary": "Get token balance",
+                "summary": "获取 Ticker 详情",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Type of the token (e.g., sol, eth)",
-                        "name": "chainType",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Owner of the token",
-                        "name": "owner",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Token address",
-                        "name": "token",
+                        "example": "\"SUPER\"",
+                        "description": "代币符号",
+                        "name": "token_symbol",
                         "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "成功返回 Ticker 详情",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/response.TokenBalance"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/token_info/{chainType}/{tokenAddress}": {
-            "get": {
-                "description": "Retrieve detailed information for a specific token",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "token"
-                ],
-                "summary": "Get token information",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Type of the token (e.g., sol, eth)",
-                        "name": "chainType",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Address of the token",
-                        "name": "tokenAddress",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Detailed token information",
-                        "schema": {
-                            "$ref": "#/definitions/response.TokenInfoResponse"
+                            "$ref": "#/definitions/response.GetTickerResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/response.TokenInfoResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/token_launchpad_info/{chainType}/{tokenAddress}": {
-            "get": {
-                "description": "Retrieve detailed information for a specific token",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "token"
-                ],
-                "summary": "Get token launchpad info",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Type of the token (e.g., sol, eth)",
-                        "name": "chainType",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Address of the token",
-                        "name": "tokenAddress",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/response.TokenLaunchpadInfo"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/token_market_analytics/{chainType}/{tokenAddress}": {
-            "get": {
-                "description": "Retrieve market analytics for a specific token",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "token"
-                ],
-                "summary": "Get token market analytics",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Type of the token (e.g., sol, eth)",
-                        "name": "chainType",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Address of the token",
-                        "name": "tokenAddress",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/response.TokenMarketAnalyticsResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/token_order_book/{chainType}/{tokenAddress}": {
-            "get": {
-                "description": "Retrieve order book information for a specific token",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "token"
-                ],
-                "summary": "Get token order book",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Type of the token (e.g., sol, eth)",
-                        "name": "chainType",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Address of the token",
-                        "name": "tokenAddress",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/response.TokenOrderBookItem"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/token_pool_info_sol/{chainType}/{tokenAddress}": {
-            "get": {
-                "description": "Retrieve pool information for a specific token",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "pool"
-                ],
-                "summary": "Get token pool information",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Type of the token (e.g., sol)",
-                        "name": "chainType",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Address of the token",
-                        "name": "tokenAddress",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/response.MarketInfo"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
+                        "description": "参数错误",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/token_prices/{chainType}": {
-            "post": {
-                "description": "Retrieve prices for a list of tokens",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "token"
-                ],
-                "summary": "Get token prices",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Type of the token (e.g., sol, eth)",
-                        "name": "chainType",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Array of token addresses",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.TokenPriceRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/response.TokenPriceResponse"
-                                            }
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/tokens/{chainType}/{tokenAddress}/search": {
-            "get": {
-                "description": "Search for tokens",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "search"
-                ],
-                "summary": "Search for tokens",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Query",
-                        "name": "query",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
+                        "description": "服务器内部错误",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -1198,147 +266,9 @@
                 }
             }
         },
-        "/transaction/sol/get_swap_request_status": {
-            "get": {
-                "description": "Get swap request status",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "swap"
-                ],
-                "summary": "Get swap request status",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "swap_transaction",
-                        "name": "swap_transaction",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/response.SwapTransactionResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/transaction/sol/send_swap_transaction": {
-            "get": {
-                "description": "Send swap request",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "swap"
-                ],
-                "summary": "Send swap request",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "transaction",
-                        "name": "transaction",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/response.SwapTransactionResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/user/message": {
-            "get": {
-                "description": "Get a message that needs to be signed for wallet authentication",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "authentication"
-                ],
-                "summary": "Get message for wallet authentication",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Solana wallet address",
-                        "name": "address",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.MessageResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/user/wallet-login": {
+        "/user/login": {
             "post": {
-                "description": "Authenticate user with wallet signature",
+                "description": "通过钱包地址和签名进行登录",
                 "consumes": [
                     "application/json"
                 ],
@@ -1346,35 +276,35 @@
                     "application/json"
                 ],
                 "tags": [
-                    "authentication"
+                    "用户"
                 ],
-                "summary": "Wallet login",
+                "summary": "用户钱包登录",
                 "parameters": [
                     {
-                        "description": "Wallet authentication input",
-                        "name": "input",
+                        "description": "登录请求参数",
+                        "name": "login",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/service.WalletAuthService"
+                            "$ref": "#/definitions/request.LoginRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "登录成功",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/response.LoginResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "参数错误",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "服务器内部错误",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -1384,7 +314,7 @@
         },
         "/ws/kline/{tokenAddress}": {
             "get": {
-                "description": "通过 WebSocket 实时推送 K 线数据",
+                "description": "通过 WebSocket 实时推送 K 线数据。连接成功后，服务器将每秒推送最新的K线数据。\n连接格式: ws://host/ws/kline/{tokenAddress}?resolution={resolution}\n示例: ws://localhost:8080/ws/kline/0x1234...?resolution=1S",
                 "consumes": [
                     "application/json"
                 ],
@@ -1398,6 +328,7 @@
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "0x1234567890abcdef1234567890abcdef12345678",
                         "description": "代币地址",
                         "name": "tokenAddress",
                         "in": "path",
@@ -1415,7 +346,8 @@
                             "1D"
                         ],
                         "type": "string",
-                        "description": "K线周期 (1S/1/5/15/60/240/720/1D)",
+                        "example": "1S",
+                        "description": "K线周期",
                         "name": "resolution",
                         "in": "query",
                         "required": true
@@ -1423,180 +355,36 @@
                 ],
                 "responses": {
                     "101": {
-                        "description": "切换到 WebSocket 协议",
-                        "schema": {
-                            "$ref": "#/definitions/response.KlineData"
-                        }
-                    }
-                }
-            }
-        },
-        "/{chainType}/{tradeType}/get_swap_route": {
-            "get": {
-                "description": "Get swap route for a specific token address",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "swap"
-                ],
-                "summary": "Get swap route",
-                "parameters": [
-                    {
-                        "enum": [
-                            "sol",
-                            "eth",
-                            "btc"
-                        ],
-                        "type": "string",
-                        "description": "Chain type",
-                        "name": "chainType",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "enum": [
-                            "tx"
-                        ],
-                        "type": "string",
-                        "description": "Trade type",
-                        "name": "tradeType",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "enum": [
-                            "sol",
-                            "eth",
-                            "btc"
-                        ],
-                        "type": "string",
-                        "description": "Token in chain",
-                        "name": "token_in_chain",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "enum": [
-                            "sol",
-                            "eth",
-                            "btc"
-                        ],
-                        "type": "string",
-                        "description": "Token out chain",
-                        "name": "token_out_chain",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "From address",
-                        "name": "from_address",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "number",
-                        "description": "Slippage",
-                        "name": "slippage",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Token in address",
-                        "name": "token_in_address",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Token out address",
-                        "name": "token_out_address",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "In amount",
-                        "name": "in_amount",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "number",
-                        "description": "Fee",
-                        "name": "fee",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Is anti MEV",
-                        "name": "is_anti_mev",
-                        "in": "query"
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Legacy",
-                        "name": "legacy",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Token total supply",
-                        "name": "token_total_supply",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Initial real token reserves",
-                        "name": "initial_real_token_reserves",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Initial virtual sol reserves",
-                        "name": "initial_virtual_sol_reserves",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Initial virtual token reserves",
-                        "name": "initial_virtual_token_reserves",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
+                        "description": "WebSocket连接成功后的推送数据格式",
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/response.KlineData"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/response.SwapRouteData"
+                                        "close": {
+                                            "type": "string"
+                                        },
+                                        "high": {
+                                            "type": "string"
+                                        },
+                                        "low": {
+                                            "type": "string"
+                                        },
+                                        "open": {
+                                            "type": "string"
+                                        },
+                                        "timestamp": {
+                                            "type": "integer"
+                                        },
+                                        "volume": {
+                                            "type": "string"
                                         }
                                     }
                                 }
                             ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
                         }
                     }
                 }
@@ -1604,174 +392,74 @@
         }
     },
     "definitions": {
-        "httpRespone.GasFee": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {
-                    "$ref": "#/definitions/httpRespone.GasFeeResponse"
-                },
-                "message": {
-                    "type": "string"
-                }
-            }
-        },
-        "httpRespone.GasFeeResponse": {
-            "type": "object",
-            "properties": {
-                "priorityFeeLevels": {
-                    "$ref": "#/definitions/httpRespone.PriorityFeeLevels"
-                }
-            }
-        },
-        "httpRespone.PriorityFeeLevels": {
-            "type": "object",
-            "properties": {
-                "high": {
-                    "type": "number"
-                },
-                "low": {
-                    "type": "number"
-                },
-                "medium": {
-                    "type": "number"
-                },
-                "min": {
-                    "type": "number"
-                },
-                "unsafeMax": {
-                    "type": "number"
-                },
-                "veryHigh": {
-                    "type": "number"
-                }
-            }
-        },
-        "request.TokenPriceRequest": {
-            "type": "object",
-            "required": [
-                "addresses"
-            ],
-            "properties": {
-                "addresses": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "response.Attributes": {
+        "request.LoginRequest": {
+            "description": "用户登录时提交的请求参数",
             "type": "object",
             "properties": {
                 "address": {
-                    "type": "string"
+                    "description": "用户钱包地址",
+                    "type": "string",
+                    "example": "F59CSoJEmjDFQWZMjSjjvu6q7xV31p9rPzRynwrE71yk"
                 },
-                "base_token_price_native_currency": {
-                    "type": "string"
+                "comment_id": {
+                    "description": "评论ID（可选）",
+                    "type": "string",
+                    "example": ""
                 },
-                "base_token_price_quote_token": {
-                    "type": "string"
+                "invite_code": {
+                    "description": "邀请码（可选）",
+                    "type": "string",
+                    "example": "INVITE123"
                 },
-                "base_token_price_usd": {
-                    "type": "string"
+                "message": {
+                    "description": "登录消息",
+                    "type": "string",
+                    "example": "Sign in to the super.exchange\r\n\r\nTimestamp: 1740885327"
                 },
-                "fdv_usd": {
-                    "type": "string"
+                "post_id": {
+                    "description": "帖子ID（可选）",
+                    "type": "string",
+                    "example": ""
                 },
-                "market_cap_usd": {
-                    "description": "Use interface{} to handle null values"
+                "signature": {
+                    "description": "签名信息",
+                    "type": "string",
+                    "example": "Pli28P7PHx6Mzh+RwRTcqtCSuNs2qlncAqC4tK9PFN/CLnvZ2Gm8koqvkLPEZNoiVJOX71hCBaQV9NUKVX8KDg=="
                 },
-                "name": {
-                    "type": "string"
-                },
-                "pool_created_at": {
-                    "type": "string"
-                },
-                "price_change_percentage": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "quote_token_price_base_token": {
-                    "type": "string"
-                },
-                "quote_token_price_native_currency": {
-                    "type": "string"
-                },
-                "quote_token_price_usd": {
-                    "type": "string"
-                },
-                "reserve_in_usd": {
-                    "type": "string"
-                },
-                "token_price_usd": {
-                    "type": "string"
-                },
-                "transactions": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "$ref": "#/definitions/response.TransactionData"
-                    }
-                },
-                "volume_usd": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
+                "timestamp": {
+                    "description": "时间戳",
+                    "type": "string",
+                    "example": "1740885327"
                 }
             }
         },
-        "response.DexData": {
+        "response.GetTickerResponse": {
+            "description": "Ticker 的具体数据",
             "type": "object",
             "properties": {
-                "id": {
-                    "type": "string"
+                "market": {
+                    "description": "市场信息",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/response.Market"
+                        }
+                    ]
                 },
-                "type": {
-                    "type": "string"
-                }
-            }
-        },
-        "response.DexRelationship": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/response.DexData"
-                }
-            }
-        },
-        "response.IncludedData": {
-            "type": "object",
-            "properties": {
-                "attributes": {
-                    "$ref": "#/definitions/response.TokenAttributes"
+                "market_metadata": {
+                    "description": "市场元数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/response.MarketMetadata"
+                        }
+                    ]
                 },
-                "id": {
-                    "type": "string"
-                },
-                "type": {
-                    "type": "string"
-                }
-            }
-        },
-        "response.Instruction": {
-            "type": "object",
-            "properties": {
-                "accounts": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "data": {
-                    "type": "string"
-                },
-                "programIdIndex": {
-                    "type": "integer"
+                "market_ticker": {
+                    "description": "市场行情",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/response.MarketTicker"
+                        }
+                    ]
                 }
             }
         },
@@ -1798,226 +486,295 @@
                 }
             }
         },
-        "response.MarketInfo": {
+        "response.LoginResponse": {
+            "description": "登录成功后返回的具体数据",
             "type": "object",
             "properties": {
-                "address": {
-                    "type": "string"
+                "invite_code": {
+                    "description": "邀请码",
+                    "type": "string",
+                    "example": ""
                 },
-                "base_address": {
-                    "type": "string"
+                "token": {
+                    "description": "登录令牌",
+                    "type": "string",
+                    "example": "_vetZFMHLOlPWer8_uTrqe5_7gGGNPi-fvD--pomTdSd2kn3po2uBujC4o7raUiNHPpKJaS_BR3jmgOEdaAEFA=="
                 },
-                "base_reserve": {
-                    "type": "integer"
-                },
-                "base_reserve_value": {
-                    "type": "number"
-                },
-                "base_symbol": {
-                    "type": "string"
-                },
-                "base_vault_address": {
-                    "type": "string"
-                },
-                "circulating_supply": {
-                    "type": "number"
-                },
-                "creation_timestamp": {
-                    "type": "integer"
+                "user": {
+                    "description": "用户信息",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/response.UserInfo"
+                        }
+                    ]
+                }
+            }
+        },
+        "response.Market": {
+            "description": "市场的基本信息",
+            "type": "object",
+            "properties": {
+                "create_timestamp": {
+                    "description": "创建时间戳",
+                    "type": "integer",
+                    "example": 1740033455
                 },
                 "creator": {
-                    "type": "string"
+                    "description": "创建者地址",
+                    "type": "string",
+                    "example": "3P3PMv28AM7SvNkGmAdHCusPwahSB9QG9z5o4gTvmNBX"
                 },
-                "initial_base_reserve": {
-                    "type": "integer"
+                "holders": {
+                    "description": "持有者数量",
+                    "type": "integer",
+                    "example": 4204
                 },
-                "initial_liquidity": {
-                    "type": "number"
+                "market": {
+                    "description": "市场地址",
+                    "type": "string",
+                    "example": "B3o198GX45DZ9HeJZ56wuruyWWCfGVBSn5qC71q5AHZz"
                 },
-                "initial_quote_reserve": {
-                    "type": "integer"
+                "market_id": {
+                    "description": "市场ID",
+                    "type": "integer",
+                    "example": 1
                 },
-                "liquidity": {
-                    "type": "number"
+                "native_vault": {
+                    "description": "原生代币金库地址",
+                    "type": "string",
+                    "example": "98J2RACW3wk8u36k1cPmDenzHdPjhcd5qXsm5g471kdh"
                 },
-                "market_cap": {
-                    "type": "number"
+                "price": {
+                    "description": "当前价格",
+                    "type": "string",
+                    "example": "0.000050417320729"
                 },
-                "pool_address": {
-                    "type": "string"
+                "token_mint": {
+                    "description": "代币铸造地址",
+                    "type": "string",
+                    "example": "suprkbfvwpFZXzWaoKjTzGkW1nkvvwK9n2E6g1zyLFo"
                 },
-                "quote_address": {
-                    "type": "string"
+                "token_name": {
+                    "description": "代币名称",
+                    "type": "string",
+                    "example": "§uper Exchange"
                 },
-                "quote_reserve": {
-                    "type": "integer"
+                "token_symbol": {
+                    "description": "代币符号",
+                    "type": "string",
+                    "example": "SUPER"
                 },
-                "quote_reserve_value": {
-                    "type": "number"
-                },
-                "quote_symbol": {
-                    "type": "string"
-                },
-                "quote_vault_address": {
-                    "type": "string"
-                },
-                "total_supply": {
-                    "type": "number"
-                }
-            }
-        },
-        "response.Message": {
-            "type": "object",
-            "properties": {
-                "chain_id": {
-                    "type": "integer"
-                },
-                "domain": {
-                    "type": "string"
-                },
-                "expiration_time": {
-                    "type": "string"
-                },
-                "issued_at": {
-                    "type": "string"
-                },
-                "nonce": {
-                    "type": "string"
-                },
-                "statement": {
-                    "type": "string"
+                "token_vault": {
+                    "description": "代币金库地址",
+                    "type": "string",
+                    "example": "9SQy9T4pzadupDcWdYYgFmUgXLVydfQwgKZEbzeACNAQ"
                 },
                 "uri": {
-                    "type": "string"
-                },
-                "version": {
-                    "type": "string"
+                    "description": "URI",
+                    "type": "string",
+                    "example": "https://static.super.exchange/m/official/super.json"
                 }
             }
         },
-        "response.MessageResponse": {
+        "response.MarketMetadata": {
+            "description": "市场的元数据信息",
             "type": "object",
             "properties": {
-                "code": {
-                    "type": "integer"
+                "banner": {
+                    "description": "横幅图片",
+                    "type": "string",
+                    "example": ""
                 },
-                "data": {
-                    "$ref": "#/definitions/response.Message"
+                "description": {
+                    "description": "描述",
+                    "type": "string",
+                    "example": ""
                 },
-                "msg": {
-                    "type": "string"
+                "image_url": {
+                    "description": "图片URL",
+                    "type": "string",
+                    "example": "https://static.super.exchange/i/official/super.png"
+                },
+                "rules": {
+                    "description": "规则",
+                    "type": "string",
+                    "example": ""
+                },
+                "sort": {
+                    "description": "排序",
+                    "type": "integer",
+                    "example": 0
+                },
+                "telegram": {
+                    "description": "Telegram链接",
+                    "type": "string",
+                    "example": "https://t.me/SuperExchangeCommunity"
+                },
+                "twitter": {
+                    "description": "Twitter链接",
+                    "type": "string",
+                    "example": "https://x.com/_superexchange"
+                },
+                "website": {
+                    "description": "网站链接",
+                    "type": "string",
+                    "example": "https://super.exchange"
                 }
             }
         },
-        "response.PoolData": {
+        "response.MarketTicker": {
+            "description": "市场的行情数据",
             "type": "object",
             "properties": {
-                "attributes": {
-                    "$ref": "#/definitions/response.Attributes"
+                "buy_native_volume_1h": {
+                    "description": "1小时买入原生代币交易量",
+                    "type": "string",
+                    "example": "19.071274881"
                 },
-                "id": {
-                    "type": "string"
+                "buy_native_volume_24h": {
+                    "description": "24小时买入原生代币交易量",
+                    "type": "string",
+                    "example": "703.884254256"
                 },
-                "relationships": {
-                    "$ref": "#/definitions/response.Relationships"
+                "buy_native_volume_5m": {
+                    "description": "5分钟买入原生代币交易量",
+                    "type": "string",
+                    "example": "3.138140370"
                 },
-                "type": {
-                    "type": "string"
-                }
-            }
-        },
-        "response.PoolResponse": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/response.PoolData"
-                    }
+                "buy_token_volume_1h": {
+                    "description": "1小时买入代币交易量",
+                    "type": "string",
+                    "example": "379231.972430"
                 },
-                "included": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/response.IncludedData"
-                    }
-                }
-            }
-        },
-        "response.Quote": {
-            "type": "object",
-            "properties": {
-                "inAmount": {
-                    "type": "string"
+                "buy_token_volume_24h": {
+                    "description": "24小时买入代币交易量",
+                    "type": "string",
+                    "example": "15435782.918031"
                 },
-                "inDecimals": {
-                    "type": "integer"
+                "buy_token_volume_5m": {
+                    "description": "5分钟买入代币交易量",
+                    "type": "string",
+                    "example": "62269.324250"
                 },
-                "inputMint": {
-                    "type": "string"
+                "buy_tx_count_1h": {
+                    "description": "1小时买入交易次数",
+                    "type": "integer",
+                    "example": 271
                 },
-                "otherAmountThreshold": {
-                    "type": "string"
+                "buy_tx_count_24h": {
+                    "description": "24小时买入交易次数",
+                    "type": "integer",
+                    "example": 7566
                 },
-                "outAmount": {
-                    "type": "string"
+                "buy_tx_count_5m": {
+                    "description": "5分钟买入交易次数",
+                    "type": "integer",
+                    "example": 25
                 },
-                "outDecimals": {
-                    "type": "integer"
+                "high_1h": {
+                    "description": "1小时最高价",
+                    "type": "string",
+                    "example": "0.000050417320729"
                 },
-                "outputMint": {
-                    "type": "string"
+                "high_24h": {
+                    "description": "24小时最高价",
+                    "type": "string",
+                    "example": "0.000050417320729"
                 },
-                "platformFee": {
-                    "type": "integer"
+                "high_5m": {
+                    "description": "5分钟最高价",
+                    "type": "string",
+                    "example": "0.000050417320729"
                 },
-                "priceImpactPct": {
-                    "type": "string"
+                "last_swap_at": {
+                    "description": "最后交易时间戳",
+                    "type": "integer",
+                    "example": 1740887399
                 },
-                "routePlan": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/response.RoutePlan"
-                    }
+                "low_1h": {
+                    "description": "1小时最低价",
+                    "type": "string",
+                    "example": "0.000050161350930"
                 },
-                "slippageBps": {
-                    "type": "integer"
+                "low_24h": {
+                    "description": "24小时最低价",
+                    "type": "string",
+                    "example": "0.000041158184158"
                 },
-                "swapMode": {
-                    "type": "string"
+                "low_5m": {
+                    "description": "5分钟最低价",
+                    "type": "string",
+                    "example": "0.000050375183502"
                 },
-                "timeTaken": {
-                    "type": "number"
-                }
-            }
-        },
-        "response.RawTx": {
-            "type": "object",
-            "properties": {
-                "lastValidBlockHeight": {
-                    "type": "integer"
+                "market_cap": {
+                    "description": "市值",
+                    "type": "string",
+                    "example": "50417.320729000000000"
                 },
-                "prioritizationFeeLamports": {
-                    "type": "integer"
+                "native_volume_1h": {
+                    "description": "1小时原生代币交易量",
+                    "type": "string",
+                    "example": "19.071274881"
                 },
-                "recentBlockhash": {
-                    "type": "string"
+                "native_volume_24h": {
+                    "description": "24小时原生代币交易量",
+                    "type": "string",
+                    "example": "704.558749824"
                 },
-                "swapTransaction": {
-                    "type": "string"
-                }
-            }
-        },
-        "response.Relationships": {
-            "type": "object",
-            "properties": {
-                "base_token": {
-                    "$ref": "#/definitions/response.TokenRelationship"
+                "native_volume_5m": {
+                    "description": "5分钟原生代币交易量",
+                    "type": "string",
+                    "example": "3.138140370"
                 },
-                "dex": {
-                    "$ref": "#/definitions/response.DexRelationship"
+                "price_change_1h": {
+                    "description": "1小时价格变化",
+                    "type": "string",
+                    "example": "0.005103"
                 },
-                "quote_token": {
-                    "$ref": "#/definitions/response.TokenRelationship"
+                "price_change_24h": {
+                    "description": "24小时价格变化",
+                    "type": "string",
+                    "example": "0.224965"
+                },
+                "price_change_5m": {
+                    "description": "5分钟价格变化",
+                    "type": "string",
+                    "example": "0.000836"
+                },
+                "rank": {
+                    "description": "排名",
+                    "type": "integer",
+                    "example": 1
+                },
+                "token_volume_1h": {
+                    "description": "1小时代币交易量",
+                    "type": "string",
+                    "example": "379231.972430"
+                },
+                "token_volume_24h": {
+                    "description": "24小时代币交易量",
+                    "type": "string",
+                    "example": "15450301.872331"
+                },
+                "token_volume_5m": {
+                    "description": "5分钟代币交易量",
+                    "type": "string",
+                    "example": "62269.324250"
+                },
+                "tx_count_1h": {
+                    "description": "1小时交易次数",
+                    "type": "integer",
+                    "example": 271
+                },
+                "tx_count_24h": {
+                    "description": "24小时交易次数",
+                    "type": "integer",
+                    "example": 7590
+                },
+                "tx_count_5m": {
+                    "description": "5分钟交易次数",
+                    "type": "integer",
+                    "example": 25
                 }
             }
         },
@@ -2034,587 +791,87 @@
                 }
             }
         },
-        "response.RoutePlan": {
+        "response.TickerItem": {
+            "description": "单个市场的详细信息",
             "type": "object",
             "properties": {
-                "percent": {
-                    "type": "integer"
-                },
-                "swapInfo": {
-                    "$ref": "#/definitions/response.SwapInfo"
-                }
-            }
-        },
-        "response.Signature": {
-            "type": "object",
-            "properties": {
-                "signature": {
-                    "description": "Use a map to capture numeric keys",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "response.SwapInfo": {
-            "type": "object",
-            "properties": {
-                "ammKey": {
-                    "type": "string"
-                },
-                "feeAmount": {
-                    "type": "integer"
-                },
-                "feeMint": {
-                    "type": "string"
-                },
-                "inAmount": {
-                    "type": "string"
-                },
-                "inputMint": {
-                    "type": "string"
-                },
-                "label": {
-                    "type": "string"
-                },
-                "outAmount": {
-                    "type": "string"
-                },
-                "outputMint": {
-                    "type": "string"
-                }
-            }
-        },
-        "response.SwapRouteData": {
-            "type": "object",
-            "properties": {
-                "amountInUSD": {
-                    "type": "string"
-                },
-                "amountOutUSD": {
-                    "type": "string"
-                },
-                "jito_order_id": {},
-                "quote": {
-                    "$ref": "#/definitions/response.Quote"
-                },
-                "raw_tx": {
-                    "$ref": "#/definitions/response.RawTx"
-                }
-            }
-        },
-        "response.SwapTransactionResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {
-                    "type": "object",
-                    "properties": {
-                        "base64SwapTransaction": {
-                            "type": "string"
-                        },
-                        "lastValidBlockHeight": {
-                            "type": "integer"
-                        },
-                        "swapTransaction": {
-                            "type": "object",
-                            "properties": {
-                                "message": {
-                                    "$ref": "#/definitions/response.TransactionMessage"
-                                },
-                                "signatures": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/definitions/response.Signature"
-                                    }
-                                }
-                            }
+                "market": {
+                    "description": "市场信息",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/response.Market"
                         }
+                    ]
+                },
+                "market_metadata": {
+                    "description": "市场元数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/response.MarketMetadata"
+                        }
+                    ]
+                },
+                "market_ticker": {
+                    "description": "市场行情",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/response.MarketTicker"
+                        }
+                    ]
+                }
+            }
+        },
+        "response.TickersResponse": {
+            "description": "市场行情的具体数据",
+            "type": "object",
+            "properties": {
+                "cursor": {
+                    "description": "分页游标",
+                    "type": "string",
+                    "example": "NTA0MTcuMzIwNzI5MDAwMDAwMDAwOjE="
+                },
+                "has_more": {
+                    "description": "是否有更多数据",
+                    "type": "boolean",
+                    "example": true
+                },
+                "list": {
+                    "description": "市场列表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.TickerItem"
                     }
-                },
-                "message": {
-                    "type": "string"
                 }
             }
         },
-        "response.TokenAttributes": {
+        "response.UserInfo": {
+            "description": "用户的基本信息",
             "type": "object",
             "properties": {
                 "address": {
-                    "type": "string"
+                    "description": "钱包地址",
+                    "type": "string",
+                    "example": "F59CSoJEmjDFQWZMjSjjvu6q7xV31p9rPzRynwrE71yk"
                 },
-                "coingecko_coin_id": {
-                    "description": "Use interface{} to handle null values"
-                },
-                "decimals": {
-                    "type": "integer"
-                },
-                "image_url": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "symbol": {
-                    "type": "string"
-                }
-            }
-        },
-        "response.TokenBalance": {
-            "type": "object",
-            "properties": {
-                "balance": {
-                    "type": "string"
-                },
-                "owner": {
-                    "type": "string"
-                },
-                "token": {
-                    "type": "string"
-                }
-            }
-        },
-        "response.TokenData": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
-                },
-                "type": {
-                    "type": "string"
-                }
-            }
-        },
-        "response.TokenInfoResponse": {
-            "description": "Detailed information about a token",
-            "type": "object",
-            "properties": {
-                "address": {
-                    "description": "The unique address of the token",
-                    "type": "string"
-                },
-                "biggest_pool_address": {
-                    "description": "Address of the largest liquidity pool for the token",
-                    "type": "string"
-                },
-                "circulating_supply": {
-                    "description": "The amount of tokens currently in circulation",
-                    "type": "integer"
-                },
-                "create_timestamp": {
-                    "description": "The timestamp when the token was created",
-                    "type": "integer"
-                },
-                "created_platform_type": {
-                    "description": "The platform type where the token was created",
-                    "type": "integer"
-                },
-                "creator": {
-                    "description": "The address of the token's creator",
-                    "type": "string"
-                },
-                "creator_balance_rate": {
-                    "description": "The percentage of total supply held by the creator",
-                    "type": "string"
-                },
-                "creator_token_balance": {
-                    "description": "The balance of tokens held by the creator",
-                    "type": "string"
-                },
-                "cto_flag": {
-                    "description": "Security check data",
-                    "type": "boolean"
-                },
-                "decimals": {
-                    "description": "The number of decimal places the token uses",
-                    "type": "integer"
-                },
-                "dev_native_token_amount": {
-                    "description": "The amount of native tokens held by the developer",
-                    "type": "integer"
-                },
-                "dev_token_burn_amount": {
-                    "description": "The amount of tokens burned by the developer",
-                    "type": "number"
-                },
-                "dev_token_burn_ratio": {
-                    "description": "The ratio of tokens burned by the developer",
-                    "type": "number"
-                },
-                "dexscr_ad": {
-                    "description": "Advertisement status on DEX",
-                    "type": "boolean"
-                },
-                "dexscr_update_link": {
-                    "description": "Update link status on DEX",
-                    "type": "boolean"
-                },
-                "dexscr_update_link_time": {
-                    "description": "Timestamp of the last update link on DEX",
-                    "type": "integer"
-                },
-                "freeze_authority": {
-                    "description": "Indicates if the token has freezing authority",
-                    "type": "boolean"
-                },
-                "holder_count": {
-                    "description": "The number of holders of the token",
-                    "type": "integer"
-                },
-                "is_complete": {
-                    "description": "Flag indicating if the token is a common token",
-                    "type": "boolean"
-                },
-                "liquidity": {
-                    "description": "The liquidity of the token in the market",
-                    "type": "number"
-                },
-                "logo": {
-                    "description": "URL to the token's logo image",
-                    "type": "string"
-                },
-                "market_cap": {
-                    "type": "number"
-                },
-                "max_supply": {
-                    "description": "The maximum supply of the token",
-                    "type": "integer"
-                },
-                "mint_authority": {
-                    "description": "Indicates if the token has minting authority",
-                    "type": "boolean"
-                },
-                "name": {
-                    "description": "The name of the token",
-                    "type": "string"
-                },
-                "open_timestamp": {
-                    "description": "The timestamp when the token was first opened for trading",
-                    "type": "integer"
-                },
-                "price": {
-                    "description": "The price of the token",
-                    "type": "number"
-                },
-                "price_change": {
-                    "description": "The price change of the token",
-                    "type": "number"
-                },
-                "progress": {
-                    "description": "The progress of the token",
-                    "type": "number"
-                },
-                "rat_trader_amount_rate": {
-                    "description": "The percentage of total supply held by rat traders",
-                    "type": "number"
-                },
-                "symbol": {
-                    "description": "The symbol representing the token",
-                    "type": "string"
-                },
-                "telegram": {
-                    "description": "The Telegram handle of the token",
-                    "type": "string"
-                },
-                "token_burn_ratio": {
-                    "description": "The ratio of tokens burned by the token",
-                    "type": "number"
-                },
-                "top10_holdings": {
-                    "description": "The percentage of total supply held by the top 10 holders",
-                    "type": "number"
-                },
-                "top_10_holder_rate": {
-                    "description": "The percentage of total supply held by the top 10 holders",
-                    "type": "number"
-                },
-                "total_holders": {
-                    "description": "The total number of holders of the token",
-                    "type": "boolean"
-                },
-                "total_supply": {
-                    "description": "The total supply of the token",
-                    "type": "integer"
-                },
-                "twitter": {
-                    "description": "The Twitter handle of the token",
-                    "type": "string"
-                },
-                "twitter_change_flag": {
-                    "description": "Twitter change flag",
-                    "type": "boolean"
-                },
-                "website": {
-                    "description": "The website of the token",
-                    "type": "string"
-                }
-            }
-        },
-        "response.TokenLaunchpadInfo": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "type": "string"
+                "avatar": {
+                    "description": "头像",
+                    "type": "string",
+                    "example": ""
                 },
                 "description": {
-                    "type": "string"
-                },
-                "launchpad": {
-                    "type": "string"
-                },
-                "launchpad_progress": {
-                    "type": "string"
-                },
-                "launchpad_status": {
-                    "type": "integer"
-                }
-            }
-        },
-        "response.TokenMarketAnalyticsResponse": {
-            "type": "object",
-            "properties": {
-                "buy_count_1h": {
-                    "type": "integer"
-                },
-                "buy_count_1m": {
-                    "type": "integer"
-                },
-                "buy_count_24h": {
-                    "type": "integer"
-                },
-                "buy_count_5m": {
-                    "type": "integer"
-                },
-                "buy_volume_1h": {
-                    "type": "number"
-                },
-                "buy_volume_1m": {
-                    "type": "number"
-                },
-                "buy_volume_24h": {
-                    "type": "number"
-                },
-                "buy_volume_5m": {
-                    "type": "number"
-                },
-                "current_price": {
-                    "type": "number"
-                },
-                "price_change_1h": {
-                    "type": "number"
-                },
-                "price_change_1m": {
-                    "type": "number"
-                },
-                "price_change_24h": {
-                    "type": "number"
-                },
-                "price_change_5m": {
-                    "type": "number"
-                },
-                "sell_count_1h": {
-                    "type": "integer"
-                },
-                "sell_count_1m": {
-                    "type": "integer"
-                },
-                "sell_count_24h": {
-                    "type": "integer"
-                },
-                "sell_count_5m": {
-                    "type": "integer"
-                },
-                "sell_volume_1h": {
-                    "type": "number"
-                },
-                "sell_volume_1m": {
-                    "type": "number"
-                },
-                "sell_volume_24h": {
-                    "type": "number"
-                },
-                "sell_volume_5m": {
-                    "type": "number"
-                },
-                "token_address": {
-                    "type": "string"
-                },
-                "total_count_1h": {
-                    "type": "integer"
-                },
-                "total_count_1m": {
-                    "type": "integer"
-                },
-                "total_count_24h": {
-                    "type": "integer"
-                },
-                "total_count_5m": {
-                    "type": "integer"
-                },
-                "volume_1h": {
-                    "type": "number"
-                },
-                "volume_1m": {
-                    "type": "number"
-                },
-                "volume_24h": {
-                    "type": "number"
-                },
-                "volume_5m": {
-                    "type": "number"
-                }
-            }
-        },
-        "response.TokenOrderBookItem": {
-            "description": "Single transaction record in the token order book",
-            "type": "object",
-            "properties": {
-                "base_token_amount": {
-                    "description": "The amount of base tokens in the transaction",
-                    "type": "number"
-                },
-                "base_token_price": {
-                    "description": "The price of the base token",
-                    "type": "number"
-                },
-                "chain_type": {
-                    "description": "The type of blockchain network",
-                    "type": "integer"
-                },
-                "platform_type": {
-                    "description": "The type of platform where the transaction occurred",
-                    "type": "integer"
-                },
-                "pool_address": {
-                    "description": "The address of the liquidity pool",
-                    "type": "string"
-                },
-                "quote_token_amount": {
-                    "description": "The amount of quote tokens in the transaction",
-                    "type": "number"
-                },
-                "quote_token_price": {
-                    "description": "The price of the quote token",
-                    "type": "number"
-                },
-                "token_address": {
-                    "description": "The address of the token being traded",
-                    "type": "string"
-                },
-                "transaction_hash": {
-                    "description": "The unique hash of the transaction",
-                    "type": "string"
-                },
-                "transaction_time": {
-                    "description": "The timestamp of the transaction in unix seconds",
-                    "type": "integer"
-                },
-                "transaction_type": {
-                    "description": "The type of transaction (buy/sell)",
-                    "type": "integer"
-                },
-                "usd_amount": {
-                    "description": "The transaction amount in USD",
-                    "type": "number"
-                },
-                "user_address": {
-                    "description": "The address of the user who made the transaction",
-                    "type": "string"
-                }
-            }
-        },
-        "response.TokenPriceResponse": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "type": "string"
-                },
-                "price": {
-                    "type": "number"
-                }
-            }
-        },
-        "response.TokenRelationship": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/response.TokenData"
-                }
-            }
-        },
-        "response.TransactionData": {
-            "type": "object",
-            "properties": {
-                "buyers": {
-                    "type": "integer"
-                },
-                "buys": {
-                    "type": "integer"
-                },
-                "sellers": {
-                    "type": "integer"
-                },
-                "sells": {
-                    "type": "integer"
-                }
-            }
-        },
-        "response.TransactionMessage": {
-            "type": "object",
-            "properties": {
-                "accountKeys": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "header": {
-                    "type": "object",
-                    "properties": {
-                        "numReadonlySignedAccounts": {
-                            "type": "integer"
-                        },
-                        "numReadonlyUnsignedAccounts": {
-                            "type": "integer"
-                        },
-                        "numRequiredSignatures": {
-                            "type": "integer"
-                        }
-                    }
-                },
-                "indexToProgramIds": {
-                    "type": "object",
-                    "additionalProperties": true
-                },
-                "instructions": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/response.Instruction"
-                    }
-                },
-                "recentBlockhash": {
-                    "type": "string"
-                }
-            }
-        },
-        "service.WalletAuthService": {
-            "description": "用于钱包认证和登录的服务结构体",
-            "type": "object",
-            "required": [
-                "address",
-                "signature"
-            ],
-            "properties": {
-                "address": {
+                    "description": "个人描述",
                     "type": "string",
-                    "example": "5YNmS1R9nNSCDzb5a7mMJ1dwK9uHeAAF4CmPEwKgVWr8"
+                    "example": ""
                 },
-                "signature": {
+                "nickname": {
+                    "description": "昵称",
                     "type": "string",
-                    "example": "base58_encoded_signature"
+                    "example": "EagleI14Jv"
+                },
+                "user_id": {
+                    "description": "用户ID",
+                    "type": "string",
+                    "example": "10014855"
                 }
             }
         }
