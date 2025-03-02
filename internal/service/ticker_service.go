@@ -30,3 +30,23 @@ func (s *TickerService) GetTicker(tokenSymbol string) response.Response {
 		Msg:  "success",
 	}
 }
+
+func (s *TickerService) SwapHistories(tickersId string) response.Response {
+	var swapHistoriesResponse response.SwapHistoriesResponse
+
+	return response.Response{
+		Code: 200,
+		Data: swapHistoriesResponse,
+		Msg:  "success",
+	}
+}
+
+func (s *TickerService) TokenDistribution(tickersId string) response.Response {
+	var tokenDistributionResponse response.TokenDistributionResponse
+
+	return response.Response{
+		Code: 200,
+		Data: tokenDistributionResponse,
+		Msg:  "success",
+	}
+}

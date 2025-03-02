@@ -20,3 +20,13 @@ func (s *UserService) Login(req request.LoginRequest) response.Response {
 		Msg:  "success",
 	}
 }
+
+func (s *UserService) MyInfo(userID string) response.Response {
+	var myInfoResponse response.MyInfoResponse
+
+	return response.Response{
+		Code: 200,
+		Data: myInfoResponse,
+		Msg:  "success",
+	}
+}

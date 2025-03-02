@@ -23,9 +23,8 @@ import (
 // @Param limit query int false "每页返回的数据条数" example(50)
 // @Param search query string false "搜索关键字，用于筛选数据" example("")
 // @Param new_pairs_resolution query string false "新交易对的时间分辨率，例如 1D（1 天）" Enums(1D, 1H, 1M) example("1D")
-// @Success 200 {object} response.TickersResponse "成功返回市场行情数据"
+// @Success 200 {object} response.Response{data=response.TickersResponse} "成功返回市场行情数据"
 // @Failure 400 {object} response.Response "参数错误"
-// @Failure 500 {object} response.Response "服务器内部错误"
 // @Router /tickers [get]
 func Tickers(c *gin.Context) {
 	var req request.TickersRequest
@@ -45,9 +44,8 @@ func Tickers(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param token_symbol path string true "代币符号" Enums(SUPER, BTC, ETH, USDT, BNB) example("SUPER")
-// @Success 200 {object} response.GetTickerResponse "成功返回 Ticker 详情"
+// @Success 200 {object} response.Response{data=response.GetTickerResponse} "成功返回 Ticker 详情"
 // @Failure 400 {object} response.Response "参数错误"
-// @Failure 500 {object} response.Response "服务器内部错误"
 // @Router /tickers/{token_symbol} [get]
 func GetTicker(c *gin.Context) {
 	tokenSymbol := c.Param("token_symbol")
@@ -57,5 +55,80 @@ func GetTicker(c *gin.Context) {
 	}
 	tickerService := service.NewTickerService()
 	response := tickerService.GetTicker(tokenSymbol)
+	c.JSON(200, response)
+}
+
+// SwapHistories 获取交易历史记录
+// @Summary 获取指定 Ticker 的交易历史记录
+// @Description 根据 Ticker ID 获取交易历史记录
+// @Tags 市场行情
+// @Accept json
+// @Produce json
+// @Param tickers_id path string true "Ticker ID" example("SUPER")
+// @Success 200 {object} response.Response{data=response.SwapHistoriesResponse} "成功返回交易历史记录"
+//
+//	@Example ExampleResponse {
+//	  "code": 200,
+//	  "msg": "success",
+//	  "data": {
+//	    "transaction_histories": [
+//	      {
+//	        "market_id": 1,
+//	        "is_buy": true,
+//	        "payer": "BPeE27Y13ChxWHVceuv4JdWdZjh9tnc9xxgbJoxYbXLq",
+//	        "recipient": "669VYcBRq51iQzFiPTQcsW2CsvLfHM9AwVmaoM1mAAR7",
+//	        "signature": "3XTc73NfWb92PFv52ZDNSabNui4pyeWKaFB8cCjZR1SDWqgKDBaojWUCssRF5ijwvYDKF3k4MuGAakmDeDX9pwnd",
+//	        "block_time": "2025-03-02T03:57:35Z",
+//	        "index": 1,
+//	        "slot": 324011096,
+//	        "token_amount": "1987.143391",
+//	        "native_amount": "0.100251255",
+//	        "fee": "0.000501256",
+//	        "total_native_amount": "0.100251255",
+//	        "id": 749019,
+//	        "payer_profile": {
+//	          "user_id": "10000661",
+//	          "avatar": "",
+//	          "username": "",
+//	          "nickname": "Zebra8fsmP"
+//	        }
+//	      }
+//	    ],
+//	    "has_more": false
+//	  }
+//	}
+//
+// @Failure 400 {object} response.Response "参数错误"
+// @Failure 500 {object} response.Response "服务器内部错误"
+// @Router /tickers/swap_histories/{tickers_id} [get]
+func SwapHistories(c *gin.Context) {
+	tickersId := c.Param("tickers_id")
+	if tickersId == "" {
+		c.JSON(http.StatusBadRequest, response.Err(http.StatusBadRequest, "tickers_id cannot be empty", errors.New("tickers_id is required")))
+		return
+	}
+	tickerService := service.NewTickerService()
+	response := tickerService.SwapHistories(tickersId)
+	c.JSON(200, response)
+}
+
+// TokenDistribution 获取代币分布信息
+// @Summary 获取指定 Ticker 的代币分布信息
+// @Description 根据 Ticker ID 获取代币持有者的分布信息
+// @Tags 市场行情
+// @Accept json
+// @Produce json
+// @Param tickers_id path string true "Ticker ID" example("SUPER")
+// @Success 200 {object} response.Response{data=response.TokenDistributionResponse} "成功返回代币分布信息"
+// @Failure 500 {object} response.Response "服务器内部错误"
+// @Router /tickers/{tickers_id}/distribution [get]
+func TokenDistribution(c *gin.Context) {
+	tickersId := c.Param("tickers_id")
+	if tickersId == "" {
+		c.JSON(http.StatusBadRequest, response.Err(http.StatusBadRequest, "tickers_id cannot be empty", errors.New("tickers_id is required")))
+		return
+	}
+	tickerService := service.NewTickerService()
+	response := tickerService.TokenDistribution(tickersId)
 	c.JSON(200, response)
 }

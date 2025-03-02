@@ -19,7 +19,7 @@ import (
 // @Success 200 {object} response.LoginResponse "登录成功"
 // @Failure 400 {object} response.Response "参数错误"
 // @Failure 500 {object} response.Response "服务器内部错误"
-// @Router /user/login [post]
+// @Router /users/login [post]
 func Login(c *gin.Context) {
 	var req request.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -28,5 +28,26 @@ func Login(c *gin.Context) {
 	}
 	userService := service.NewUserService()
 	response := userService.Login(req)
+	c.JSON(200, response)
+}
+
+// MyInfo 获取用户信息
+// @Summary 获取当前用户信息
+// @Description 根据 JWT Token 获取当前用户的详细信息
+// @Tags 用户
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Success 200 {object} response.Response{data=response.MyInfoResponse} "成功返回用户信息"
+// @Failure 500 {object} response.Response "服务器内部错误"
+// @Router /users/my_info [get]
+func MyInfo(c *gin.Context) {
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" {
+		c.JSON(http.StatusUnauthorized, response.Err(http.StatusUnauthorized, "Authorization header is required", nil))
+		return
+	}
+	userService := service.NewUserService()
+	response := userService.MyInfo("userID")
 	c.JSON(200, response)
 }

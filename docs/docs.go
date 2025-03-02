@@ -117,13 +117,127 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回市场行情数据",
                         "schema": {
-                            "$ref": "#/definitions/response.TickersResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.TickersResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
                         "description": "参数错误",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/tickers/swap_histories/{tickers_id}": {
+            "get": {
+                "description": "根据 Ticker ID 获取交易历史记录",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "市场行情"
+                ],
+                "summary": "获取指定 Ticker 的交易历史记录",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"SUPER\"",
+                        "description": "Ticker ID",
+                        "name": "tickers_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回交易历史记录",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.SwapHistoriesResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/tickers/{tickers_id}/distribution": {
+            "get": {
+                "description": "根据 Ticker ID 获取代币持有者的分布信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "市场行情"
+                ],
+                "summary": "获取指定 Ticker 的代币分布信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"SUPER\"",
+                        "description": "Ticker ID",
+                        "name": "tickers_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回代币分布信息",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.TokenDistributionResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "500": {
@@ -169,17 +283,23 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回 Ticker 详情",
                         "schema": {
-                            "$ref": "#/definitions/response.GetTickerResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.GetTickerResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
                         "description": "参数错误",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "服务器内部错误",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -300,7 +420,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/user/login": {
+        "/users/login": {
             "post": {
                 "description": "通过钱包地址和签名进行登录",
                 "consumes": [
@@ -335,6 +455,52 @@ const docTemplate = `{
                         "description": "参数错误",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/my_info": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据 JWT Token 获取当前用户的详细信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户"
+                ],
+                "summary": "获取当前用户信息",
+                "responses": {
+                    "200": {
+                        "description": "成功返回用户信息",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.MyInfoResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "500": {
@@ -812,6 +978,90 @@ const docTemplate = `{
                 }
             }
         },
+        "response.Moderator": {
+            "description": "持有者的管理员信息",
+            "type": "object",
+            "properties": {
+                "banned": {
+                    "description": "是否被封禁",
+                    "type": "boolean",
+                    "example": false
+                },
+                "banned_mod_id": {
+                    "description": "被封禁的 Moderator ID",
+                    "type": "integer",
+                    "example": 0
+                },
+                "status": {
+                    "description": "当前状态",
+                    "type": "string",
+                    "example": "NORMAL"
+                }
+            }
+        },
+        "response.MyInfoResponse": {
+            "description": "包含用户基本信息、社交统计、邀请码等详细信息。",
+            "type": "object",
+            "properties": {
+                "fan_count": {
+                    "description": "关注数量",
+                    "type": "integer"
+                },
+                "follow_status": {
+                    "description": "关注状态",
+                    "type": "string"
+                },
+                "follower_count": {
+                    "description": "粉丝数量",
+                    "type": "integer"
+                },
+                "has_bound": {
+                    "description": "是否已绑定",
+                    "type": "boolean"
+                },
+                "invite_code": {
+                    "description": "邀请码",
+                    "type": "string"
+                },
+                "mention_count": {
+                    "description": "提及数量",
+                    "type": "integer"
+                },
+                "user": {
+                    "description": "用户基本信息",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/response.UserInfo"
+                        }
+                    ]
+                },
+                "vote_count": {
+                    "description": "投票数量",
+                    "type": "integer"
+                }
+            }
+        },
+        "response.PayerProfile": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "description": "用户头像",
+                    "type": "string"
+                },
+                "nickname": {
+                    "description": "用户昵称",
+                    "type": "string"
+                },
+                "user_id": {
+                    "description": "用户 ID",
+                    "type": "string"
+                },
+                "username": {
+                    "description": "用户名",
+                    "type": "string"
+                }
+            }
+        },
         "response.Response": {
             "type": "object",
             "properties": {
@@ -822,6 +1072,22 @@ const docTemplate = `{
                 "error": {},
                 "msg": {
                     "type": "string"
+                }
+            }
+        },
+        "response.SwapHistoriesResponse": {
+            "type": "object",
+            "properties": {
+                "has_more": {
+                    "description": "是否还有更多数据",
+                    "type": "boolean"
+                },
+                "transaction_histories": {
+                    "description": "交易历史记录列表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.TransactionHistory"
+                    }
                 }
             }
         },
@@ -878,34 +1144,149 @@ const docTemplate = `{
                 }
             }
         },
+        "response.TokenDistributionResponse": {
+            "description": "代币持有者数据",
+            "type": "object",
+            "properties": {
+                "token_holders": {
+                    "description": "代币持有者列表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.TokenHolder"
+                    }
+                }
+            }
+        },
+        "response.TokenHolder": {
+            "description": "代币持有者详情",
+            "type": "object",
+            "properties": {
+                "account": {
+                    "description": "持有者钱包地址",
+                    "type": "string",
+                    "example": "669VYcBRq51iQzFiPTQcsW2CsvLfHM9AwVmaoM1mAAR7"
+                },
+                "is_associated_bonding_curve": {
+                    "description": "是否与 Bonding Curve 关联",
+                    "type": "boolean",
+                    "example": false
+                },
+                "is_black_hole": {
+                    "description": "是否为黑洞地址",
+                    "type": "boolean",
+                    "example": false
+                },
+                "is_community_vault": {
+                    "description": "是否为社区金库",
+                    "type": "boolean",
+                    "example": false
+                },
+                "moderator": {
+                    "description": "持有者的管理员信息",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/response.Moderator"
+                        }
+                    ]
+                },
+                "percentage": {
+                    "description": "持有代币的百分比",
+                    "type": "string",
+                    "example": "100.000000"
+                },
+                "user_profile": {
+                    "description": "用户资料（可能为空）"
+                }
+            }
+        },
+        "response.TransactionHistory": {
+            "type": "object",
+            "properties": {
+                "block_time": {
+                    "description": "区块时间",
+                    "type": "string"
+                },
+                "fee": {
+                    "description": "手续费",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "交易 ID",
+                    "type": "integer"
+                },
+                "index": {
+                    "description": "交易索引",
+                    "type": "integer"
+                },
+                "is_buy": {
+                    "description": "是否为买入",
+                    "type": "boolean"
+                },
+                "market_id": {
+                    "description": "市场 ID",
+                    "type": "integer"
+                },
+                "native_amount": {
+                    "description": "原生代币数量",
+                    "type": "string"
+                },
+                "payer": {
+                    "description": "支付方地址",
+                    "type": "string"
+                },
+                "payer_profile": {
+                    "description": "支付方信息",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/response.PayerProfile"
+                        }
+                    ]
+                },
+                "recipient": {
+                    "description": "接收方地址",
+                    "type": "string"
+                },
+                "signature": {
+                    "description": "交易签名",
+                    "type": "string"
+                },
+                "slot": {
+                    "description": "区块槽位",
+                    "type": "integer"
+                },
+                "token_amount": {
+                    "description": "代币数量",
+                    "type": "string"
+                },
+                "total_native_amount": {
+                    "description": "总原生代币数量",
+                    "type": "string"
+                }
+            }
+        },
         "response.UserInfo": {
-            "description": "用户的基本信息",
+            "description": "包含用户 ID、地址、昵称、头像和描述等信息。",
             "type": "object",
             "properties": {
                 "address": {
-                    "description": "钱包地址",
-                    "type": "string",
-                    "example": "F59CSoJEmjDFQWZMjSjjvu6q7xV31p9rPzRynwrE71yk"
+                    "description": "用户地址",
+                    "type": "string"
                 },
                 "avatar": {
-                    "description": "头像",
-                    "type": "string",
-                    "example": ""
+                    "description": "用户头像",
+                    "type": "string"
                 },
                 "description": {
-                    "description": "个人描述",
-                    "type": "string",
-                    "example": ""
+                    "description": "用户描述",
+                    "type": "string"
                 },
                 "nickname": {
-                    "description": "昵称",
-                    "type": "string",
-                    "example": "EagleI14Jv"
+                    "description": "用户昵称",
+                    "type": "string"
                 },
                 "user_id": {
-                    "description": "用户ID",
-                    "type": "string",
-                    "example": "10014855"
+                    "description": "用户 ID",
+                    "type": "string"
                 }
             }
         }

@@ -291,6 +291,66 @@ definitions:
         example: 7590
         type: integer
     type: object
+  response.Moderator:
+    description: 持有者的管理员信息
+    properties:
+      banned:
+        description: 是否被封禁
+        example: false
+        type: boolean
+      banned_mod_id:
+        description: 被封禁的 Moderator ID
+        example: 0
+        type: integer
+      status:
+        description: 当前状态
+        example: NORMAL
+        type: string
+    type: object
+  response.MyInfoResponse:
+    description: 包含用户基本信息、社交统计、邀请码等详细信息。
+    properties:
+      fan_count:
+        description: 关注数量
+        type: integer
+      follow_status:
+        description: 关注状态
+        type: string
+      follower_count:
+        description: 粉丝数量
+        type: integer
+      has_bound:
+        description: 是否已绑定
+        type: boolean
+      invite_code:
+        description: 邀请码
+        type: string
+      mention_count:
+        description: 提及数量
+        type: integer
+      user:
+        allOf:
+        - $ref: '#/definitions/response.UserInfo'
+        description: 用户基本信息
+      vote_count:
+        description: 投票数量
+        type: integer
+    type: object
+  response.PayerProfile:
+    properties:
+      avatar:
+        description: 用户头像
+        type: string
+      nickname:
+        description: 用户昵称
+        type: string
+      user_id:
+        description: 用户 ID
+        type: string
+      username:
+        description: 用户名
+        type: string
+    type: object
   response.Response:
     properties:
       code:
@@ -299,6 +359,17 @@ definitions:
       error: {}
       msg:
         type: string
+    type: object
+  response.SwapHistoriesResponse:
+    properties:
+      has_more:
+        description: 是否还有更多数据
+        type: boolean
+      transaction_histories:
+        description: 交易历史记录列表
+        items:
+          $ref: '#/definitions/response.TransactionHistory'
+        type: array
     type: object
   response.TickerItem:
     description: 单个市场的详细信息
@@ -333,28 +404,108 @@ definitions:
           $ref: '#/definitions/response.TickerItem'
         type: array
     type: object
+  response.TokenDistributionResponse:
+    description: 代币持有者数据
+    properties:
+      token_holders:
+        description: 代币持有者列表
+        items:
+          $ref: '#/definitions/response.TokenHolder'
+        type: array
+    type: object
+  response.TokenHolder:
+    description: 代币持有者详情
+    properties:
+      account:
+        description: 持有者钱包地址
+        example: 669VYcBRq51iQzFiPTQcsW2CsvLfHM9AwVmaoM1mAAR7
+        type: string
+      is_associated_bonding_curve:
+        description: 是否与 Bonding Curve 关联
+        example: false
+        type: boolean
+      is_black_hole:
+        description: 是否为黑洞地址
+        example: false
+        type: boolean
+      is_community_vault:
+        description: 是否为社区金库
+        example: false
+        type: boolean
+      moderator:
+        allOf:
+        - $ref: '#/definitions/response.Moderator'
+        description: 持有者的管理员信息
+      percentage:
+        description: 持有代币的百分比
+        example: "100.000000"
+        type: string
+      user_profile:
+        description: 用户资料（可能为空）
+    type: object
+  response.TransactionHistory:
+    properties:
+      block_time:
+        description: 区块时间
+        type: string
+      fee:
+        description: 手续费
+        type: string
+      id:
+        description: 交易 ID
+        type: integer
+      index:
+        description: 交易索引
+        type: integer
+      is_buy:
+        description: 是否为买入
+        type: boolean
+      market_id:
+        description: 市场 ID
+        type: integer
+      native_amount:
+        description: 原生代币数量
+        type: string
+      payer:
+        description: 支付方地址
+        type: string
+      payer_profile:
+        allOf:
+        - $ref: '#/definitions/response.PayerProfile'
+        description: 支付方信息
+      recipient:
+        description: 接收方地址
+        type: string
+      signature:
+        description: 交易签名
+        type: string
+      slot:
+        description: 区块槽位
+        type: integer
+      token_amount:
+        description: 代币数量
+        type: string
+      total_native_amount:
+        description: 总原生代币数量
+        type: string
+    type: object
   response.UserInfo:
-    description: 用户的基本信息
+    description: 包含用户 ID、地址、昵称、头像和描述等信息。
     properties:
       address:
-        description: 钱包地址
-        example: F59CSoJEmjDFQWZMjSjjvu6q7xV31p9rPzRynwrE71yk
+        description: 用户地址
         type: string
       avatar:
-        description: 头像
-        example: ""
+        description: 用户头像
         type: string
       description:
-        description: 个人描述
-        example: ""
+        description: 用户描述
         type: string
       nickname:
-        description: 昵称
-        example: EagleI14Jv
+        description: 用户昵称
         type: string
       user_id:
-        description: 用户ID
-        example: "10014855"
+        description: 用户 ID
         type: string
     type: object
 host: 8.218.102.112:4880
@@ -439,16 +590,48 @@ paths:
         "200":
           description: 成功返回市场行情数据
           schema:
-            $ref: '#/definitions/response.TickersResponse'
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.TickersResponse'
+              type: object
         "400":
           description: 参数错误
           schema:
             $ref: '#/definitions/response.Response'
+      summary: 获取市场行情数据
+      tags:
+      - 市场行情
+  /tickers/{tickers_id}/distribution:
+    get:
+      consumes:
+      - application/json
+      description: 根据 Ticker ID 获取代币持有者的分布信息
+      parameters:
+      - description: Ticker ID
+        example: '"SUPER"'
+        in: path
+        name: tickers_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回代币分布信息
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.TokenDistributionResponse'
+              type: object
         "500":
           description: 服务器内部错误
           schema:
             $ref: '#/definitions/response.Response'
-      summary: 获取市场行情数据
+      summary: 获取指定 Ticker 的代币分布信息
       tags:
       - 市场行情
   /tickers/{token_symbol}:
@@ -475,7 +658,43 @@ paths:
         "200":
           description: 成功返回 Ticker 详情
           schema:
-            $ref: '#/definitions/response.GetTickerResponse'
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.GetTickerResponse'
+              type: object
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取 Ticker 详情
+      tags:
+      - 市场行情
+  /tickers/swap_histories/{tickers_id}:
+    get:
+      consumes:
+      - application/json
+      description: 根据 Ticker ID 获取交易历史记录
+      parameters:
+      - description: Ticker ID
+        example: '"SUPER"'
+        in: path
+        name: tickers_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回交易历史记录
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.SwapHistoriesResponse'
+              type: object
         "400":
           description: 参数错误
           schema:
@@ -484,7 +703,7 @@ paths:
           description: 服务器内部错误
           schema:
             $ref: '#/definitions/response.Response'
-      summary: 获取 Ticker 详情
+      summary: 获取指定 Ticker 的交易历史记录
       tags:
       - 市场行情
   /tokens/{klineType}/{chainType}/{tokenAddress}:
@@ -556,7 +775,7 @@ paths:
       summary: Get token kline data
       tags:
       - on-chain-data
-  /user/login:
+  /users/login:
     post:
       consumes:
       - application/json
@@ -584,6 +803,32 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       summary: 用户钱包登录
+      tags:
+      - 用户
+  /users/my_info:
+    get:
+      consumes:
+      - application/json
+      description: 根据 JWT Token 获取当前用户的详细信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回用户信息
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.MyInfoResponse'
+              type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取当前用户信息
       tags:
       - 用户
   /ws/kline/{tokenAddress}:
