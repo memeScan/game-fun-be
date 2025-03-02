@@ -1,115 +1,52 @@
 basePath: /api/v1
 definitions:
-  httpRespone.GasFee:
-    properties:
-      code:
-        type: integer
-      data:
-        $ref: '#/definitions/httpRespone.GasFeeResponse'
-      message:
-        type: string
-    type: object
-  httpRespone.GasFeeResponse:
-    properties:
-      priorityFeeLevels:
-        $ref: '#/definitions/httpRespone.PriorityFeeLevels'
-    type: object
-  httpRespone.PriorityFeeLevels:
-    properties:
-      high:
-        type: number
-      low:
-        type: number
-      medium:
-        type: number
-      min:
-        type: number
-      unsafeMax:
-        type: number
-      veryHigh:
-        type: number
-    type: object
-  request.TokenPriceRequest:
-    properties:
-      addresses:
-        items:
-          type: string
-        type: array
-    required:
-    - addresses
-    type: object
-  response.Attributes:
+  request.LoginRequest:
+    description: 用户登录时提交的请求参数
     properties:
       address:
+        description: 用户钱包地址
+        example: F59CSoJEmjDFQWZMjSjjvu6q7xV31p9rPzRynwrE71yk
         type: string
-      base_token_price_native_currency:
+      comment_id:
+        description: 评论ID（可选）
+        example: ""
         type: string
-      base_token_price_quote_token:
+      invite_code:
+        description: 邀请码（可选）
+        example: INVITE123
         type: string
-      base_token_price_usd:
+      message:
+        description: 登录消息
+        example: "Sign in to the super.exchange\r\n\r\nTimestamp: 1740885327"
         type: string
-      fdv_usd:
+      post_id:
+        description: 帖子ID（可选）
+        example: ""
         type: string
-      market_cap_usd:
-        description: Use interface{} to handle null values
-      name:
+      signature:
+        description: 签名信息
+        example: Pli28P7PHx6Mzh+RwRTcqtCSuNs2qlncAqC4tK9PFN/CLnvZ2Gm8koqvkLPEZNoiVJOX71hCBaQV9NUKVX8KDg==
         type: string
-      pool_created_at:
-        type: string
-      price_change_percentage:
-        additionalProperties:
-          type: string
-        type: object
-      quote_token_price_base_token:
-        type: string
-      quote_token_price_native_currency:
-        type: string
-      quote_token_price_usd:
-        type: string
-      reserve_in_usd:
-        type: string
-      token_price_usd:
-        type: string
-      transactions:
-        additionalProperties:
-          $ref: '#/definitions/response.TransactionData'
-        type: object
-      volume_usd:
-        additionalProperties:
-          type: string
-        type: object
-    type: object
-  response.DexData:
-    properties:
-      id:
-        type: string
-      type:
+      timestamp:
+        description: 时间戳
+        example: "1740885327"
         type: string
     type: object
-  response.DexRelationship:
+  response.GetTickerResponse:
+    description: Ticker 的具体数据
     properties:
-      data:
-        $ref: '#/definitions/response.DexData'
-    type: object
-  response.IncludedData:
-    properties:
-      attributes:
-        $ref: '#/definitions/response.TokenAttributes'
-      id:
-        type: string
-      type:
-        type: string
-    type: object
-  response.Instruction:
-    properties:
-      accounts:
-        items:
-          type: integer
-        type: array
-      data:
-        type: string
-      programIdIndex:
-        type: integer
+      market:
+        allOf:
+        - $ref: '#/definitions/response.Market'
+        description: 市场信息
+      market_metadata:
+        allOf:
+        - $ref: '#/definitions/response.MarketMetadata'
+        description: 市场元数据
+      market_ticker:
+        allOf:
+        - $ref: '#/definitions/response.MarketTicker'
+        description: 市场行情
     type: object
   response.KlineData:
     properties:
@@ -126,151 +63,233 @@ definitions:
       volume:
         type: number
     type: object
-  response.MarketInfo:
+  response.LoginResponse:
+    description: 登录成功后返回的具体数据
     properties:
-      address:
+      invite_code:
+        description: 邀请码
+        example: ""
         type: string
-      base_address:
+      token:
+        description: 登录令牌
+        example: _vetZFMHLOlPWer8_uTrqe5_7gGGNPi-fvD--pomTdSd2kn3po2uBujC4o7raUiNHPpKJaS_BR3jmgOEdaAEFA==
         type: string
-      base_reserve:
-        type: integer
-      base_reserve_value:
-        type: number
-      base_symbol:
-        type: string
-      base_vault_address:
-        type: string
-      circulating_supply:
-        type: number
-      creation_timestamp:
+      user:
+        allOf:
+        - $ref: '#/definitions/response.UserInfo'
+        description: 用户信息
+    type: object
+  response.Market:
+    description: 市场的基本信息
+    properties:
+      create_timestamp:
+        description: 创建时间戳
+        example: 1740033455
         type: integer
       creator:
+        description: 创建者地址
+        example: 3P3PMv28AM7SvNkGmAdHCusPwahSB9QG9z5o4gTvmNBX
         type: string
-      initial_base_reserve:
+      holders:
+        description: 持有者数量
+        example: 4204
         type: integer
-      initial_liquidity:
-        type: number
-      initial_quote_reserve:
+      market:
+        description: 市场地址
+        example: B3o198GX45DZ9HeJZ56wuruyWWCfGVBSn5qC71q5AHZz
+        type: string
+      market_id:
+        description: 市场ID
+        example: 1
         type: integer
-      liquidity:
-        type: number
-      market_cap:
-        type: number
-      pool_address:
+      native_vault:
+        description: 原生代币金库地址
+        example: 98J2RACW3wk8u36k1cPmDenzHdPjhcd5qXsm5g471kdh
         type: string
-      quote_address:
+      price:
+        description: 当前价格
+        example: "0.000050417320729"
         type: string
-      quote_reserve:
-        type: integer
-      quote_reserve_value:
-        type: number
-      quote_symbol:
+      token_mint:
+        description: 代币铸造地址
+        example: suprkbfvwpFZXzWaoKjTzGkW1nkvvwK9n2E6g1zyLFo
         type: string
-      quote_vault_address:
+      token_name:
+        description: 代币名称
+        example: §uper Exchange
         type: string
-      total_supply:
-        type: number
-    type: object
-  response.Message:
-    properties:
-      chain_id:
-        type: integer
-      domain:
+      token_symbol:
+        description: 代币符号
+        example: SUPER
         type: string
-      expiration_time:
-        type: string
-      issued_at:
-        type: string
-      nonce:
-        type: string
-      statement:
+      token_vault:
+        description: 代币金库地址
+        example: 9SQy9T4pzadupDcWdYYgFmUgXLVydfQwgKZEbzeACNAQ
         type: string
       uri:
-        type: string
-      version:
-        type: string
-    type: object
-  response.MessageResponse:
-    properties:
-      code:
-        type: integer
-      data:
-        $ref: '#/definitions/response.Message'
-      msg:
+        description: URI
+        example: https://static.super.exchange/m/official/super.json
         type: string
     type: object
-  response.PoolData:
+  response.MarketMetadata:
+    description: 市场的元数据信息
     properties:
-      attributes:
-        $ref: '#/definitions/response.Attributes'
-      id:
+      banner:
+        description: 横幅图片
+        example: ""
         type: string
-      relationships:
-        $ref: '#/definitions/response.Relationships'
-      type:
+      description:
+        description: 描述
+        example: ""
+        type: string
+      image_url:
+        description: 图片URL
+        example: https://static.super.exchange/i/official/super.png
+        type: string
+      rules:
+        description: 规则
+        example: ""
+        type: string
+      sort:
+        description: 排序
+        example: 0
+        type: integer
+      telegram:
+        description: Telegram链接
+        example: https://t.me/SuperExchangeCommunity
+        type: string
+      twitter:
+        description: Twitter链接
+        example: https://x.com/_superexchange
+        type: string
+      website:
+        description: 网站链接
+        example: https://super.exchange
         type: string
     type: object
-  response.PoolResponse:
+  response.MarketTicker:
+    description: 市场的行情数据
     properties:
-      data:
-        items:
-          $ref: '#/definitions/response.PoolData'
-        type: array
-      included:
-        items:
-          $ref: '#/definitions/response.IncludedData'
-        type: array
-    type: object
-  response.Quote:
-    properties:
-      inAmount:
+      buy_native_volume_1h:
+        description: 1小时买入原生代币交易量
+        example: "19.071274881"
         type: string
-      inDecimals:
+      buy_native_volume_5m:
+        description: 5分钟买入原生代币交易量
+        example: "3.138140370"
+        type: string
+      buy_native_volume_24h:
+        description: 24小时买入原生代币交易量
+        example: "703.884254256"
+        type: string
+      buy_token_volume_1h:
+        description: 1小时买入代币交易量
+        example: "379231.972430"
+        type: string
+      buy_token_volume_5m:
+        description: 5分钟买入代币交易量
+        example: "62269.324250"
+        type: string
+      buy_token_volume_24h:
+        description: 24小时买入代币交易量
+        example: "15435782.918031"
+        type: string
+      buy_tx_count_1h:
+        description: 1小时买入交易次数
+        example: 271
         type: integer
-      inputMint:
-        type: string
-      otherAmountThreshold:
-        type: string
-      outAmount:
-        type: string
-      outDecimals:
+      buy_tx_count_5m:
+        description: 5分钟买入交易次数
+        example: 25
         type: integer
-      outputMint:
-        type: string
-      platformFee:
+      buy_tx_count_24h:
+        description: 24小时买入交易次数
+        example: 7566
         type: integer
-      priceImpactPct:
+      high_1h:
+        description: 1小时最高价
+        example: "0.000050417320729"
         type: string
-      routePlan:
-        items:
-          $ref: '#/definitions/response.RoutePlan'
-        type: array
-      slippageBps:
+      high_5m:
+        description: 5分钟最高价
+        example: "0.000050417320729"
+        type: string
+      high_24h:
+        description: 24小时最高价
+        example: "0.000050417320729"
+        type: string
+      last_swap_at:
+        description: 最后交易时间戳
+        example: 1740887399
         type: integer
-      swapMode:
+      low_1h:
+        description: 1小时最低价
+        example: "0.000050161350930"
         type: string
-      timeTaken:
-        type: number
-    type: object
-  response.RawTx:
-    properties:
-      lastValidBlockHeight:
+      low_5m:
+        description: 5分钟最低价
+        example: "0.000050375183502"
+        type: string
+      low_24h:
+        description: 24小时最低价
+        example: "0.000041158184158"
+        type: string
+      market_cap:
+        description: 市值
+        example: "50417.320729000000000"
+        type: string
+      native_volume_1h:
+        description: 1小时原生代币交易量
+        example: "19.071274881"
+        type: string
+      native_volume_5m:
+        description: 5分钟原生代币交易量
+        example: "3.138140370"
+        type: string
+      native_volume_24h:
+        description: 24小时原生代币交易量
+        example: "704.558749824"
+        type: string
+      price_change_1h:
+        description: 1小时价格变化
+        example: "0.005103"
+        type: string
+      price_change_5m:
+        description: 5分钟价格变化
+        example: "0.000836"
+        type: string
+      price_change_24h:
+        description: 24小时价格变化
+        example: "0.224965"
+        type: string
+      rank:
+        description: 排名
+        example: 1
         type: integer
-      prioritizationFeeLamports:
+      token_volume_1h:
+        description: 1小时代币交易量
+        example: "379231.972430"
+        type: string
+      token_volume_5m:
+        description: 5分钟代币交易量
+        example: "62269.324250"
+        type: string
+      token_volume_24h:
+        description: 24小时代币交易量
+        example: "15450301.872331"
+        type: string
+      tx_count_1h:
+        description: 1小时交易次数
+        example: 271
         type: integer
-      recentBlockhash:
-        type: string
-      swapTransaction:
-        type: string
-    type: object
-  response.Relationships:
-    properties:
-      base_token:
-        $ref: '#/definitions/response.TokenRelationship'
-      dex:
-        $ref: '#/definitions/response.DexRelationship'
-      quote_token:
-        $ref: '#/definitions/response.TokenRelationship'
+      tx_count_5m:
+        description: 5分钟交易次数
+        example: 25
+        type: integer
+      tx_count_24h:
+        description: 24小时交易次数
+        example: 7590
+        type: integer
     type: object
   response.Response:
     properties:
@@ -281,408 +300,62 @@ definitions:
       msg:
         type: string
     type: object
-  response.RoutePlan:
+  response.TickerItem:
+    description: 单个市场的详细信息
     properties:
-      percent:
-        type: integer
-      swapInfo:
-        $ref: '#/definitions/response.SwapInfo'
+      market:
+        allOf:
+        - $ref: '#/definitions/response.Market'
+        description: 市场信息
+      market_metadata:
+        allOf:
+        - $ref: '#/definitions/response.MarketMetadata'
+        description: 市场元数据
+      market_ticker:
+        allOf:
+        - $ref: '#/definitions/response.MarketTicker'
+        description: 市场行情
     type: object
-  response.Signature:
+  response.TickersResponse:
+    description: 市场行情的具体数据
     properties:
-      signature:
-        additionalProperties:
-          type: string
-        description: Use a map to capture numeric keys
-        type: object
+      cursor:
+        description: 分页游标
+        example: NTA0MTcuMzIwNzI5MDAwMDAwMDAwOjE=
+        type: string
+      has_more:
+        description: 是否有更多数据
+        example: true
+        type: boolean
+      list:
+        description: 市场列表
+        items:
+          $ref: '#/definitions/response.TickerItem'
+        type: array
     type: object
-  response.SwapInfo:
-    properties:
-      ammKey:
-        type: string
-      feeAmount:
-        type: integer
-      feeMint:
-        type: string
-      inAmount:
-        type: string
-      inputMint:
-        type: string
-      label:
-        type: string
-      outAmount:
-        type: string
-      outputMint:
-        type: string
-    type: object
-  response.SwapRouteData:
-    properties:
-      amountInUSD:
-        type: string
-      amountOutUSD:
-        type: string
-      jito_order_id: {}
-      quote:
-        $ref: '#/definitions/response.Quote'
-      raw_tx:
-        $ref: '#/definitions/response.RawTx'
-    type: object
-  response.SwapTransactionResponse:
-    properties:
-      code:
-        type: integer
-      data:
-        properties:
-          base64SwapTransaction:
-            type: string
-          lastValidBlockHeight:
-            type: integer
-          swapTransaction:
-            properties:
-              message:
-                $ref: '#/definitions/response.TransactionMessage'
-              signatures:
-                items:
-                  $ref: '#/definitions/response.Signature'
-                type: array
-            type: object
-        type: object
-      message:
-        type: string
-    type: object
-  response.TokenAttributes:
+  response.UserInfo:
+    description: 用户的基本信息
     properties:
       address:
+        description: 钱包地址
+        example: F59CSoJEmjDFQWZMjSjjvu6q7xV31p9rPzRynwrE71yk
         type: string
-      coingecko_coin_id:
-        description: Use interface{} to handle null values
-      decimals:
-        type: integer
-      image_url:
-        type: string
-      name:
-        type: string
-      symbol:
-        type: string
-    type: object
-  response.TokenBalance:
-    properties:
-      balance:
-        type: string
-      owner:
-        type: string
-      token:
-        type: string
-    type: object
-  response.TokenData:
-    properties:
-      id:
-        type: string
-      type:
-        type: string
-    type: object
-  response.TokenInfoResponse:
-    description: Detailed information about a token
-    properties:
-      address:
-        description: The unique address of the token
-        type: string
-      biggest_pool_address:
-        description: Address of the largest liquidity pool for the token
-        type: string
-      circulating_supply:
-        description: The amount of tokens currently in circulation
-        type: integer
-      create_timestamp:
-        description: The timestamp when the token was created
-        type: integer
-      created_platform_type:
-        description: The platform type where the token was created
-        type: integer
-      creator:
-        description: The address of the token's creator
-        type: string
-      creator_balance_rate:
-        description: The percentage of total supply held by the creator
-        type: string
-      creator_token_balance:
-        description: The balance of tokens held by the creator
-        type: string
-      cto_flag:
-        description: Security check data
-        type: boolean
-      decimals:
-        description: The number of decimal places the token uses
-        type: integer
-      dev_native_token_amount:
-        description: The amount of native tokens held by the developer
-        type: integer
-      dev_token_burn_amount:
-        description: The amount of tokens burned by the developer
-        type: number
-      dev_token_burn_ratio:
-        description: The ratio of tokens burned by the developer
-        type: number
-      dexscr_ad:
-        description: Advertisement status on DEX
-        type: boolean
-      dexscr_update_link:
-        description: Update link status on DEX
-        type: boolean
-      dexscr_update_link_time:
-        description: Timestamp of the last update link on DEX
-        type: integer
-      freeze_authority:
-        description: Indicates if the token has freezing authority
-        type: boolean
-      holder_count:
-        description: The number of holders of the token
-        type: integer
-      is_complete:
-        description: Flag indicating if the token is a common token
-        type: boolean
-      liquidity:
-        description: The liquidity of the token in the market
-        type: number
-      logo:
-        description: URL to the token's logo image
-        type: string
-      market_cap:
-        type: number
-      max_supply:
-        description: The maximum supply of the token
-        type: integer
-      mint_authority:
-        description: Indicates if the token has minting authority
-        type: boolean
-      name:
-        description: The name of the token
-        type: string
-      open_timestamp:
-        description: The timestamp when the token was first opened for trading
-        type: integer
-      price:
-        description: The price of the token
-        type: number
-      price_change:
-        description: The price change of the token
-        type: number
-      progress:
-        description: The progress of the token
-        type: number
-      rat_trader_amount_rate:
-        description: The percentage of total supply held by rat traders
-        type: number
-      symbol:
-        description: The symbol representing the token
-        type: string
-      telegram:
-        description: The Telegram handle of the token
-        type: string
-      token_burn_ratio:
-        description: The ratio of tokens burned by the token
-        type: number
-      top_10_holder_rate:
-        description: The percentage of total supply held by the top 10 holders
-        type: number
-      top10_holdings:
-        description: The percentage of total supply held by the top 10 holders
-        type: number
-      total_holders:
-        description: The total number of holders of the token
-        type: boolean
-      total_supply:
-        description: The total supply of the token
-        type: integer
-      twitter:
-        description: The Twitter handle of the token
-        type: string
-      twitter_change_flag:
-        description: Twitter change flag
-        type: boolean
-      website:
-        description: The website of the token
-        type: string
-    type: object
-  response.TokenLaunchpadInfo:
-    properties:
-      address:
+      avatar:
+        description: 头像
+        example: ""
         type: string
       description:
+        description: 个人描述
+        example: ""
         type: string
-      launchpad:
+      nickname:
+        description: 昵称
+        example: EagleI14Jv
         type: string
-      launchpad_progress:
+      user_id:
+        description: 用户ID
+        example: "10014855"
         type: string
-      launchpad_status:
-        type: integer
-    type: object
-  response.TokenMarketAnalyticsResponse:
-    properties:
-      buy_count_1h:
-        type: integer
-      buy_count_1m:
-        type: integer
-      buy_count_5m:
-        type: integer
-      buy_count_24h:
-        type: integer
-      buy_volume_1h:
-        type: number
-      buy_volume_1m:
-        type: number
-      buy_volume_5m:
-        type: number
-      buy_volume_24h:
-        type: number
-      current_price:
-        type: number
-      price_change_1h:
-        type: number
-      price_change_1m:
-        type: number
-      price_change_5m:
-        type: number
-      price_change_24h:
-        type: number
-      sell_count_1h:
-        type: integer
-      sell_count_1m:
-        type: integer
-      sell_count_5m:
-        type: integer
-      sell_count_24h:
-        type: integer
-      sell_volume_1h:
-        type: number
-      sell_volume_1m:
-        type: number
-      sell_volume_5m:
-        type: number
-      sell_volume_24h:
-        type: number
-      token_address:
-        type: string
-      total_count_1h:
-        type: integer
-      total_count_1m:
-        type: integer
-      total_count_5m:
-        type: integer
-      total_count_24h:
-        type: integer
-      volume_1h:
-        type: number
-      volume_1m:
-        type: number
-      volume_5m:
-        type: number
-      volume_24h:
-        type: number
-    type: object
-  response.TokenOrderBookItem:
-    description: Single transaction record in the token order book
-    properties:
-      base_token_amount:
-        description: The amount of base tokens in the transaction
-        type: number
-      base_token_price:
-        description: The price of the base token
-        type: number
-      chain_type:
-        description: The type of blockchain network
-        type: integer
-      platform_type:
-        description: The type of platform where the transaction occurred
-        type: integer
-      pool_address:
-        description: The address of the liquidity pool
-        type: string
-      quote_token_amount:
-        description: The amount of quote tokens in the transaction
-        type: number
-      quote_token_price:
-        description: The price of the quote token
-        type: number
-      token_address:
-        description: The address of the token being traded
-        type: string
-      transaction_hash:
-        description: The unique hash of the transaction
-        type: string
-      transaction_time:
-        description: The timestamp of the transaction in unix seconds
-        type: integer
-      transaction_type:
-        description: The type of transaction (buy/sell)
-        type: integer
-      usd_amount:
-        description: The transaction amount in USD
-        type: number
-      user_address:
-        description: The address of the user who made the transaction
-        type: string
-    type: object
-  response.TokenPriceResponse:
-    properties:
-      address:
-        type: string
-      price:
-        type: number
-    type: object
-  response.TokenRelationship:
-    properties:
-      data:
-        $ref: '#/definitions/response.TokenData'
-    type: object
-  response.TransactionData:
-    properties:
-      buyers:
-        type: integer
-      buys:
-        type: integer
-      sellers:
-        type: integer
-      sells:
-        type: integer
-    type: object
-  response.TransactionMessage:
-    properties:
-      accountKeys:
-        items:
-          type: string
-        type: array
-      header:
-        properties:
-          numReadonlySignedAccounts:
-            type: integer
-          numReadonlyUnsignedAccounts:
-            type: integer
-          numRequiredSignatures:
-            type: integer
-        type: object
-      indexToProgramIds:
-        additionalProperties: true
-        type: object
-      instructions:
-        items:
-          $ref: '#/definitions/response.Instruction'
-        type: array
-      recentBlockhash:
-        type: string
-    type: object
-  service.WalletAuthService:
-    description: 用于钱包认证和登录的服务结构体
-    properties:
-      address:
-        example: 5YNmS1R9nNSCDzb5a7mMJ1dwK9uHeAAF4CmPEwKgVWr8
-        type: string
-      signature:
-        example: base58_encoded_signature
-        type: string
-    required:
-    - address
-    - signature
     type: object
 host: 8.218.102.112:4880
 info:
@@ -691,821 +364,129 @@ info:
   title: My API
   version: "1.0"
 paths:
-  /{chainType}/{tradeType}/get_swap_route:
+  /health:
     get:
-      consumes:
-      - application/json
-      description: Get swap route for a specific token address
-      parameters:
-      - description: Chain type
-        enum:
-        - sol
-        - eth
-        - btc
-        in: path
-        name: chainType
-        required: true
-        type: string
-      - description: Trade type
-        enum:
-        - tx
-        in: path
-        name: tradeType
-        required: true
-        type: string
-      - description: Token in chain
-        enum:
-        - sol
-        - eth
-        - btc
-        in: query
-        name: token_in_chain
-        required: true
-        type: string
-      - description: Token out chain
-        enum:
-        - sol
-        - eth
-        - btc
-        in: query
-        name: token_out_chain
-        required: true
-        type: string
-      - description: From address
-        in: query
-        name: from_address
-        required: true
-        type: string
-      - description: Slippage
-        in: query
-        name: slippage
-        required: true
-        type: number
-      - description: Token in address
-        in: query
-        name: token_in_address
-        required: true
-        type: string
-      - description: Token out address
-        in: query
-        name: token_out_address
-        required: true
-        type: string
-      - description: In amount
-        in: query
-        name: in_amount
-        required: true
-        type: string
-      - description: Fee
-        in: query
-        name: fee
-        required: true
-        type: number
-      - description: Is anti MEV
-        in: query
-        name: is_anti_mev
-        type: boolean
-      - description: Legacy
-        in: query
-        name: legacy
-        type: boolean
-      - description: Token total supply
-        in: query
-        name: token_total_supply
-        required: true
-        type: integer
-      - description: Initial real token reserves
-        in: query
-        name: initial_real_token_reserves
-        required: true
-        type: integer
-      - description: Initial virtual sol reserves
-        in: query
-        name: initial_virtual_sol_reserves
-        required: true
-        type: integer
-      - description: Initial virtual token reserves
-        in: query
-        name: initial_virtual_token_reserves
-        required: true
-        type: integer
+      description: Check if the service is healthy
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: ok
           schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/response.SwapRouteData'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: Get swap route
+            type: string
+      summary: Health check endpoint
       tags:
-      - swap
-  /api/v1/user/me:
+      - system
+  /tickers:
     get:
       consumes:
       - application/json
-      description: Get details of the currently authenticated user
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Get user details
-      tags:
-      - user
-  /chains/:chainType/gas_fee:
-    get:
-      consumes:
-      - application/json
-      description: Get the current gas fee for Solana blockchain
+      description: 根据排序、分页和搜索条件获取市场行情数据
       parameters:
-      - description: Type of the token (e.g., sol, eth)
-        in: path
-        name: chainType
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/httpRespone.GasFee'
-              type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: Get Solana gas fee
-      tags:
-      - on-chain-data
-  /chains/:chainType/sol_price:
-    get:
-      consumes:
-      - application/json
-      description: Get the current real-time price for Solana
-      parameters:
-      - description: Type of the token (e.g., sol, eth)
-        in: path
-        name: chainType
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  type: number
-              type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: Get Solana real-time price
-      tags:
-      - on-chain-data
-  /pool_info/{address}:
-    get:
-      consumes:
-      - application/json
-      description: Retrieve pool information for a specific token
-      parameters:
-      - description: Address of the token
-        in: path
-        name: address
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/response.PoolResponse'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: Get pool info
-      tags:
-      - pool
-  /rank/sol/new_pairs:
-    get:
-      consumes:
-      - application/json
-      description: Get the dump rank for SOL tokens
-      parameters:
-      - description: Time range
+      - description: 排序字段，支持以下值：MARKET_CAP, PRICE_CHANGE_5M, PRICE_CHANGE_1H, PRICE_CHANGE_24H,
+          NATIVE_VOLUME_1H, NATIVE_VOLUME_24H, TX_COUNT_24H, HOLDERS, INITIALIZE_AT,
+          Links
         enum:
-        - 1m
-        - 5m
-        - 1h
-        - 6h
-        - 24h
+        - MARKET_CAP
+        - PRICE_CHANGE_5M
+        - PRICE_CHANGE_1H
+        - PRICE_CHANGE_24H
+        - NATIVE_VOLUME_1H
+        - NATIVE_VOLUME_24H
+        - TX_COUNT_24H
+        - HOLDERS
+        - INITIALIZE_AT
+        - Links
+        example: '"INITIALIZE_AT"'
         in: query
-        name: time
-        required: true
+        name: sorted_by
         type: string
-      - description: Limit of results
+      - description: 排序方向，支持以下值：DESC, ASC
+        enum:
+        - DESC
+        - ASC
+        example: '"DESC"'
         in: query
-        minimum: 1
+        name: sort_direction
+        type: string
+      - description: 分页游标，用于分页查询
+        example: '""'
+        in: query
+        name: page_cursor
+        type: string
+      - description: 每页返回的数据条数
+        example: 50
+        in: query
         name: limit
-        required: true
         type: integer
-      - description: Order by field
+      - description: 搜索关键字，用于筛选数据
+        example: '""'
+        in: query
+        name: search
+        type: string
+      - description: 新交易对的时间分辨率，例如 1D（1 天）
         enum:
-        - progress
-        - created_timestamp
-        - price_change_percent5m
-        - price_change_percent1h
-        - liquidity
-        - creator_balance
-        - holder_count
-        - swaps_1h
-        - volume_1h
-        - reply_count
-        - usd_market_cap
-        - last_trade_timestamp
-        - koth_duration
-        - time_since_koth
-        - market_cap_1m
-        - market_cap_5m
+        - 1D
+        - 1H
+        - 1M
+        example: '"1D"'
         in: query
-        name: orderby
+        name: new_pairs_resolution
         type: string
-      - description: Sort direction
-        enum:
-        - asc
-        - desc
-        in: query
-        name: direction
-        type: string
-      - description: Filter for completed projects
-        in: query
-        name: completed
-        type: boolean
-      - collectionFormat: csv
-        description: Additional filters
-        in: query
-        items:
-          type: string
-        name: filters[]
-        type: array
-      - description: Minimum creation time
-        in: query
-        name: min_created
-        type: string
-      - description: Maximum creation time
-        in: query
-        name: max_created
-        type: string
-      - description: Minimum holder count
-        in: query
-        name: min_holder_count
-        type: integer
-      - description: Maximum holder count
-        in: query
-        name: max_holder_count
-        type: integer
-      - description: Minimum swaps
-        in: query
-        name: min_swaps
-        type: integer
-      - description: Maximum swaps
-        in: query
-        name: max_swaps
-        type: integer
-      - description: Minimum market cap
-        in: query
-        name: min_marketcap
-        type: number
-      - description: Maximum market cap
-        in: query
-        name: max_marketcap
-        type: number
-      - description: Minimum volume
-        in: query
-        name: min_volume
-        type: number
-      - description: Maximum volume
-        in: query
-        name: max_volume
-        type: number
-      - description: Minimum reply count
-        in: query
-        name: min_reply
-        type: integer
-      - description: Time to reach 1/2 crown
-        in: query
-        name: koth_duration
-        type: string
-      - description: Time to reach 2/2 rocket
-        in: query
-        name: time_since_koth
-        type: string
-      - description: Minimum initial liquidity
-        in: query
-        name: min_init_liquidity
-        type: number
-      - description: Maximum initial liquidity
-        in: query
-        name: max_init_liquidity
-        type: number
-      - description: Minimum quote USD
-        in: query
-        name: min_quote_usd
-        type: number
-      - description: Maximum quote USD
-        in: query
-        name: max_quote_usd
-        type: number
-      - description: Minimum liquidity
-        in: query
-        name: min_liquidity
-        type: number
-      - description: Maximum liquidity
-        in: query
-        name: max_liquidity
-        type: number
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 成功返回市场行情数据
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.TickersResponse'
         "400":
-          description: Bad Request
+          description: 参数错误
           schema:
             $ref: '#/definitions/response.Response'
         "500":
-          description: Internal Server Error
+          description: 服务器内部错误
           schema:
             $ref: '#/definitions/response.Response'
-      summary: Get SOL dump rank
+      summary: 获取市场行情数据
       tags:
-      - pump
-  /rank/sol/pump:
+      - 市场行情
+  /tickers/{token_symbol}:
     get:
       consumes:
       - application/json
-      description: Get the pump rank for SOL tokens
+      description: 根据 token_symbol 获取 Ticker 的详细信息
       parameters:
-      - description: Time range
+      - description: 代币符号
         enum:
-        - 1m
-        - 5m
-        - 1h
-        - 6h
-        - 24h
-        in: query
-        name: time
+        - SUPER
+        - BTC
+        - ETH
+        - USDT
+        - BNB
+        example: '"SUPER"'
+        in: path
+        name: token_symbol
         required: true
-        type: string
-      - description: Limit of results
-        in: query
-        minimum: 1
-        name: limit
-        required: true
-        type: integer
-      - description: Order by field
-        enum:
-        - progress
-        - created_timestamp
-        - creator_balance
-        - holder_count
-        - swaps_1h
-        - volume_1h
-        - reply_count
-        - usd_market_cap
-        - last_trade_timestamp
-        - koth_duration
-        - time_since_koth
-        - market_cap_1m
-        - market_cap_5m
-        in: query
-        name: orderby
-        type: string
-      - description: Sort direction
-        enum:
-        - asc
-        - desc
-        in: query
-        name: direction
-        type: string
-      - description: Filter for new creations
-        in: query
-        name: new_creation
-        type: boolean
-      - description: Filter for completing projects
-        in: query
-        name: completing
-        type: boolean
-      - description: Filter for projects about to pump
-        in: query
-        name: pump
-        type: boolean
-      - description: Filter for soaring projects
-        in: query
-        name: soaring
-        type: boolean
-      - collectionFormat: csv
-        description: Additional filters
-        in: query
-        items:
-          type: string
-        name: filters[]
-        type: array
-      - description: Minimum creation time
-        in: query
-        name: min_created
-        type: string
-      - description: Maximum creation time
-        in: query
-        name: max_created
-        type: string
-      - description: Minimum holder count
-        in: query
-        name: min_holder_count
-        type: integer
-      - description: Maximum holder count
-        in: query
-        name: max_holder_count
-        type: integer
-      - description: Minimum swaps
-        in: query
-        name: min_swaps
-        type: integer
-      - description: Maximum swaps
-        in: query
-        name: max_swaps
-        type: integer
-      - description: Minimum market cap
-        in: query
-        name: min_marketcap
-        type: number
-      - description: Maximum market cap
-        in: query
-        name: max_marketcap
-        type: number
-      - description: Minimum volume
-        in: query
-        name: min_volume
-        type: number
-      - description: Maximum volume
-        in: query
-        name: max_volume
-        type: number
-      - description: Minimum reply count
-        in: query
-        name: min_reply
-        type: integer
-      - description: Time to reach 1/2 crown
-        in: query
-        name: koth_duration
-        type: string
-      - description: Time to reach 2/2 rocket
-        in: query
-        name: time_since_koth
         type: string
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 成功返回 Ticker 详情
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.GetTickerResponse'
         "400":
-          description: Bad Request
+          description: 参数错误
           schema:
             $ref: '#/definitions/response.Response'
         "500":
-          description: Internal Server Error
+          description: 服务器内部错误
           schema:
             $ref: '#/definitions/response.Response'
-      summary: Get SOL pump rank
+      summary: 获取 Ticker 详情
       tags:
-      - pump
-  /token_balance/{chainType}/{owner}/{token}:
-    get:
-      consumes:
-      - application/json
-      description: Get the balance of a token for a given owner
-      parameters:
-      - description: Type of the token (e.g., sol, eth)
-        in: path
-        name: chainType
-        required: true
-        type: string
-      - description: Owner of the token
-        in: path
-        name: owner
-        required: true
-        type: string
-      - description: Token address
-        in: path
-        name: token
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/response.TokenBalance'
-              type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: Get token balance
-      tags:
-      - on-chain-data
-  /token_info/{chainType}/{tokenAddress}:
-    get:
-      consumes:
-      - application/json
-      description: Retrieve detailed information for a specific token
-      parameters:
-      - description: Type of the token (e.g., sol, eth)
-        in: path
-        name: chainType
-        required: true
-        type: string
-      - description: Address of the token
-        in: path
-        name: tokenAddress
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Detailed token information
-          schema:
-            $ref: '#/definitions/response.TokenInfoResponse'
-        "400":
-          description: Bad Request
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/response.TokenInfoResponse'
-              type: object
-      summary: Get token information
-      tags:
-      - token
-  /token_launchpad_info/{chainType}/{tokenAddress}:
-    get:
-      consumes:
-      - application/json
-      description: Retrieve detailed information for a specific token
-      parameters:
-      - description: Type of the token (e.g., sol, eth)
-        in: path
-        name: chainType
-        required: true
-        type: string
-      - description: Address of the token
-        in: path
-        name: tokenAddress
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/response.TokenLaunchpadInfo'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: Get token launchpad info
-      tags:
-      - token
-  /token_market_analytics/{chainType}/{tokenAddress}:
-    get:
-      consumes:
-      - application/json
-      description: Retrieve market analytics for a specific token
-      parameters:
-      - description: Type of the token (e.g., sol, eth)
-        in: path
-        name: chainType
-        required: true
-        type: string
-      - description: Address of the token
-        in: path
-        name: tokenAddress
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/response.TokenMarketAnalyticsResponse'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: Get token market analytics
-      tags:
-      - token
-  /token_order_book/{chainType}/{tokenAddress}:
-    get:
-      consumes:
-      - application/json
-      description: Retrieve order book information for a specific token
-      parameters:
-      - description: Type of the token (e.g., sol, eth)
-        in: path
-        name: chainType
-        required: true
-        type: string
-      - description: Address of the token
-        in: path
-        name: tokenAddress
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/response.TokenOrderBookItem'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: Get token order book
-      tags:
-      - token
-  /token_pool_info_sol/{chainType}/{tokenAddress}:
-    get:
-      consumes:
-      - application/json
-      description: Retrieve pool information for a specific token
-      parameters:
-      - description: Type of the token (e.g., sol)
-        in: path
-        name: chainType
-        required: true
-        type: string
-      - description: Address of the token
-        in: path
-        name: tokenAddress
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/response.MarketInfo'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: Get token pool information
-      tags:
-      - pool
-  /token_prices/{chainType}:
-    post:
-      consumes:
-      - application/json
-      description: Retrieve prices for a list of tokens
-      parameters:
-      - description: Type of the token (e.g., sol, eth)
-        in: path
-        name: chainType
-        required: true
-        type: string
-      - description: Array of token addresses
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/request.TokenPriceRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  items:
-                    $ref: '#/definitions/response.TokenPriceResponse'
-                  type: array
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: Get token prices
-      tags:
-      - token
-  /tokens/{chainType}/{tokenAddress}/search:
-    get:
-      consumes:
-      - application/json
-      description: Search for tokens
-      parameters:
-      - description: Query
-        in: path
-        name: query
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: Search for tokens
-      tags:
-      - search
+      - 市场行情
   /tokens/{klineType}/{chainType}/{tokenAddress}:
     get:
       consumes:
@@ -1575,133 +556,52 @@ paths:
       summary: Get token kline data
       tags:
       - on-chain-data
-  /transaction/sol/get_swap_request_status:
-    get:
-      consumes:
-      - application/json
-      description: Get swap request status
-      parameters:
-      - description: swap_transaction
-        in: path
-        name: swap_transaction
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/response.SwapTransactionResponse'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: Get swap request status
-      tags:
-      - swap
-  /transaction/sol/send_swap_transaction:
-    get:
-      consumes:
-      - application/json
-      description: Send swap request
-      parameters:
-      - description: transaction
-        in: path
-        name: transaction
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/response.SwapTransactionResponse'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: Send swap request
-      tags:
-      - swap
-  /user/message:
-    get:
-      consumes:
-      - application/json
-      description: Get a message that needs to be signed for wallet authentication
-      parameters:
-      - description: Solana wallet address
-        in: query
-        name: address
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.MessageResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: Get message for wallet authentication
-      tags:
-      - authentication
-  /user/wallet-login:
+  /user/login:
     post:
       consumes:
       - application/json
-      description: Authenticate user with wallet signature
+      description: 通过钱包地址和签名进行登录
       parameters:
-      - description: Wallet authentication input
+      - description: 登录请求参数
         in: body
-        name: input
+        name: login
         required: true
         schema:
-          $ref: '#/definitions/service.WalletAuthService'
+          $ref: '#/definitions/request.LoginRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 登录成功
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.LoginResponse'
         "400":
-          description: Bad Request
+          description: 参数错误
           schema:
             $ref: '#/definitions/response.Response'
         "500":
-          description: Internal Server Error
+          description: 服务器内部错误
           schema:
             $ref: '#/definitions/response.Response'
-      summary: Wallet login
+      summary: 用户钱包登录
       tags:
-      - authentication
+      - 用户
   /ws/kline/{tokenAddress}:
     get:
       consumes:
       - application/json
-      description: 通过 WebSocket 实时推送 K 线数据
+      description: |-
+        通过 WebSocket 实时推送 K 线数据。连接成功后，服务器将每秒推送最新的K线数据。
+        连接格式: ws://host/ws/kline/{tokenAddress}?resolution={resolution}
+        示例: ws://localhost:8080/ws/kline/0x1234...?resolution=1S
       parameters:
       - description: 代币地址
+        example: 0x1234567890abcdef1234567890abcdef12345678
         in: path
         name: tokenAddress
         required: true
         type: string
-      - description: K线周期 (1S/1/5/15/60/240/720/1D)
+      - description: K线周期
         enum:
         - 1S
         - "1"
@@ -1711,6 +611,7 @@ paths:
         - "240"
         - "720"
         - 1D
+        example: 1S
         in: query
         name: resolution
         required: true
@@ -1719,9 +620,24 @@ paths:
       - application/json
       responses:
         "101":
-          description: 切换到 WebSocket 协议
+          description: WebSocket连接成功后的推送数据格式
           schema:
-            $ref: '#/definitions/response.KlineData'
+            allOf:
+            - $ref: '#/definitions/response.KlineData'
+            - properties:
+                close:
+                  type: string
+                high:
+                  type: string
+                low:
+                  type: string
+                open:
+                  type: string
+                timestamp:
+                  type: integer
+                volume:
+                  type: string
+              type: object
       summary: K线数据 WebSocket 接口
       tags:
       - WebSocket

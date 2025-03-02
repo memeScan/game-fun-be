@@ -10,16 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GetSolGasFee godoc
-// @Summary Get Solana gas fee
-// @Description Get the current gas fee for Solana blockchain
-// @Tags on-chain-data
-// @Accept json
-// @Param chainType path string true "Type of the token (e.g., sol, eth)"
-// @Produce json
-// @Success 200 {object} response.Response{data=httpRespone.GasFee}
-// @Failure 500 {object} response.Response
-// @Router /chains/:chainType/gas_fee [get]
 func GetSolGasFee(c *gin.Context) {
 	chainType := c.Param("chainType")
 
@@ -29,33 +19,12 @@ func GetSolGasFee(c *gin.Context) {
 	c.JSON(res.Code, res)
 }
 
-// GetSolPrice godoc
-// @Summary Get Solana real-time price
-// @Description Get the current real-time price for Solana
-// @Tags on-chain-data
-// @Param chainType path string true "Type of the token (e.g., sol, eth)"
-// @Accept json
-// @Produce json
-// @Success 200 {object} response.Response{data=float64}
-// @Failure 500 {object} response.Response
-// @Router /chains/:chainType/sol_price [get]
 func GetSolPrice(c *gin.Context) {
 	onChainDataService := service.NewOnChainDataService()
 	res := onChainDataService.GetSolPrice()
 	c.JSON(res.Code, res)
 }
 
-// @Summary Get token balance
-// @Description Get the balance of a token for a given owner
-// @Tags on-chain-data
-// @Accept json
-// @Produce json
-// @Param chainType path string true "Type of the token (e.g., sol, eth)"
-// @Param owner path string true "Owner of the token"
-// @Param token path string true "Token address"
-// @Success 200 {object} response.Response{data=response.TokenBalance}
-// @Failure 500 {object} response.Response
-// @Router /token_balance/{chainType}/{owner}/{token} [get]
 func GetTokenBalance(c *gin.Context) {
 	tokenBalance := service.NewOnChainDataService().GetTokenBalance(c.Param("chainType"), c.Param("owner"), c.Param("token"))
 	c.JSON(tokenBalance.Code, tokenBalance)
