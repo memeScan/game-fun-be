@@ -48,6 +48,17 @@ definitions:
         - $ref: '#/definitions/response.MarketTicker'
         description: 市场行情
     type: object
+  response.InviteCodeResponse:
+    properties:
+      invite_code:
+        description: 邀请码
+        example: GT4L5B
+        type: string
+      invite_count:
+        description: 邀请数量
+        example: 0
+        type: integer
+    type: object
   response.KlineData:
     properties:
       close:
@@ -349,6 +360,55 @@ definitions:
         type: string
       username:
         description: 用户名
+        type: string
+    type: object
+  response.PointsDetail:
+    properties:
+      amount:
+        description: 金额
+        example: "0.000182"
+        type: string
+      points:
+        description: 积分
+        example: "0.000182"
+        type: string
+      timestamp:
+        description: 时间戳
+        example: 1740840671
+        type: integer
+      type:
+        description: 类型
+        example: trading
+        type: string
+    type: object
+  response.PointsDetailsResponse:
+    properties:
+      details:
+        description: 积分明细列表
+        items:
+          $ref: '#/definitions/response.PointsDetail'
+        type: array
+    type: object
+  response.PointsEstimatedResponse:
+    properties:
+      estimated_points:
+        description: 预估积分
+        example: "12862.90277"
+        type: string
+    type: object
+  response.PointsResponse:
+    properties:
+      available_points:
+        description: 可用积分
+        example: "0.147938"
+        type: string
+      invite_points:
+        description: 邀请积分
+        example: "0"
+        type: string
+      trading_points:
+        description: 交易积分
+        example: "0.147938"
         type: string
     type: object
   response.Response:
@@ -713,6 +773,100 @@ paths:
       summary: Health check endpoint
       tags:
       - system
+  /points:
+    get:
+      consumes:
+      - application/json
+      description: 根据用户 ID 获取用户的交易积分、邀请积分和可用积分
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回用户积分数据
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.PointsResponse'
+              type: object
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取用户积分数据
+      tags:
+      - 用户
+  /points/detail:
+    get:
+      consumes:
+      - application/json
+      description: 根据用户 ID 获取用户的积分明细数据
+      parameters:
+      - description: 用户 ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      - description: 分页页码
+        in: query
+        name: page
+        required: true
+        type: string
+      - description: 每页数量
+        in: query
+        name: limit
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回用户积分明细
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.PointsDetailsResponse'
+              type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取用户积分明细
+      tags:
+      - 用户
+  /points/estimated:
+    get:
+      consumes:
+      - application/json
+      description: 根据用户 ID 获取用户的预估积分数据
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回用户预估积分数据
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.PointsEstimatedResponse'
+              type: object
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取用户预估积分数据
+      tags:
+      - 积分
   /tickers:
     get:
       consumes:
@@ -1036,6 +1190,36 @@ paths:
       summary: Get token kline data
       tags:
       - on-chain-data
+  /users/invite/code:
+    get:
+      consumes:
+      - application/json
+      description: 根据用户 ID 获取用户的邀请码和邀请数量
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回用户邀请码信息
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.InviteCodeResponse'
+              type: object
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取用户邀请码信息
+      tags:
+      - 用户
   /users/login:
     post:
       consumes:

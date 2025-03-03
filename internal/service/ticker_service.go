@@ -7,7 +7,7 @@ import (
 
 type TickerService interface {
 	Tickers(req request.TickersRequest) response.Response
-	GetTicker(tokenSymbol string) response.Response
+	TickerDetail(tokenSymbol string) response.Response
 	SwapHistories(tickersId string) response.Response
 	TokenDistribution(tickersId string) response.Response
 }
@@ -23,10 +23,9 @@ func (s *TickerServiceImpl) Tickers(req request.TickersRequest) response.Respons
 	return response.Success(tickersResponse)
 }
 
-func (s *TickerServiceImpl) GetTicker(tokenSymbol string) response.Response {
+func (s *TickerServiceImpl) TickerDetail(tokenSymbol string) response.Response {
 	var getTickerResponse response.GetTickerResponse
 	return response.Success(getTickerResponse)
-
 }
 
 func (s *TickerServiceImpl) SwapHistories(tickersId string) response.Response {
@@ -38,5 +37,4 @@ func (s *TickerServiceImpl) SwapHistories(tickersId string) response.Response {
 func (s *TickerServiceImpl) TokenDistribution(tickersId string) response.Response {
 	var tokenDistributionResponse response.TokenDistributionResponse
 	return response.Success(tokenDistributionResponse)
-
 }

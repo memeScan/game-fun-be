@@ -8,6 +8,7 @@ import (
 type UserService interface {
 	Login(req request.LoginRequest) response.Response
 	MyInfo(userID string) response.Response
+	GetCode(userID string) response.Response
 }
 
 type UserServiceImpl struct{}
@@ -24,4 +25,9 @@ func (s *UserServiceImpl) Login(req request.LoginRequest) response.Response {
 func (s *UserServiceImpl) MyInfo(userID string) response.Response {
 	var myInfoResponse response.MyInfoResponse
 	return response.Success(myInfoResponse)
+}
+
+func (s *UserServiceImpl) GetCode(userID string) response.Response {
+	var inviteCodeResponse response.InviteCodeResponse
+	return response.Success(inviteCodeResponse)
 }

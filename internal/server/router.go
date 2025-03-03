@@ -29,6 +29,9 @@ func NewRouter() *gin.Engine {
 	tokenHoldingsService := service.NewTokenHoldingsServiceImpl()
 	tokenHoldingsHandler := api.NewTokenHoldingsHandler(tokenHoldingsService)
 
+	pointsService := service.NewPointsServiceImpl()
+	pointsHandler := api.NewPointsHandler(pointsService)
+
 	r := gin.New()
 
 	// 基础中间件
@@ -105,18 +108,23 @@ func NewRouter() *gin.Engine {
 
 		v1.POST("users/login", userHandler.Login)
 		v1.GET("tickers", tickerHandler.Tickers)
-		v1.GET("tickers/:token_symbol", tickerHandler.GetTicker)
+		v1.GET("tickers/:token_symbol", tickerHandler.TickerDetail)
 		v1.GET("tickers/swap_histories/:tickers_id", tickerHandler.SwapHistories)
 		v1.GET("tickers/token_distribution/:tickers_id", tickerHandler.TokenDistribution)
 		v1.GET("token_holdings/:account", tokenHoldingsHandler.TokenHoldings)
 		v1.GET("token_holdings/histories/:account", tokenHoldingsHandler.TokenHoldingsHistories)
 		v1.GET("global/sol_usd_price", globalHandler.SolUsdPrice)
-		v1.GET("tokens/:klineType/:chainType/:tokenAddress", api.GetTokenKlines)
 
 		auth := v1.Group("")
 		auth.Use(interceptor.AuthRequired())
+		auth.GET("users/my_info", userHandler.MyInfo)
+		auth.GET("users/invite/code", userHandler.InviteCode)
+		auth.GET("points", pointsHandler.Points)
+		auth.GET("points/detail", pointsHandler.PointsDetail)
+		auth.GET("points/estimated", pointsHandler.PointsEstimated)
 		auth.GET("global/balance", globalHandler.SolBalance)
-		auth.POST("users/my_info", userHandler.MyInfo)
+
+		v1.GET("tokens/:klineType/:chainType/:tokenAddress", api.GetTokenKlines)
 
 		// WebSocket 路由
 		v1.GET("ws/kline/:tokenAddress", ws.HandleKlineWS)

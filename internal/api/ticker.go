@@ -44,7 +44,7 @@ func (t *TickersHandler) Tickers(c *gin.Context) {
 	c.JSON(res.Code, res)
 }
 
-// GetTicker 获取 Ticker 详情
+// TickerDetail 获取 Ticker 详情
 // @Summary 获取 Ticker 详情
 // @Description 根据 token_symbol 获取 Ticker 的详细信息
 // @Tags 市场行情
@@ -54,13 +54,13 @@ func (t *TickersHandler) Tickers(c *gin.Context) {
 // @Success 200 {object} response.Response{data=response.GetTickerResponse} "成功返回 Ticker 详情"
 // @Failure 400 {object} response.Response "参数错误"
 // @Router /tickers/{token_symbol} [get]
-func (t *TickersHandler) GetTicker(c *gin.Context) {
+func (t *TickersHandler) TickerDetail(c *gin.Context) {
 	tokenSymbol := c.Param("token_symbol")
 	if tokenSymbol == "" {
 		c.JSON(http.StatusBadRequest, response.Err(http.StatusBadRequest, "token_symbol cannot be empty", errors.New("token_symbol is required")))
 		return
 	}
-	res := t.tickerService.GetTicker(tokenSymbol)
+	res := t.tickerService.TickerDetail(tokenSymbol)
 	c.JSON(res.Code, res)
 }
 

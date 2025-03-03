@@ -63,8 +63,11 @@ func (h *TokenHoldingsHandler) TokenHoldingsHistories(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, response.Err(http.StatusBadRequest, "User account parameter is required", nil))
 		return
 	}
-	page := c.DefaultQuery("page", "0")
-	limit := c.DefaultQuery("limit", "20")
+	page, limit, errResp := GetPageAndLimit(c)
+	if errResp != nil {
+		c.JSON(errResp.Code, errResp)
+		return
+	}
 	res := h.tokenHoldingsService.TokenHoldingsHistories(userAccount, page, limit)
 	c.JSON(res.Code, res)
 }

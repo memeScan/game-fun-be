@@ -1,10 +1,7 @@
 package api
 
 import (
-	"my-token-ai-be/internal/response"
 	"my-token-ai-be/internal/service"
-
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -42,16 +39,11 @@ func (g *GlobalHandler) SolUsdPrice(c *gin.Context) {
 // @Failure 500 {object} response.Response "服务器内部错误"
 // @Router /global/sol_balance [get]
 func (g *GlobalHandler) SolBalance(c *gin.Context) {
-	address, exists := c.Get("address")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, response.Err(http.StatusUnauthorized, "Address not found in context", nil))
+	address, errResp := GetAddressFromContext(c)
+	if errResp != nil {
+		c.JSON(errResp.Code, errResp)
 		return
 	}
-	addressStr, ok := address.(string)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, response.Err(http.StatusUnauthorized, "Invalid address type in context", nil))
-		return
-	}
-	res := g.globalService.SolBalance(addressStr)
+	res := g.globalService.SolBalance(address)
 	c.JSON(res.Code, res)
 }

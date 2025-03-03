@@ -125,6 +125,167 @@ const docTemplate = `{
                 }
             }
         },
+        "/points": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据用户 ID 获取用户的交易积分、邀请积分和可用积分",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户"
+                ],
+                "summary": "获取用户积分数据",
+                "responses": {
+                    "200": {
+                        "description": "成功返回用户积分数据",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.PointsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "未授权",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/points/detail": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据用户 ID 获取用户的积分明细数据",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户"
+                ],
+                "summary": "获取用户积分明细",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "用户 ID",
+                        "name": "userID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "分页页码",
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "每页数量",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回用户积分明细",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.PointsDetailsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/points/estimated": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据用户 ID 获取用户的预估积分数据",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "积分"
+                ],
+                "summary": "获取用户预估积分数据",
+                "responses": {
+                    "200": {
+                        "description": "成功返回用户预估积分数据",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.PointsEstimatedResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "未授权",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/tickers": {
             "get": {
                 "description": "根据排序、分页和搜索条件获取市场行情数据",
@@ -632,6 +793,58 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/invite/code": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据用户 ID 获取用户的邀请码和邀请数量",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户"
+                ],
+                "summary": "获取用户邀请码信息",
+                "responses": {
+                    "200": {
+                        "description": "成功返回用户邀请码信息",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.InviteCodeResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "未授权",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/users/login": {
             "post": {
                 "description": "通过钱包地址和签名进行登录",
@@ -866,6 +1079,21 @@ const docTemplate = `{
                             "$ref": "#/definitions/response.MarketTicker"
                         }
                     ]
+                }
+            }
+        },
+        "response.InviteCodeResponse": {
+            "type": "object",
+            "properties": {
+                "invite_code": {
+                    "description": "邀请码",
+                    "type": "string",
+                    "example": "GT4L5B"
+                },
+                "invite_count": {
+                    "description": "邀请数量",
+                    "type": "integer",
+                    "example": 0
                 }
             }
         },
@@ -1265,6 +1493,73 @@ const docTemplate = `{
                 "username": {
                     "description": "用户名",
                     "type": "string"
+                }
+            }
+        },
+        "response.PointsDetail": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "description": "金额",
+                    "type": "string",
+                    "example": "0.000182"
+                },
+                "points": {
+                    "description": "积分",
+                    "type": "string",
+                    "example": "0.000182"
+                },
+                "timestamp": {
+                    "description": "时间戳",
+                    "type": "integer",
+                    "example": 1740840671
+                },
+                "type": {
+                    "description": "类型",
+                    "type": "string",
+                    "example": "trading"
+                }
+            }
+        },
+        "response.PointsDetailsResponse": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "description": "积分明细列表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.PointsDetail"
+                    }
+                }
+            }
+        },
+        "response.PointsEstimatedResponse": {
+            "type": "object",
+            "properties": {
+                "estimated_points": {
+                    "description": "预估积分",
+                    "type": "string",
+                    "example": "12862.90277"
+                }
+            }
+        },
+        "response.PointsResponse": {
+            "type": "object",
+            "properties": {
+                "available_points": {
+                    "description": "可用积分",
+                    "type": "string",
+                    "example": "0.147938"
+                },
+                "invite_points": {
+                    "description": "邀请积分",
+                    "type": "string",
+                    "example": "0"
+                },
+                "trading_points": {
+                    "description": "交易积分",
+                    "type": "string",
+                    "example": "0.147938"
                 }
             }
         },
