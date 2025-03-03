@@ -11,6 +11,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type TickersHandler struct {
+	tickerService service.TickerService
+}
+
+func NewTickersHandler(tickerService service.TickerService) *TickersHandler {
+	return &TickersHandler{tickerService: tickerService}
+}
+
 // Tickers 获取市场行情
 // @Summary 获取市场行情数据
 // @Description 根据排序、分页和搜索条件获取市场行情数据
@@ -24,17 +32,16 @@ import (
 // @Param search query string false "搜索关键字，用于筛选数据" example("")
 // @Param new_pairs_resolution query string false "新交易对的时间分辨率，例如 1D（1 天）" Enums(1D, 1H, 1M) example("1D")
 // @Success 200 {object} response.Response{data=response.TickersResponse} "成功返回市场行情数据"
-// @Failure 400 {object} response.Response "参数错误"
+// @Failure 500 {object} response.Response "服务器内部错误"
 // @Router /tickers [get]
-func Tickers(c *gin.Context) {
+func (t *TickersHandler) Tickers(c *gin.Context) {
 	var req request.TickersRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
 		c.JSON(http.StatusBadRequest, response.Err(http.StatusBadRequest, "Invalid request parameters", err))
 		return
 	}
-	tickerService := service.NewTickerService()
-	response := tickerService.Tickers(req)
-	c.JSON(200, response)
+	res := t.tickerService.Tickers(req)
+	c.JSON(res.Code, res)
 }
 
 // GetTicker 获取 Ticker 详情
@@ -47,15 +54,14 @@ func Tickers(c *gin.Context) {
 // @Success 200 {object} response.Response{data=response.GetTickerResponse} "成功返回 Ticker 详情"
 // @Failure 400 {object} response.Response "参数错误"
 // @Router /tickers/{token_symbol} [get]
-func GetTicker(c *gin.Context) {
+func (t *TickersHandler) GetTicker(c *gin.Context) {
 	tokenSymbol := c.Param("token_symbol")
 	if tokenSymbol == "" {
 		c.JSON(http.StatusBadRequest, response.Err(http.StatusBadRequest, "token_symbol cannot be empty", errors.New("token_symbol is required")))
 		return
 	}
-	tickerService := service.NewTickerService()
-	response := tickerService.GetTicker(tokenSymbol)
-	c.JSON(200, response)
+	res := t.tickerService.GetTicker(tokenSymbol)
+	c.JSON(res.Code, res)
 }
 
 // SwapHistories 获取交易历史记录
@@ -99,17 +105,15 @@ func GetTicker(c *gin.Context) {
 //	}
 //
 // @Failure 400 {object} response.Response "参数错误"
-// @Failure 500 {object} response.Response "服务器内部错误"
 // @Router /tickers/swap_histories/{tickers_id} [get]
-func SwapHistories(c *gin.Context) {
+func (t *TickersHandler) SwapHistories(c *gin.Context) {
 	tickersId := c.Param("tickers_id")
 	if tickersId == "" {
 		c.JSON(http.StatusBadRequest, response.Err(http.StatusBadRequest, "tickers_id cannot be empty", errors.New("tickers_id is required")))
 		return
 	}
-	tickerService := service.NewTickerService()
-	response := tickerService.SwapHistories(tickersId)
-	c.JSON(200, response)
+	res := t.tickerService.SwapHistories(tickersId)
+	c.JSON(res.Code, res)
 }
 
 // TokenDistribution 获取代币分布信息
@@ -122,13 +126,12 @@ func SwapHistories(c *gin.Context) {
 // @Success 200 {object} response.Response{data=response.TokenDistributionResponse} "成功返回代币分布信息"
 // @Failure 500 {object} response.Response "服务器内部错误"
 // @Router /tickers/{tickers_id}/distribution [get]
-func TokenDistribution(c *gin.Context) {
+func (t *TickersHandler) TokenDistribution(c *gin.Context) {
 	tickersId := c.Param("tickers_id")
 	if tickersId == "" {
 		c.JSON(http.StatusBadRequest, response.Err(http.StatusBadRequest, "tickers_id cannot be empty", errors.New("tickers_id is required")))
 		return
 	}
-	tickerService := service.NewTickerService()
-	response := tickerService.TokenDistribution(tickersId)
-	c.JSON(200, response)
+	res := t.tickerService.TokenDistribution(tickersId)
+	c.JSON(res.Code, res)
 }

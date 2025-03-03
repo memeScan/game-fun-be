@@ -4,6 +4,8 @@ import (
 	"my-token-ai-be/internal/api"
 	"my-token-ai-be/internal/api/ws"
 	"my-token-ai-be/internal/interceptor"
+	"my-token-ai-be/internal/service"
+
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -14,6 +16,19 @@ import (
 
 // NewRouter 路由配置
 func NewRouter() *gin.Engine {
+
+	globalService := service.NewGlobalServiceImpl()
+	globalHandler := api.NewGlobalHandler(globalService)
+
+	userService := service.NewUserServiceImpl()
+	userHandler := api.NewUserHandler(userService)
+
+	tickerService := service.NewTickerServiceImpl()
+	tickerHandler := api.NewTickersHandler(tickerService)
+
+	tokenHoldingsService := service.NewTokenHoldingsServiceImpl()
+	tokenHoldingsHandler := api.NewTokenHoldingsHandler(tokenHoldingsService)
+
 	r := gin.New()
 
 	// 基础中间件
@@ -88,20 +103,20 @@ func NewRouter() *gin.Engine {
 		// v1.GET("pairs/:chainType/new_pair_ranks", api.GetNewPairRanks)
 		// v1.GET("tools/token_info_sync", api.TokenInfoSyncJob)
 
-		v1.POST("users/login", api.Login)
-		v1.GET("tickers", api.Tickers)
-		v1.GET("tickers/:token_symbol", api.GetTicker)
-		v1.GET("tickers/swap_histories/:tickers_id", api.SwapHistories)
-		v1.GET("tickers/token_distribution/:tickers_id", api.TokenDistribution)
-		v1.GET("token_holdings/:account", api.GetTokenKlines)
-		v1.GET("token_holdings/histories/:account", api.GetTokenKlines)
-		v1.GET("global/sol_usd_price", api.SolUsdPrice)
+		v1.POST("users/login", userHandler.Login)
+		v1.GET("tickers", tickerHandler.Tickers)
+		v1.GET("tickers/:token_symbol", tickerHandler.GetTicker)
+		v1.GET("tickers/swap_histories/:tickers_id", tickerHandler.SwapHistories)
+		v1.GET("tickers/token_distribution/:tickers_id", tickerHandler.TokenDistribution)
+		v1.GET("token_holdings/:account", tokenHoldingsHandler.TokenHoldings)
+		v1.GET("token_holdings/histories/:account", tokenHoldingsHandler.TokenHoldingsHistories)
+		v1.GET("global/sol_usd_price", globalHandler.SolUsdPrice)
 		v1.GET("tokens/:klineType/:chainType/:tokenAddress", api.GetTokenKlines)
 
 		auth := v1.Group("")
 		auth.Use(interceptor.AuthRequired())
-		auth.GET("global/balance", api.SolBalance)
-		auth.POST("users/my_info", api.MyInfo)
+		auth.GET("global/balance", globalHandler.SolBalance)
+		auth.POST("users/my_info", userHandler.MyInfo)
 
 		// WebSocket 路由
 		v1.GET("ws/kline/:tokenAddress", ws.HandleKlineWS)

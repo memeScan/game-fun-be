@@ -170,8 +170,8 @@ func handlePumpfunComplete(message []byte) error {
 	if resp.Code != 200 {
 		// 添加更详细的错误信息
 		errMsg := "unknown error"
-		if resp.Error != nil {
-			errMsg = resp.Error.Error()
+		if resp.Error != "" {
+			errMsg = resp.Error
 		}
 		util.Log().Error("Failed to update token complete status: code=%d, error=%s", resp.Code, errMsg)
 		return fmt.Errorf("failed to update token complete status: code=%d, error=%s", resp.Code, errMsg)

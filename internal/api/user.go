@@ -4,10 +4,19 @@ import (
 	"my-token-ai-be/internal/request"
 	"my-token-ai-be/internal/response"
 	"my-token-ai-be/internal/service"
+	
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
+
+type UserHandler struct {
+	userService service.UserService
+}
+
+func NewUserHandler(userService service.UserService) *UserHandler {
+	return &UserHandler{userService: userService}
+}
 
 // Login 用户登录
 // @Summary 用户钱包登录
@@ -17,18 +26,16 @@ import (
 // @Produce json
 // @Param login body request.LoginRequest true "登录请求参数"
 // @Success 200 {object} response.LoginResponse "登录成功"
-// @Failure 400 {object} response.Response "参数错误"
 // @Failure 500 {object} response.Response "服务器内部错误"
 // @Router /users/login [post]
-func Login(c *gin.Context) {
+func (u *UserHandler) Login(c *gin.Context) {
 	var req request.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(200, response.Err(http.StatusBadRequest, "Invalid request parameters", err))
+		c.JSON(http.StatusBadRequest, response.Err(http.StatusBadRequest, "Invalid request parameters", err))
 		return
 	}
-	userService := service.NewUserService()
-	response := userService.Login(req)
-	c.JSON(200, response)
+	res := u.userService.Login(req)
+	c.JSON(res.Code, res)
 }
 
 // MyInfo 获取用户信息
@@ -41,7 +48,7 @@ func Login(c *gin.Context) {
 // @Success 200 {object} response.Response{data=response.MyInfoResponse} "成功返回用户信息"
 // @Failure 500 {object} response.Response "服务器内部错误"
 // @Router /users/my_info [get]
-func MyInfo(c *gin.Context) {
+func (u *UserHandler) MyInfo(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, response.Err(http.StatusUnauthorized, "Address not found in context", nil))
@@ -52,7 +59,6 @@ func MyInfo(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, response.Err(http.StatusUnauthorized, "Invalid address type in context", nil))
 		return
 	}
-	userService := service.NewUserService()
-	response := userService.MyInfo(userIDStr)
-	c.JSON(200, response)
+	res := u.userService.MyInfo(userIDStr)
+	c.JSON(res.Code, res)
 }

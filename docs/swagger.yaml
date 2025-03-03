@@ -356,7 +356,8 @@ definitions:
       code:
         type: integer
       data: {}
-      error: {}
+      error:
+        type: string
       msg:
         type: string
     type: object
@@ -403,6 +404,17 @@ definitions:
         items:
           $ref: '#/definitions/response.TickerItem'
         type: array
+    type: object
+  response.TokenBalance:
+    properties:
+      balance:
+        type: string
+      decimals:
+        type: integer
+      owner:
+        type: string
+      token:
+        type: string
     type: object
   response.TokenDistributionResponse:
     description: 代币持有者数据
@@ -515,6 +527,58 @@ info:
   title: My API
   version: "1.0"
 paths:
+  /global/sol_balance:
+    get:
+      consumes:
+      - application/json
+      description: 根据 JWT Token 获取当前用户的 SOL 余额
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回 SOL 余额
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.TokenBalance'
+              type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取当前用户的 SOL 余额
+      tags:
+      - 全局数据
+  /global/sol_usd_price:
+    get:
+      consumes:
+      - application/json
+      description: 返回 SOL 对 USD 的当前价格，保留 8 位小数
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回 SOL 价格
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  additionalProperties:
+                    type: string
+                  type: object
+              type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取 SOL 对 USD 的当前价格
+      tags:
+      - 全局数据
   /health:
     get:
       description: Check if the service is healthy
@@ -596,8 +660,8 @@ paths:
                 data:
                   $ref: '#/definitions/response.TickersResponse'
               type: object
-        "400":
-          description: 参数错误
+        "500":
+          description: 服务器内部错误
           schema:
             $ref: '#/definitions/response.Response'
       summary: 获取市场行情数据
@@ -699,10 +763,6 @@ paths:
           description: 参数错误
           schema:
             $ref: '#/definitions/response.Response'
-        "500":
-          description: 服务器内部错误
-          schema:
-            $ref: '#/definitions/response.Response'
       summary: 获取指定 Ticker 的交易历史记录
       tags:
       - 市场行情
@@ -794,10 +854,6 @@ paths:
           description: 登录成功
           schema:
             $ref: '#/definitions/response.LoginResponse'
-        "400":
-          description: 参数错误
-          schema:
-            $ref: '#/definitions/response.Response'
         "500":
           description: 服务器内部错误
           schema:

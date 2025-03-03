@@ -14,46 +14,29 @@ type TickerService interface {
 
 type TickerServiceImpl struct{}
 
-func NewTickerService() TickerService {
+func NewTickerServiceImpl() TickerService {
 	return &TickerServiceImpl{}
 }
 
 func (s *TickerServiceImpl) Tickers(req request.TickersRequest) response.Response {
 	var tickersResponse response.TickersResponse
-
-	return response.Response{
-		Code: 200,
-		Data: tickersResponse,
-		Msg:  "success",
-	}
+	return response.Success(tickersResponse)
 }
 
 func (s *TickerServiceImpl) GetTicker(tokenSymbol string) response.Response {
 	var getTickerResponse response.GetTickerResponse
+	return response.Success(getTickerResponse)
 
-	return response.Response{
-		Code: 200,
-		Data: getTickerResponse,
-		Msg:  "success",
-	}
 }
 
 func (s *TickerServiceImpl) SwapHistories(tickersId string) response.Response {
 	var swapHistoriesResponse response.SwapHistoriesResponse
+	return response.Success(swapHistoriesResponse)
 
-	return response.Response{
-		Code: 200,
-		Data: swapHistoriesResponse,
-		Msg:  "success",
-	}
 }
 
 func (s *TickerServiceImpl) TokenDistribution(tickersId string) response.Response {
 	var tokenDistributionResponse response.TokenDistributionResponse
+	return response.Success(tokenDistributionResponse)
 
-	return response.Response{
-		Code: 200,
-		Data: tokenDistributionResponse,
-		Msg:  "success",
-	}
 }

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"my-token-ai-be/internal/constants"
 	"my-token-ai-be/internal/model"
@@ -86,7 +87,7 @@ func (s *ToolService) ResetPoolInfo(startID ...int64) response.Response {
 		resp := tokenInfoService.BatchUpdateTokenInfo(tokenInfos)
 		if resp.Code != 0 {
 			util.Log().Error("批量更新失败: %v", resp.Error)
-			return response.Err(response.CodeDBError, "批量更新失败", resp.Error)
+			return response.Err(response.CodeDBError, "批量更新失败", errors.New(resp.Error))
 		}
 
 		// 记录本批次更新数量

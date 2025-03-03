@@ -8,16 +8,22 @@ type Response struct {
 	Code  int         `json:"code"`
 	Data  interface{} `json:"data,omitempty"`
 	Msg   string      `json:"msg"`
-	Error error       `json:"error,omitempty"`
+	Error string      `json:"error,omitempty"`
 }
 
+// BuildResponse 构建响应
 func BuildResponse(data interface{}, code int, msg string, err error) Response {
-	return Response{
+	res := Response{
 		Code:  code,
 		Data:  data,
 		Msg:   msg,
-		Error: err,
+		Error: "", // 默认值为空字符串
 	}
+	// 如果 err 不为空，将其转换为字符串
+	if err != nil {
+		res.Error = err.Error()
+	}
+	return res
 }
 
 // TrackedErrorResponse 有追踪信息的错误响应
@@ -93,7 +99,11 @@ func Err(errCode int, msg string, err error) Response {
 	res := Response{
 		Code:  errCode,
 		Msg:   msg,
-		Error: err,
+		Error: "",
+	}
+	// 如果 err 不为空，将其转换为字符串
+	if err != nil {
+		res.Error = err.Error()
 	}
 	return res
 }

@@ -12,25 +12,16 @@ type UserService interface {
 
 type UserServiceImpl struct{}
 
-func NewUserService() UserService {
+func NewUserServiceImpl() UserService {
 	return &UserServiceImpl{}
 }
 
 func (s *UserServiceImpl) Login(req request.LoginRequest) response.Response {
 	var loginResponse response.LoginResponse
-
-	return response.Response{
-		Code: 200,
-		Data: loginResponse,
-		Msg:  "success",
-	}
+	return response.Success(loginResponse)
 }
 
 func (s *UserServiceImpl) MyInfo(userID string) response.Response {
 	var myInfoResponse response.MyInfoResponse
-	return response.Response{
-		Code: 200,
-		Data: myInfoResponse,
-		Msg:  "success",
-	}
+	return response.Success(myInfoResponse)
 }

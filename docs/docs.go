@@ -15,6 +15,96 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/global/sol_balance": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据 JWT Token 获取当前用户的 SOL 余额",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "全局数据"
+                ],
+                "summary": "获取当前用户的 SOL 余额",
+                "responses": {
+                    "200": {
+                        "description": "成功返回 SOL 余额",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.TokenBalance"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/global/sol_usd_price": {
+            "get": {
+                "description": "返回 SOL 对 USD 的当前价格，保留 8 位小数",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "全局数据"
+                ],
+                "summary": "获取 SOL 对 USD 的当前价格",
+                "responses": {
+                    "200": {
+                        "description": "成功返回 SOL 价格",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "description": "Check if the service is healthy",
@@ -132,8 +222,8 @@ const docTemplate = `{
                             ]
                         }
                     },
-                    "400": {
-                        "description": "参数错误",
+                    "500": {
+                        "description": "服务器内部错误",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -185,12 +275,6 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "参数错误",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "服务器内部错误",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -449,12 +533,6 @@ const docTemplate = `{
                         "description": "登录成功",
                         "schema": {
                             "$ref": "#/definitions/response.LoginResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "参数错误",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "500": {
@@ -1069,7 +1147,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "data": {},
-                "error": {},
+                "error": {
+                    "type": "string"
+                },
                 "msg": {
                     "type": "string"
                 }
@@ -1141,6 +1221,23 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/response.TickerItem"
                     }
+                }
+            }
+        },
+        "response.TokenBalance": {
+            "type": "object",
+            "properties": {
+                "balance": {
+                    "type": "string"
+                },
+                "decimals": {
+                    "type": "integer"
+                },
+                "owner": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
                 }
             }
         },

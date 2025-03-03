@@ -268,7 +268,7 @@ func (s *SwapService) GetPumpSwapRoute(chainType model.ChainType, tradeType stri
 
 		onChainDataService := NewOnChainDataService()
 		res := onChainDataService.GetSolPrice()
-		if res.Error != nil {
+		if res.Error != "" { // 将 res.Error != nil 改为 res.Error != ""
 			return &response.Response{
 				Code: http.StatusInternalServerError,
 				Msg:  "failed to get sol price",
