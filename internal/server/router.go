@@ -109,6 +109,7 @@ func NewRouter() *gin.Engine {
 		v1.POST("users/login", userHandler.Login)
 		v1.GET("tickers", tickerHandler.Tickers)
 		v1.GET("tickers/:token_symbol", tickerHandler.TickerDetail)
+		v1.GET("tickers/search", tickerHandler.SearchTickers)
 		v1.GET("tickers/swap_histories/:tickers_id", tickerHandler.SwapHistories)
 		v1.GET("tickers/token_distribution/:tickers_id", tickerHandler.TokenDistribution)
 		v1.GET("token_holdings/:account", tokenHoldingsHandler.TokenHoldings)

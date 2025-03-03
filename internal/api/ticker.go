@@ -135,3 +135,19 @@ func (t *TickersHandler) TokenDistribution(c *gin.Context) {
 	res := t.tickerService.TokenDistribution(tickersId)
 	c.JSON(res.Code, res)
 }
+
+func (t *TickersHandler) SearchTickers(c *gin.Context) {
+	param := c.Param("param")
+	if param == "" {
+		c.JSON(http.StatusBadRequest, response.Err(http.StatusBadRequest, "tickers_id cannot be empty", errors.New("tickers_id is required")))
+		return
+	}
+	limit, errResp := GetLimit(c)
+	if errResp != nil {
+		c.JSON(errResp.Code, errResp)
+		return
+	}
+	cursor := c.Param("cursor")
+	res := t.tickerService.SearchTickers(param, limit, cursor)
+	c.JSON(res.Code, res)
+}

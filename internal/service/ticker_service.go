@@ -10,6 +10,7 @@ type TickerService interface {
 	TickerDetail(tokenSymbol string) response.Response
 	SwapHistories(tickersId string) response.Response
 	TokenDistribution(tickersId string) response.Response
+	SearchTickers(param, limit, cursor string) response.Response
 }
 
 type TickerServiceImpl struct{}
@@ -37,4 +38,9 @@ func (s *TickerServiceImpl) SwapHistories(tickersId string) response.Response {
 func (s *TickerServiceImpl) TokenDistribution(tickersId string) response.Response {
 	var tokenDistributionResponse response.TokenDistributionResponse
 	return response.Success(tokenDistributionResponse)
+}
+
+func (s *TickerServiceImpl) SearchTickers(param, limit, cursor string) response.Response {
+	var sarchTickerResponse response.SearchTickerResponse
+	return response.Success(sarchTickerResponse)
 }

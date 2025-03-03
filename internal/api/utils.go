@@ -64,3 +64,18 @@ func GetPageAndLimit(c *gin.Context) (page, limit string, errResp *response.Resp
 
 	return page, limit, nil
 }
+
+// GetPageAndLimit 从上下文中获取并验证 page 和 limit 参数
+func GetLimit(c *gin.Context) (limit string, errResp *response.Response) {
+
+	limit = c.Query("limit")
+	if limit == "" {
+		errResp = &response.Response{
+			Code: http.StatusBadRequest,
+			Msg:  "limit parameter is required",
+		}
+		return
+	}
+
+	return limit, nil
+}
