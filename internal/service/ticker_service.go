@@ -5,13 +5,20 @@ import (
 	"my-token-ai-be/internal/response"
 )
 
-type TickerService struct{}
-
-func NewTickerService() *TickerService {
-	return &TickerService{}
+type TickerService interface {
+	Tickers(req request.TickersRequest) response.Response
+	GetTicker(tokenSymbol string) response.Response
+	SwapHistories(tickersId string) response.Response
+	TokenDistribution(tickersId string) response.Response
 }
 
-func (s *TickerService) Tickers(req request.TickersRequest) response.Response {
+type TickerServiceImpl struct{}
+
+func NewTickerService() TickerService {
+	return &TickerServiceImpl{}
+}
+
+func (s *TickerServiceImpl) Tickers(req request.TickersRequest) response.Response {
 	var tickersResponse response.TickersResponse
 
 	return response.Response{
@@ -21,7 +28,7 @@ func (s *TickerService) Tickers(req request.TickersRequest) response.Response {
 	}
 }
 
-func (s *TickerService) GetTicker(tokenSymbol string) response.Response {
+func (s *TickerServiceImpl) GetTicker(tokenSymbol string) response.Response {
 	var getTickerResponse response.GetTickerResponse
 
 	return response.Response{
@@ -31,7 +38,7 @@ func (s *TickerService) GetTicker(tokenSymbol string) response.Response {
 	}
 }
 
-func (s *TickerService) SwapHistories(tickersId string) response.Response {
+func (s *TickerServiceImpl) SwapHistories(tickersId string) response.Response {
 	var swapHistoriesResponse response.SwapHistoriesResponse
 
 	return response.Response{
@@ -41,7 +48,7 @@ func (s *TickerService) SwapHistories(tickersId string) response.Response {
 	}
 }
 
-func (s *TickerService) TokenDistribution(tickersId string) response.Response {
+func (s *TickerServiceImpl) TokenDistribution(tickersId string) response.Response {
 	var tokenDistributionResponse response.TokenDistributionResponse
 
 	return response.Response{

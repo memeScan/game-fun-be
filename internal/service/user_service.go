@@ -5,25 +5,29 @@ import (
 	"my-token-ai-be/internal/response"
 )
 
-type UserService struct{}
-
-func NewUserService() *UserService {
-	return &UserService{}
+type UserService interface {
+	Login(req request.LoginRequest) response.Response
+	MyInfo(userID string) response.Response
 }
 
-func (s *UserService) Login(req request.LoginRequest) response.Response {
-	var LoginResponse response.LoginResponse
+type UserServiceImpl struct{}
+
+func NewUserService() UserService {
+	return &UserServiceImpl{}
+}
+
+func (s *UserServiceImpl) Login(req request.LoginRequest) response.Response {
+	var loginResponse response.LoginResponse
 
 	return response.Response{
 		Code: 200,
-		Data: LoginResponse,
+		Data: loginResponse,
 		Msg:  "success",
 	}
 }
 
-func (s *UserService) MyInfo(userID string) response.Response {
+func (s *UserServiceImpl) MyInfo(userID string) response.Response {
 	var myInfoResponse response.MyInfoResponse
-
 	return response.Response{
 		Code: 200,
 		Data: myInfoResponse,

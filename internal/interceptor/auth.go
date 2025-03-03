@@ -1,45 +1,13 @@
 package interceptor
 
 import (
-	"my-token-ai-be/internal/model"
-	"my-token-ai-be/internal/redis"
 	"my-token-ai-be/internal/auth"
-	"github.com/gin-gonic/gin"
-	"strings"
-	"fmt"
+	"my-token-ai-be/internal/redis"
 	"my-token-ai-be/internal/response"
+	"strings"
+
+	"github.com/gin-gonic/gin"
 )
-
-// CurrentUser 获取登录用户
-func CurrentUser() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		token := c.GetHeader("Authorization")
-		if token == "" {
-			c.Next()
-			return
-		}
-
-		claims, err := auth.ParseToken(token)
-		if err != nil {
-			c.Next()
-			return
-		}
-
-		fmt.Println("Address: ", claims.Address)
-
-		user, err := model.GetUserByAddress(claims.Address)
-
-		if err != nil {
-			c.Next()
-			return
-		}
-
-
-		c.Set("user", user)
-		c.Set("address", user.Address)
-		c.Next()
-	}
-}
 
 // AuthRequired 需要登录
 func AuthRequired() gin.HandlerFunc {
@@ -78,6 +46,7 @@ func AuthRequired() gin.HandlerFunc {
 
 		// 将用户信息存储在上下文中
 		c.Set("address", claims.Address)
+		c.Set("user_id", claims.UserID)
 
 		c.Next()
 	}

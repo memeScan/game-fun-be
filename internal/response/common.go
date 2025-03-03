@@ -1,5 +1,9 @@
 package response
 
+import (
+	"github.com/gin-gonic/gin"
+)
+
 type Response struct {
 	Code  int         `json:"code"`
 	Data  interface{} `json:"data,omitempty"`
@@ -37,6 +41,8 @@ const (
 	RedisKeyHotTokens          = "tokens:hot:48h"
 )
 
+const TokenPrices = "price"
+
 // 通用成功
 const CodeSuccess = 200 // 请求成功
 
@@ -61,6 +67,24 @@ func CheckLogin() Response {
 	return Response{
 		Code: CodeUnauthorized,
 		Msg:  "未登录",
+	}
+}
+
+// Unauthorized 返回未授权响应
+func Unauthorized(c *gin.Context, message string) {
+	c.JSON(401, gin.H{
+		"code":    401,
+		"message": message,
+	})
+	c.Abort()
+}
+
+// Success 返回成功响应
+func Success(data interface{}) Response {
+	return Response{
+		Code: CodeSuccess,
+		Data: data,
+		Msg:  "success",
 	}
 }
 

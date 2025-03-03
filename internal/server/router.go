@@ -88,23 +88,20 @@ func NewRouter() *gin.Engine {
 		// v1.GET("pairs/:chainType/new_pair_ranks", api.GetNewPairRanks)
 		// v1.GET("tools/token_info_sync", api.TokenInfoSyncJob)
 
-		// POST
 		v1.POST("users/login", api.Login)
-		v1.POST("users/my_info", api.Login)
-
-		// GET
 		v1.GET("tickers", api.Tickers)
-		v1.GET("tickers/{token_symbol}", api.GetTicker)
-		v1.GET("tickers/swap_histories/{tickers_id}", api.SwapHistories)
-		v1.GET("tickers/token_distribution/{tickers_id}", api.TokenDistribution)
-		// v1.GET("global/balance", api.GetMessage)
-		// v1.GET("global/sol_usd_price", api.GetMessage)
-
+		v1.GET("tickers/:token_symbol", api.GetTicker)
+		v1.GET("tickers/swap_histories/:tickers_id", api.SwapHistories)
+		v1.GET("tickers/token_distribution/:tickers_id", api.TokenDistribution)
+		v1.GET("token_holdings/:account", api.GetTokenKlines)
+		v1.GET("token_holdings/histories/:account", api.GetTokenKlines)
+		v1.GET("global/sol_usd_price", api.SolUsdPrice)
 		v1.GET("tokens/:klineType/:chainType/:tokenAddress", api.GetTokenKlines)
 
 		auth := v1.Group("")
 		auth.Use(interceptor.AuthRequired())
-		auth.Use(interceptor.CurrentUser())
+		auth.GET("global/balance", api.SolBalance)
+		auth.POST("users/my_info", api.MyInfo)
 
 		// WebSocket 路由
 		v1.GET("ws/kline/:tokenAddress", ws.HandleKlineWS)

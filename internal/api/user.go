@@ -42,12 +42,17 @@ func Login(c *gin.Context) {
 // @Failure 500 {object} response.Response "服务器内部错误"
 // @Router /users/my_info [get]
 func MyInfo(c *gin.Context) {
-	authHeader := c.GetHeader("Authorization")
-	if authHeader == "" {
-		c.JSON(http.StatusUnauthorized, response.Err(http.StatusUnauthorized, "Authorization header is required", nil))
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, response.Err(http.StatusUnauthorized, "Address not found in context", nil))
+		return
+	}
+	userIDStr, ok := userID.(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, response.Err(http.StatusUnauthorized, "Invalid address type in context", nil))
 		return
 	}
 	userService := service.NewUserService()
-	response := userService.MyInfo("userID")
+	response := userService.MyInfo(userIDStr)
 	c.JSON(200, response)
 }

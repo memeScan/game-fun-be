@@ -1,13 +1,13 @@
 package auth
 
 import (
+	"errors"
+	"fmt"
+	"my-token-ai-be/internal/redis"
 	"os"
 	"time"
+
 	"github.com/golang-jwt/jwt/v4"
-	"errors"
-	"my-token-ai-be/internal/redis"
-	"my-token-ai-be/internal/response"
-	"fmt"
 )
 
 var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
@@ -15,22 +15,24 @@ var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 // Claims 自定义的 JWT Claims
 type Claims struct {
 	Address string `json:"address"`
+	UserID  string `json:"user_id"` // 用户信息
 	jwt.RegisteredClaims
 }
 
 // GenerateJWT 生成 JWT token
-func GenerateJWT(address string) (string, error) {
+func GenerateJWT(address string, userID string, expireDuration time.Duration) (string, time.Time, error) {
 	nowTime := time.Now()
-	expireTime := nowTime.Add(2 * time.Hour)
+	expireTime := nowTime.Add(expireDuration)
 
 	// 创建声明
 	claims := Claims{
 		Address: address,
+		UserID:  userID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expireTime),
 			IssuedAt:  jwt.NewNumericDate(nowTime),
 			NotBefore: jwt.NewNumericDate(nowTime),
-			Issuer:    "MytokenAI",
+			Issuer:    "gmgn.exchange",
 		},
 	}
 
@@ -40,10 +42,10 @@ func GenerateJWT(address string) (string, error) {
 	// 签名并返回 token
 	token, err := tokenClaims.SignedString(jwtSecret)
 	if err != nil {
-		return "", err
+		return "", time.Time{}, fmt.Errorf("failed to sign token: %w", err)
 	}
 
-	return token, nil
+	return token, expireTime, nil
 }
 
 // ParseToken 解析 JWT token
@@ -57,38 +59,23 @@ func ParseToken(token string) (*Claims, error) {
 	})
 
 	if err != nil {
-		return nil, err // 返回解析错误
+		return nil, fmt.Errorf("failed to parse token: %w", err)
 	}
 
 	if claims, ok := tokenClaims.Claims.(*Claims); ok && tokenClaims.Valid {
-		return claims, nil // 返回解析后的 claims
+		return claims, nil
 	}
 
-	return nil, errors.New("invalid token") // 返回无效的 token 错误
+	return nil, errors.New("invalid token")
 }
 
-// GenerateAndCacheJWT 生成 JWT token 并缓存
-func GenerateAndCacheJWT(address string) (string, error) {
-	token, err := GenerateJWT(address)
-	if err != nil {
-		return "", fmt.Errorf("failed to generate token: %w", err)
-	}
-
-	// 解析 token 以获取过期时间
-	claims, err := ParseToken(token)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse token: %w", err)
-	}
-
-	// 计算 token 的有效期
-	duration := time.Until(claims.ExpiresAt.Time)
-
+// CacheToken 缓存 JWT token
+func CacheToken(address, token string, expireDuration time.Duration) error {
 	// 将 token 缓存到 Redis
-	err = redis.Set(response.RedisKeyPrefixToken + address, token, duration)
-	
+	key := fmt.Sprintf("gmgn:exchange:token:%s", address)
+	err := redis.Set(key, token, expireDuration)
 	if err != nil {
-		return "", fmt.Errorf("failed to cache token: %w", err)
+		return fmt.Errorf("failed to cache token: %w", err)
 	}
-
-	return token, nil
+	return nil
 }
