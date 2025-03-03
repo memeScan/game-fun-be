@@ -58,56 +58,8 @@ func InitCronJobs() {
 // addJobs 添加所有定时任务
 func addJobs() {
 
-	// 每分钟执行一次
-	_, err := cronJob.AddFunc("0 */1 * * * *", completedTokenDataRefreshTaskQuery)
-	if err != nil {
-		util.Log().Error("Failed to add completedToken refresh task: %v", err)
-	}
-
-	// 每分钟执行一次
-	_, err = cronJob.AddFunc("0 */1 * * * *", swapToken1mDataRefreshTaskQuery)
-	if err != nil {
-		util.Log().Error("Failed to add 1m swap token refresh task: %v", err)
-	}
-
-	// 每5分钟执行一次
-	_, err = cronJob.AddFunc("0 */5 * * * *", swapToken5mDataRefreshTaskQuery)
-	if err != nil {
-		util.Log().Error("Failed to add 5m swap token refresh task: %v", err)
-	}
-
-	// 每5分钟执行一次
-	_, err = cronJob.AddFunc("0 */5 * * * *", swapToken1hDataRefreshTaskQuery)
-	if err != nil {
-		util.Log().Error("Failed to add 1h swap token refresh task: %v", err)
-	}
-
-	// 添加每5分钟刷新热门币种的任务
-	_, err = cronJob.AddFunc("0 */5 * * * *", swapToken6hDataRefreshTaskQuery)
-	if err != nil {
-		util.Log().Error("Failed to add refreshHotTokensJob: %v", err)
-	}
-
-	// 添加每5分钟刷新热门币种的任务
-	_, err = cronJob.AddFunc("0 */6 * * * *", swapToken1dDataRefreshTaskQuery)
-	if err != nil {
-		util.Log().Error("Failed to add refreshHotTokensJob: %v", err)
-	}
-
-	// 添加每5分钟刷新热门币种的任务
-	_, err = cronJob.AddFunc("0 */5 * * * *", trading24hJob)
-	if err != nil {
-		util.Log().Error("Failed to add refreshHotTokensJob: %v", err)
-	}
-
-	// 添加每5分钟刷新热门币种的任务
-	_, err = cronJob.AddFunc("0 */5 * * * *", trading6hJob)
-	if err != nil {
-		util.Log().Error("Failed to add refreshHotTokensJob: %v", err)
-	}
-
 	// 每小时执行一次的任务
-	_, err = cronJob.AddFunc("0 0 * * * *", hourlyTask)
+	_, err := cronJob.AddFunc("0 0 * * * *", hourlyTask)
 	if err != nil {
 		util.Log().Error("Failed to add hourly task: %v", err)
 	}
@@ -141,35 +93,6 @@ func addJobs() {
 	}
 
 }
-
-// 每1分钟刷新热门币种的任务
-func completedTokenDataRefreshTaskQuery() {
-	CompletedTokenDataRefreshTaskQuery()
-}
-
-// 每1分钟刷新热门币种的任务
-func swapToken1mDataRefreshTaskQuery() {
-	SwapToken1mDataRefreshTaskQuery()
-}
-
-// 每5分钟刷新热门币种的任务
-func swapToken5mDataRefreshTaskQuery() {
-	SwapToken5mDataRefreshTaskQuery()
-}
-func swapToken1hDataRefreshTaskQuery() {
-	SwapToken1hDataRefreshTaskQuery()
-}
-func swapToken6hDataRefreshTaskQuery() {
-	SwapToken6hDataRefreshTaskQuery()
-}
-func swapToken1dDataRefreshTaskQuery() {
-	SwapToken1dDataRefreshTaskQuery()
-}
-
-// DeleteDocumentsJob 删除文档的任务
-// func deleteDocumentsJob() {
-// 	DeleteDocumentsJob()
-// }
 
 // hourlyTask 每小时执行的任务
 func hourlyTask() {
@@ -226,12 +149,4 @@ func StopCronJobs() {
 		cronJob.Stop()
 		util.Log().Info("Cron jobs stopped\n")
 	}
-}
-
-func trading6hJob() {
-	Trading6hJob()
-}
-
-func trading24hJob() {
-	Trading24hJob()
 }
