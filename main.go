@@ -71,7 +71,7 @@ func (e Environment) IsValid() bool {
 // @title My API
 // @version 1.0
 // @description This is a sample API for demonstration purposes.
-// @host 8.218.102.112:4880
+// @host 8.218.102.112:4998
 // @BasePath /api/v1
 func main() {
 	currentEnv := ParseEnvironment(os.Getenv("APP_ENV"))

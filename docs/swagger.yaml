@@ -455,6 +455,127 @@ definitions:
       user_profile:
         description: 用户资料（可能为空）
     type: object
+  response.TokenHolding:
+    properties:
+      balance:
+        description: 持仓数量
+        type: string
+      filled_price:
+        description: 成交价格
+        type: string
+      holders_count:
+        description: 持有者数量
+        type: integer
+      id:
+        description: 代币 ID
+        type: integer
+      image_uri:
+        description: 代币图片 URI
+        type: string
+      market_address:
+        description: 市场地址
+        type: string
+      market_id:
+        description: 市场 ID
+        type: integer
+      price:
+        description: 当前价格
+        type: string
+      realized_pnl:
+        description: 已实现盈亏
+        type: string
+      symbol:
+        description: 代币符号
+        type: string
+      token_name:
+        description: 代币名称
+        type: string
+      total_buy:
+        description: 总买入数量
+        type: string
+      total_buy_native:
+        description: 总买入原生代币数量
+        type: string
+      total_sell:
+        description: 总卖出数量
+        type: string
+      total_sell_native:
+        description: 总卖出原生代币数量
+        type: string
+      total_value:
+        description: 持仓总价值
+        type: string
+    type: object
+  response.TokenHoldingHistoriesResponse:
+    properties:
+      has_more:
+        description: 是否有更多数据
+        type: boolean
+      token_holdings_histories:
+        description: 代币持仓历史列表
+        items:
+          $ref: '#/definitions/response.TokenHoldingHistory'
+        type: array
+    type: object
+  response.TokenHoldingHistory:
+    properties:
+      balance:
+        description: 持仓数量
+        type: string
+      filled_price:
+        description: 成交价格
+        type: string
+      holders_count:
+        description: 持有者数量
+        type: integer
+      id:
+        description: 记录 ID
+        type: integer
+      image_uri:
+        description: 代币图片 URI
+        type: string
+      market_address:
+        description: 市场地址
+        type: string
+      market_id:
+        description: 市场 ID
+        type: integer
+      price:
+        description: 当前价格
+        type: string
+      realized_pnl:
+        description: 已实现盈亏
+        type: string
+      symbol:
+        description: 代币符号
+        type: string
+      token_name:
+        description: 代币名称
+        type: string
+      total_buy:
+        description: 总买入数量
+        type: string
+      total_buy_native:
+        description: 总买入原生代币数量
+        type: string
+      total_sell:
+        description: 总卖出数量
+        type: string
+      total_sell_native:
+        description: 总卖出原生代币数量
+        type: string
+      total_value:
+        description: 持仓总价值
+        type: string
+    type: object
+  response.TokenHoldingsResponse:
+    properties:
+      token_holdings:
+        description: 代币持仓列表
+        items:
+          $ref: '#/definitions/response.TokenHolding'
+        type: array
+    type: object
   response.TransactionHistory:
     properties:
       block_time:
@@ -520,7 +641,7 @@ definitions:
         description: 用户 ID
         type: string
     type: object
-host: 8.218.102.112:4880
+host: 8.218.102.112:4998
 info:
   contact: {}
   description: This is a sample API for demonstration purposes.
@@ -766,6 +887,86 @@ paths:
       summary: 获取指定 Ticker 的交易历史记录
       tags:
       - 市场行情
+  /token_holdings/{account}:
+    get:
+      consumes:
+      - application/json
+      description: 根据用户账户和目标账户获取代币持仓数据
+      parameters:
+      - description: 用户账户
+        in: path
+        name: account
+        required: true
+        type: string
+      - description: 目标账户
+        in: query
+        name: account
+        required: true
+        type: string
+      - default: "false"
+        description: 是否包含零余额
+        in: query
+        name: allow_zero_balance
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回代币持仓数据
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.TokenHoldingsResponse'
+              type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取代币持仓数据
+      tags:
+      - 代币持仓
+  /token_holdings/histories/{account}:
+    get:
+      consumes:
+      - application/json
+      description: 根据用户账户获取代币持仓历史数据
+      parameters:
+      - description: 用户账户
+        in: path
+        name: account
+        required: true
+        type: string
+      - default: "0"
+        description: 分页页码
+        in: query
+        name: page
+        type: string
+      - default: "20"
+        description: 每页数量
+        in: query
+        name: limit
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回代币持仓历史数据
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.TokenHoldingHistoriesResponse'
+              type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取代币持仓历史数据
+      tags:
+      - 代币持仓
   /tokens/{klineType}/{chainType}/{tokenAddress}:
     get:
       consumes:

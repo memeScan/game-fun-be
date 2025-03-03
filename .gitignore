@@ -1,0 +1,45 @@
+# 忽略 Go 编译生成的文件
+bin/
+pkg/
+dist/
+__debug_bin*
+
+# 忽略 Go 模块缓存
+go.sum
+go.mod
+
+# 忽略 IDE 配置文件
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+
+# 忽略日志文件
+*.log
+
+# 忽略测试输出
+coverage.txt
+profile.out
+
+# 忽略环境变量文件
+.env
+.env.local
+
+# 忽略构建产物
+*.exe
+*.test
+*.out
+
+# 忽略 macOS 系统文件
+.DS_Store
+
+# 忽略 Windows 系统文件
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# 忽略其他临时文件
+tmp/
+temp/
