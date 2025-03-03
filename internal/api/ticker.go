@@ -12,10 +12,10 @@ import (
 )
 
 type TickersHandler struct {
-	tickerService service.TickerService
+	tickerService service.TickerServiceImpl
 }
 
-func NewTickersHandler(tickerService service.TickerService) *TickersHandler {
+func NewTickersHandler(tickerService service.TickerServiceImpl) *TickersHandler {
 	return &TickersHandler{tickerService: tickerService}
 }
 
@@ -112,6 +112,12 @@ func (t *TickersHandler) SwapHistories(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, response.Err(http.StatusBadRequest, "tickers_id cannot be empty", errors.New("tickers_id is required")))
 		return
 	}
+	// chainType := c.Param("chainType")
+	// tokenAddress := c.Param("tokenAddress")
+	// tokenInfoService := &service.TokenInfoService{}
+	// orderBook := tokenInfoService.GetTokenOrderBook(tokenAddress, uint8(model.FromString(chainType)))
+	// c.JSON(orderBook.Code, orderBook)
+
 	res := t.tickerService.SwapHistories(tickersId)
 	c.JSON(res.Code, res)
 }

@@ -5,17 +5,10 @@ import (
 	"my-token-ai-be/internal/response"
 )
 
-type TickerService interface {
-	Tickers(req request.TickersRequest) response.Response
-	TickerDetail(tokenSymbol string) response.Response
-	SwapHistories(tickersId string) response.Response
-	TokenDistribution(tickersId string) response.Response
-	SearchTickers(param, limit, cursor string) response.Response
+type TickerServiceImpl struct {
 }
 
-type TickerServiceImpl struct{}
-
-func NewTickerServiceImpl() TickerService {
+func NewTickerServiceImpl() *TickerServiceImpl {
 	return &TickerServiceImpl{}
 }
 
