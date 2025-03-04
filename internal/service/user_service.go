@@ -5,15 +5,9 @@ import (
 	"my-token-ai-be/internal/response"
 )
 
-type UserService interface {
-	Login(req request.LoginRequest) response.Response
-	MyInfo(userID string) response.Response
-	GetCode(userID string) response.Response
-}
-
 type UserServiceImpl struct{}
 
-func NewUserServiceImpl() UserService {
+func NewUserServiceImpl() *UserServiceImpl {
 	return &UserServiceImpl{}
 }
 

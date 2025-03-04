@@ -10,10 +10,10 @@ import (
 )
 
 type TokenHoldingsHandler struct {
-	tokenHoldingsService service.TokenHoldingsService
+	tokenHoldingsService *service.TokenHoldingsServiceImpl
 }
 
-func NewTokenHoldingsHandler(tokenHoldingsService service.TokenHoldingsService) *TokenHoldingsHandler {
+func NewTokenHoldingsHandler(tokenHoldingsService *service.TokenHoldingsServiceImpl) *TokenHoldingsHandler {
 	return &TokenHoldingsHandler{tokenHoldingsService: tokenHoldingsService}
 }
 

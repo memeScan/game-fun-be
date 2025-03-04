@@ -12,10 +12,10 @@ import (
 )
 
 type TickersHandler struct {
-	tickerService service.TickerServiceImpl
+	tickerService *service.TickerServiceImpl
 }
 
-func NewTickersHandler(tickerService service.TickerServiceImpl) *TickersHandler {
+func NewTickersHandler(tickerService *service.TickerServiceImpl) *TickersHandler {
 	return &TickersHandler{tickerService: tickerService}
 }
 

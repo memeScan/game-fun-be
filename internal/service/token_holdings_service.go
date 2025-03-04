@@ -4,14 +4,9 @@ import (
 	"my-token-ai-be/internal/response"
 )
 
-type TokenHoldingsService interface {
-	TokenHoldings(userAccount, targetAccount, allowZeroBalance string) response.Response
-	TokenHoldingsHistories(userAccount, page, limit string) response.Response
-}
-
 type TokenHoldingsServiceImpl struct{}
 
-func NewTokenHoldingsServiceImpl() TokenHoldingsService {
+func NewTokenHoldingsServiceImpl() *TokenHoldingsServiceImpl {
 	return &TokenHoldingsServiceImpl{}
 }
 

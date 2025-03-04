@@ -7,21 +7,12 @@ import (
 	"net/http"
 )
 
-// GlobalService 定义接口
-type GlobalService interface {
-	SolUsdPrice() response.Response
-	SolBalance(address string) response.Response
-}
-
-// GlobalServiceImpl 实现接口
 type GlobalServiceImpl struct{}
 
-// NewGlobalServiceService 创建服务实例
-func NewGlobalServiceImpl() GlobalService {
+func NewGlobalServiceImpl() *GlobalServiceImpl {
 	return &GlobalServiceImpl{}
 }
 
-// SolUsdPrice 获取 SOL 对 USD 的价格
 func (s *GlobalServiceImpl) SolUsdPrice() response.Response {
 	solUsdPrice, err := getSolPrice()
 	if err != nil {

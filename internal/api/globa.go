@@ -7,10 +7,10 @@ import (
 )
 
 type GlobalHandler struct {
-	globalService service.GlobalService
+	globalService *service.GlobalServiceImpl
 }
 
-func NewGlobalHandler(globalService service.GlobalService) *GlobalHandler {
+func NewGlobalHandler(globalService *service.GlobalServiceImpl) *GlobalHandler {
 	return &GlobalHandler{globalService: globalService}
 }
 

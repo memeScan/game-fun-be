@@ -4,15 +4,9 @@ import (
 	"my-token-ai-be/internal/response"
 )
 
-type PointsService interface {
-	Points(userID string) response.Response
-	PointsDetail(userID, page, limit string) response.Response
-	PointsEstimated(userID string) response.Response
-}
-
 type PointsServiceImpl struct{}
 
-func NewPointsServiceImpl() PointsService {
+func NewPointsServiceImpl() *PointsServiceImpl {
 	return &PointsServiceImpl{}
 }
 

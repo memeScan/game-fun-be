@@ -33,28 +33,3 @@ func (s *onChainDataService) GetNativeTokenGasFee(chainType string) response.Res
 	}
 	return response.BuildResponse(gasFee.PriorityFeeLevels, http.StatusOK, "success", nil)
 }
-
-func (s *onChainDataService) GetSolPrice() response.Response {
-	solPrice, err := getSolPrice()
-	if err != nil {
-		return response.BuildResponse(nil, http.StatusInternalServerError, "failed to get sol price", err)
-	}
-	return response.BuildResponse(solPrice, http.StatusOK, "success", nil)
-}
-
-func (s *onChainDataService) GetTokenBalance(chainType, owner, token string) response.Response {
-
-	tokenBalances, err := httpUtil.GetTokenBalance([]string{owner}, token)
-	if err != nil {
-		return response.BuildResponse(nil, http.StatusInternalServerError, "failed to get balance", err)
-	}
-
-	balances := response.TokenBalance{
-		Token:    token,
-		Owner:    owner,
-		Balance:  (*tokenBalances)[0].Balance,
-		Decimals: (*tokenBalances)[0].Decimals,
-	}
-
-	return response.BuildResponse(balances, http.StatusOK, "success", nil)
-}

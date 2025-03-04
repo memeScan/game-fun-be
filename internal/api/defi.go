@@ -10,26 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetSolGasFee(c *gin.Context) {
-	chainType := c.Param("chainType")
-
-	onChainDataService := service.NewOnChainDataService()
-	res := onChainDataService.GetNativeTokenGasFee(chainType)
-
-	c.JSON(res.Code, res)
-}
-
-func GetSolPrice(c *gin.Context) {
-	onChainDataService := service.NewOnChainDataService()
-	res := onChainDataService.GetSolPrice()
-	c.JSON(res.Code, res)
-}
-
-func GetTokenBalance(c *gin.Context) {
-	tokenBalance := service.NewOnChainDataService().GetTokenBalance(c.Param("chainType"), c.Param("owner"), c.Param("token"))
-	c.JSON(tokenBalance.Code, tokenBalance)
-}
-
 // GetTokenKlines godoc
 // @Summary Get token kline data
 // @Description Get historical kline (candlestick) data for a specific token

@@ -7,10 +7,10 @@ import (
 )
 
 type PointsHandler struct {
-	pointsService service.PointsService
+	pointsService *service.PointsServiceImpl
 }
 
-func NewPointsHandler(pointsService service.PointsService) *PointsHandler {
+func NewPointsHandler(pointsService *service.PointsServiceImpl) *PointsHandler {
 	return &PointsHandler{pointsService: pointsService}
 }
 
