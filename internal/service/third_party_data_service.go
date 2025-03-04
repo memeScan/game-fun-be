@@ -7,10 +7,10 @@ import (
 	"math"
 	"time"
 
-	"my-token-ai-be/internal/constants"
-	"my-token-ai-be/internal/pkg/httpUtil"
-	"my-token-ai-be/internal/pkg/util"
-	"my-token-ai-be/internal/redis"
+	"game-fun-be/internal/constants"
+	"game-fun-be/internal/pkg/httpUtil"
+	"game-fun-be/internal/pkg/util"
+	"game-fun-be/internal/redis"
 )
 
 func FetchAndStoreSolPrice(ctx context.Context) error {

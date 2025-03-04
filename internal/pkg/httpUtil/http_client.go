@@ -5,12 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"game-fun-be/internal/pkg/httpRequest"
+	"game-fun-be/internal/pkg/httpRespone"
+	"game-fun-be/internal/pkg/util"
 	"io"
 	"log"
 	"math"
-	"my-token-ai-be/internal/pkg/httpRequest"
-	"my-token-ai-be/internal/pkg/httpRespone"
-	"my-token-ai-be/internal/pkg/util"
 	"net/http"
 	"strconv"
 	"strings"
@@ -18,7 +18,7 @@ import (
 
 	"unicode/utf8"
 
-	"my-token-ai-be/internal/pkg/metrics"
+	"game-fun-be/internal/pkg/metrics"
 
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/text/encoding/charmap"

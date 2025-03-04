@@ -1,10 +1,10 @@
 package httpUtil_test
 
 import (
-	"my-token-ai-be/internal/pkg/httpRequest"
-	"my-token-ai-be/internal/pkg/httpUtil"
-	"my-token-ai-be/internal/pkg/util"
-	"my-token-ai-be/internal/redis"
+	"game-fun-be/internal/pkg/httpRequest"
+	"game-fun-be/internal/pkg/httpUtil"
+	"game-fun-be/internal/pkg/util"
+	"game-fun-be/internal/redis"
 	"os"
 	"path/filepath"
 	"runtime"

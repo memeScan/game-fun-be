@@ -4,15 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"my-token-ai-be/internal/conf"
-	"my-token-ai-be/internal/constants"
-	"my-token-ai-be/internal/es"
-	"my-token-ai-be/internal/model"
-	"my-token-ai-be/internal/pkg/httpRespone"
-	"my-token-ai-be/internal/pkg/httpUtil"
-	"my-token-ai-be/internal/pkg/util"
-	"my-token-ai-be/internal/redis"
-	"my-token-ai-be/internal/service"
+	"game-fun-be/internal/conf"
+	"game-fun-be/internal/constants"
+	"game-fun-be/internal/es"
+	"game-fun-be/internal/model"
+	"game-fun-be/internal/pkg/httpRespone"
+	"game-fun-be/internal/pkg/httpUtil"
+	"game-fun-be/internal/pkg/util"
+	"game-fun-be/internal/redis"
+	"game-fun-be/internal/service"
 	"os"
 	"strconv"
 	"strings"
@@ -896,11 +896,11 @@ func handleRaydiumRemoveLiquidity(message []byte) error {
 
 // 处理 ClickHouse 数据
 func processClickHouseData(transactions []*model.TokenTransaction) {
-	klineService := &service.KlineService{}
+	transactionCkService := &service.TransactionCkServiceImpl{}
 
 	// 转换并处理交易数据
-	transactionCks := klineService.ConvertToTransactionCks(transactions)
-	if err := klineService.BatchProcessTransactions(transactionCks); err != nil {
+	transactionCks := transactionCkService.ConvertToTransactionCks(transactions)
+	if err := transactionCkService.BatchProcessTransactions(transactionCks); err != nil {
 		util.Log().Error("Failed to process transactions in ClickHouse: %v", err)
 		// 这里只记录错误但不返回，因为 ClickHouse 的错误不应影响主流
 	}

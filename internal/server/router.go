@@ -1,10 +1,10 @@
 package server
 
 import (
-	"my-token-ai-be/internal/api"
-	"my-token-ai-be/internal/api/ws"
-	"my-token-ai-be/internal/interceptor"
-	"my-token-ai-be/internal/service"
+	"game-fun-be/internal/api"
+	"game-fun-be/internal/api/ws"
+	"game-fun-be/internal/interceptor"
+	"game-fun-be/internal/service"
 
 	"time"
 

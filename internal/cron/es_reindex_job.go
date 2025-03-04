@@ -3,10 +3,10 @@ package cron
 import (
 	"context"
 	"fmt"
-	"my-token-ai-be/internal/es"
-	"my-token-ai-be/internal/model"
-	"my-token-ai-be/internal/pkg/util"
-	"my-token-ai-be/internal/service"
+	"game-fun-be/internal/es"
+	"game-fun-be/internal/model"
+	"game-fun-be/internal/pkg/util"
+	"game-fun-be/internal/service"
 	"time"
 
 	"github.com/olivere/elastic/v7"

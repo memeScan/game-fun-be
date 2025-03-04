@@ -1,9 +1,9 @@
 package service
 
 import (
-	"my-token-ai-be/internal/model"
-	"my-token-ai-be/internal/pkg/httpUtil"
-	"my-token-ai-be/internal/response"
+	"game-fun-be/internal/model"
+	"game-fun-be/internal/pkg/httpUtil"
+	"game-fun-be/internal/response"
 	"net/http"
 )
 

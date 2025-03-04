@@ -1,10 +1,10 @@
 package api
 
 import (
-	"my-token-ai-be/internal/cron"
-	"my-token-ai-be/internal/pkg/util"
-	"my-token-ai-be/internal/response"
-	"my-token-ai-be/internal/service"
+	"game-fun-be/internal/cron"
+	"game-fun-be/internal/pkg/util"
+	"game-fun-be/internal/response"
+	"game-fun-be/internal/service"
 
 	"strconv"
 

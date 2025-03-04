@@ -2,7 +2,7 @@ package model
 
 import (
 	"fmt"
-	"my-token-ai-be/internal/pkg/util"
+	"game-fun-be/internal/pkg/util"
 	"strings"
 	"time"
 

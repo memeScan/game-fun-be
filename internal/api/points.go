@@ -1,7 +1,7 @@
 package api
 
 import (
-	"my-token-ai-be/internal/service"
+	"game-fun-be/internal/service"
 
 	"github.com/gin-gonic/gin"
 )

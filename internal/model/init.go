@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"my-token-ai-be/internal/pkg/util"
+	"game-fun-be/internal/pkg/util"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"

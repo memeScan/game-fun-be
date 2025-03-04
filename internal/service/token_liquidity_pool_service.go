@@ -1,11 +1,11 @@
 package service
 
 import (
+	"game-fun-be/internal/model"
+	"game-fun-be/internal/pkg/httpUtil"
+	"game-fun-be/internal/pkg/util"
+	"game-fun-be/internal/response"
 	"hash/fnv"
-	"my-token-ai-be/internal/model"
-	"my-token-ai-be/internal/pkg/httpUtil"
-	"my-token-ai-be/internal/pkg/util"
-	"my-token-ai-be/internal/response"
 	"time"
 
 	"github.com/shopspring/decimal"

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"my-token-ai-be/internal/kafka"
+	"game-fun-be/internal/kafka"
 
 	"github.com/IBM/sarama"
 	"github.com/IBM/sarama/mocks"

@@ -3,6 +3,7 @@ bin/
 pkg/
 dist/
 __debug_bin*
+game-fun-be
 
 # 忽略 Go 模块缓存
 go.sum

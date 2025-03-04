@@ -3,9 +3,9 @@ package cron
 import (
 	"context"
 	"fmt"
-	"my-token-ai-be/internal/model"
-	"my-token-ai-be/internal/pkg/util"
-	"my-token-ai-be/internal/service"
+	"game-fun-be/internal/model"
+	"game-fun-be/internal/pkg/util"
+	"game-fun-be/internal/service"
 	"reflect"
 	"runtime"
 	"strings"
@@ -74,6 +74,12 @@ func addJobs() {
 	_, err = cronJob.AddFunc("0 */5 * * * *", every5MinuteTask)
 	if err != nil {
 		util.Log().Error("Failed to add searchDocumentsJob: %v", err)
+	}
+
+	// 每5分执行一次积分任务
+	_, err = cronJob.AddFunc("0 */5 * * * *", ExecutePointJob)
+	if err != nil {
+		util.Log().Error("Failed to add ExecutePointJob: %v", err)
 	}
 
 	// 添加每分钟获取 SOL 价格的任务

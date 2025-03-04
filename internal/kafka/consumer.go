@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"my-token-ai-be/internal/pkg/util"
+	"game-fun-be/internal/pkg/util"
 
 	"github.com/IBM/sarama"
 )

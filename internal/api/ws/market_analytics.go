@@ -1,11 +1,12 @@
 package ws
 
 import (
-	"my-token-ai-be/internal/pkg/util"
-	"my-token-ai-be/internal/service"
-	"my-token-ai-be/internal/response"
-	"github.com/gin-gonic/gin"
+	"game-fun-be/internal/pkg/util"
+	"game-fun-be/internal/response"
+	"game-fun-be/internal/service"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 func HandleMarketAnalyticsWS(c *gin.Context) {
@@ -57,7 +58,7 @@ func getMarketAnalyticsData(klineService *service.KlineService, tokenAddress str
 	decimals uint8) (*response.KlineData, error) {
 
 	interval := "60"
-	// 获取过去1天的数据	
+	// 获取过去1天的数据
 	start := time.Now().AddDate(0, -1, 0)
 	// 获取当前时间
 	end := time.Now()
@@ -71,7 +72,7 @@ func getMarketAnalyticsData(klineService *service.KlineService, tokenAddress str
 	// 拿到了分钟级别的
 	lastPrice := ""
 	// 1分钟的总购买量
-	totalBuyVolume := uint64(0)	
+	totalBuyVolume := uint64(0)
 	// 1分钟的总销售量
 	totalSellVolume := uint64(0)
 	// 1分钟的买笔数
@@ -109,37 +110,37 @@ func getMarketAnalyticsData(klineService *service.KlineService, tokenAddress str
 		if lastPrice == "" {
 			lastPrice = kline.ClosePrice.String()
 		}
-		
-		if kline.IntervalTimestamp.Unix() / 60 == 0 {
+
+		if kline.IntervalTimestamp.Unix()/60 == 0 {
 			// 1分钟的总购买量
 			totalBuyVolume = totalBuyVolume + kline.BuyVolume
 			// 1分钟的总销售量
 			totalSellVolume = totalSellVolume + kline.SellVolume
 
-		// 1分钟的买笔数
-		totalBuyCount1m += kline.BuyCount
-		// 1分钟的卖笔数
-		totalSellCount1m += kline.SellCount
+			// 1分钟的买笔数
+			totalBuyCount1m += kline.BuyCount
+			// 1分钟的卖笔数
+			totalSellCount1m += kline.SellCount
 
-		} else if kline.IntervalTimestamp.Unix() / 300 == 0 {
-		// 5分钟的总购买量
-		totalBuyVolume5m = totalBuyVolume5m + kline.BuyVolume
-		// 5分钟的总销售量
-		totalSellVolume5m = totalSellVolume5m + kline.SellVolume
-		// 5分钟的买笔数
-		totalBuyCount5m += kline.BuyCount
-		// 5分钟的卖笔数
-		totalSellCount5m += kline.SellCount
+		} else if kline.IntervalTimestamp.Unix()/300 == 0 {
+			// 5分钟的总购买量
+			totalBuyVolume5m = totalBuyVolume5m + kline.BuyVolume
+			// 5分钟的总销售量
+			totalSellVolume5m = totalSellVolume5m + kline.SellVolume
+			// 5分钟的买笔数
+			totalBuyCount5m += kline.BuyCount
+			// 5分钟的卖笔数
+			totalSellCount5m += kline.SellCount
 
-		} else if kline.IntervalTimestamp.Unix() / 3600 == 0 {
-		// 1小时的总购买量
-		totalBuyVolume1h = totalBuyVolume1h + kline.BuyVolume
-		// 1小时的总销售量
-		totalSellVolume1h = totalSellVolume1h + kline.SellVolume
-		// 1小时的买笔数
-		totalBuyCount1h += kline.BuyCount
-		// 1小时的卖笔数
-		totalSellCount1h += kline.SellCount
+		} else if kline.IntervalTimestamp.Unix()/3600 == 0 {
+			// 1小时的总购买量
+			totalBuyVolume1h = totalBuyVolume1h + kline.BuyVolume
+			// 1小时的总销售量
+			totalSellVolume1h = totalSellVolume1h + kline.SellVolume
+			// 1小时的买笔数
+			totalBuyCount1h += kline.BuyCount
+			// 1小时的卖笔数
+			totalSellCount1h += kline.SellCount
 		} else {
 			// 24小时的总购买量
 			totalBuyVolume24h = totalBuyVolume24h + kline.BuyVolume
@@ -180,4 +181,3 @@ func getMarketAnalyticsData(klineService *service.KlineService, tokenAddress str
 
 	return nil, nil
 }
-

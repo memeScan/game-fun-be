@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"my-token-ai-be/internal/pkg/util"
+	"game-fun-be/internal/pkg/util"
 	"strconv"
 	"time"
 

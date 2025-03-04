@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"my-token-ai-be/internal/response"
+	"game-fun-be/internal/response"
 
 	"github.com/gin-gonic/gin"
 )

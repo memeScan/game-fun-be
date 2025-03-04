@@ -4,14 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"my-token-ai-be/internal/clickhouse"
-	"my-token-ai-be/internal/constants"
-	"my-token-ai-be/internal/es"
-	"my-token-ai-be/internal/model"
+	"game-fun-be/internal/constants"
+	"game-fun-be/internal/es"
+	"game-fun-be/internal/model"
 
-	"my-token-ai-be/internal/pkg/util"
-	"my-token-ai-be/internal/redis"
-	"my-token-ai-be/internal/response"
+	"game-fun-be/internal/pkg/util"
+	"game-fun-be/internal/redis"
+	"game-fun-be/internal/response"
 	"net/http"
 	"time"
 
@@ -268,59 +267,6 @@ func (service *TokenInfoService) GetExistingTokenInfos(addresses []string, chain
 	}
 
 	return result
-}
-
-func (service *TokenInfoService) GetTokenOrderBook(tokenAddress string, chainType uint8) response.Response {
-	transactions, err := clickhouse.GetTokenTransactions(tokenAddress, 100)
-	if err != nil {
-		return response.Err(response.CodeDBError, "failed to get token order book", err)
-	}
-
-	convertedTransactions := make([]response.TokenOrderBookItem, len(transactions))
-	for i, tx := range transactions {
-		// 计算基础代币数量
-		baseAmount := decimal.NewFromInt(int64(tx.BaseTokenAmount))
-		if tx.Decimals > 0 {
-			baseAmount = baseAmount.Shift(-9)
-		}
-
-		// 计算报价代币数量
-		quoteAmount := decimal.NewFromInt(int64(tx.QuoteTokenAmount))
-		if tx.Decimals > 0 {
-			quoteAmount = quoteAmount.Shift(-int32(tx.Decimals))
-		}
-
-		// 计算 USD 金额
-		var usdAmount decimal.Decimal
-		if tx.TransactionType == 1 { // 1 是买入
-			usdAmount = quoteAmount.Mul(tx.QuoteTokenPrice)
-		} else {
-			usdAmount = baseAmount.Mul(tx.BaseTokenPrice)
-		}
-
-		// 创建一个新的 TokenOrderBookItem
-		item := response.TokenOrderBookItem{}
-
-		// 逐个赋值
-		item.TransactionHash = tx.TransactionHash
-		item.ChainType = tx.ChainType
-		item.UserAddress = tx.UserAddress
-		item.TokenAddress = tx.TokenAddress
-		item.PoolAddress = tx.PoolAddress
-		item.BaseTokenAmount = baseAmount
-		item.QuoteTokenAmount = quoteAmount
-		item.BaseTokenPrice = tx.BaseTokenPrice
-		item.QuoteTokenPrice = tx.QuoteTokenPrice
-		item.TransactionType = tx.TransactionType
-		item.PlatformType = tx.PlatformType
-		item.TransactionTime = tx.TransactionTime.Unix()
-		item.UsdAmount = usdAmount
-
-		// 将item赋值给切片
-		convertedTransactions[i] = item
-	}
-
-	return response.BuildTokenOrderBookResponse(convertedTransactions)
 }
 
 // UpdateTokenComplete 更新代币的完成状态

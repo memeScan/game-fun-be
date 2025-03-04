@@ -3,8 +3,8 @@ package metrics
 import (
 	"context"
 	"fmt"
+	"game-fun-be/internal/pkg/util"
 	"io"
-	"my-token-ai-be/internal/pkg/util"
 	"net/http"
 	"net/url"
 	"time"

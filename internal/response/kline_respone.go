@@ -1,7 +1,7 @@
 package response
 
 import (
-	"my-token-ai-be/internal/clickhouse"
+	"game-fun-be/internal/clickhouse"
 
 	"github.com/shopspring/decimal"
 )

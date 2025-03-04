@@ -3,11 +3,11 @@ package service
 import (
 	"errors"
 	"fmt"
-	"my-token-ai-be/internal/constants"
-	"my-token-ai-be/internal/model"
-	"my-token-ai-be/internal/pkg/util"
-	"my-token-ai-be/internal/redis"
-	"my-token-ai-be/internal/response"
+	"game-fun-be/internal/constants"
+	"game-fun-be/internal/model"
+	"game-fun-be/internal/pkg/util"
+	"game-fun-be/internal/redis"
+	"game-fun-be/internal/response"
 	"time"
 
 	"github.com/shopspring/decimal"

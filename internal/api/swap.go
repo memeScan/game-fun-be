@@ -1,9 +1,9 @@
 package api
 
 import (
-	"my-token-ai-be/internal/model"
-	"my-token-ai-be/internal/request"
-	"my-token-ai-be/internal/service"
+	"game-fun-be/internal/model"
+	"game-fun-be/internal/request"
+	"game-fun-be/internal/service"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

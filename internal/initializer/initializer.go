@@ -1,15 +1,15 @@
 package initializer
 
 import (
-	"my-token-ai-be/internal/clickhouse"
-	"my-token-ai-be/internal/conf"
-	"my-token-ai-be/internal/cron"
-	"my-token-ai-be/internal/es"
-	"my-token-ai-be/internal/kafka"
-	"my-token-ai-be/internal/model"
-	"my-token-ai-be/internal/pkg/httpUtil"
-	"my-token-ai-be/internal/pkg/util"
-	"my-token-ai-be/internal/redis"
+	"game-fun-be/internal/clickhouse"
+	"game-fun-be/internal/conf"
+	"game-fun-be/internal/cron"
+	"game-fun-be/internal/es"
+	"game-fun-be/internal/kafka"
+	"game-fun-be/internal/model"
+	"game-fun-be/internal/pkg/httpUtil"
+	"game-fun-be/internal/pkg/util"
+	"game-fun-be/internal/redis"
 	"os"
 )
 

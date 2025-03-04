@@ -2,15 +2,15 @@ package service
 
 import (
 	"fmt"
-	"my-token-ai-be/internal/model"
-	"my-token-ai-be/internal/pkg/util"
-	"my-token-ai-be/internal/response"
+	"game-fun-be/internal/model"
+	"game-fun-be/internal/pkg/util"
+	"game-fun-be/internal/response"
 	"strconv"
 	"strings"
 	"time"
 
-	"my-token-ai-be/internal/constants"
-	"my-token-ai-be/internal/redis"
+	"game-fun-be/internal/constants"
+	"game-fun-be/internal/redis"
 
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"

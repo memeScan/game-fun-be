@@ -1,9 +1,9 @@
 package interceptor
 
 import (
-	"my-token-ai-be/internal/auth"
-	"my-token-ai-be/internal/redis"
-	"my-token-ai-be/internal/response"
+	"game-fun-be/internal/auth"
+	"game-fun-be/internal/redis"
+	"game-fun-be/internal/response"
 	"strings"
 
 	"github.com/gin-gonic/gin"

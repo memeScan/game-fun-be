@@ -7,10 +7,10 @@
 package main
 
 import (
+	_ "game-fun-be/docs"
+	"game-fun-be/internal/initializer"
+	"game-fun-be/internal/server"
 	"log"
-	_ "my-token-ai-be/docs"
-	"my-token-ai-be/internal/initializer"
-	"my-token-ai-be/internal/server"
 	"os"
 	"strings"
 

@@ -1,7 +1,7 @@
 package service
 
 import (
-	"my-token-ai-be/internal/response"
+	"game-fun-be/internal/response"
 )
 
 type TokenHoldingsServiceImpl struct{}

@@ -3,7 +3,7 @@ package auth
 import (
 	"errors"
 	"fmt"
-	"my-token-ai-be/internal/redis"
+	"game-fun-be/internal/redis"
 	"os"
 	"time"
 

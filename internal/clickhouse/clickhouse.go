@@ -2,7 +2,7 @@ package clickhouse
 
 import (
 	"context"
-	"my-token-ai-be/internal/pkg/util"
+	"game-fun-be/internal/pkg/util"
 	"os"
 	"time"
 

@@ -1,8 +1,8 @@
 package api
 
 import (
-	"my-token-ai-be/internal/response"
-	"my-token-ai-be/internal/service"
+	"game-fun-be/internal/response"
+	"game-fun-be/internal/service"
 
 	"net/http"
 

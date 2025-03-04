@@ -1,12 +1,11 @@
 package service
 
 import (
-	"my-token-ai-be/internal/model"
-	"my-token-ai-be/internal/response"
+	"game-fun-be/internal/model"
+	"game-fun-be/internal/response"
 	"net/http"
 	"time"
 )
-
 
 // CreateAuthLog 创建认证日志
 func CreateAuthLog(address, messageNonce string) (*model.UserAuthenticationLog, error) {
@@ -17,32 +16,32 @@ func CreateAuthLog(address, messageNonce string) (*model.UserAuthenticationLog, 
 		CreateTime:   time.Now(),
 		UpdateTime:   time.Now(),
 	}
-	
+
 	err := model.CreateUserAuthenticationLog(authLog)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return authLog, nil
 }
 
 func UpdateAuthLog(address string, messageNonce string, signature string, status int8) (*model.UserAuthenticationLog, error) {
 
-    authLog, err := model.GetUserAuthenticationLogByAddress(address, messageNonce)
-    if err != nil {
-        return nil, err
-    }
+	authLog, err := model.GetUserAuthenticationLogByAddress(address, messageNonce)
+	if err != nil {
+		return nil, err
+	}
 
-    authLog.Signature = signature
-    authLog.Status = status
-    authLog.UpdateTime = time.Now()
+	authLog.Signature = signature
+	authLog.Status = status
+	authLog.UpdateTime = time.Now()
 
-    err = model.UpdateUserAuthenticationLog(authLog)
-    if err != nil {
-        return nil, err
-    }
+	err = model.UpdateUserAuthenticationLog(authLog)
+	if err != nil {
+		return nil, err
+	}
 
-    return authLog, nil
+	return authLog, nil
 }
 
 // GetLatestAuthLog 获取最新的认证日志
@@ -56,7 +55,7 @@ func ProcessAuthLogCreation(address, messageNonce string) response.Response {
 	if err != nil {
 		return response.Err(http.StatusInternalServerError, "Failed to create authentication log", err)
 	}
-	
+
 	return response.Response{
 		Code: 0,
 		Data: authLog,
@@ -70,6 +69,6 @@ func ProcessAuthLogUpdate(address string, messageNonce string, signature string,
 	if err != nil {
 		return err
 	}
-	
+
 	return nil
 }
