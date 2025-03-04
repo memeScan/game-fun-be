@@ -10,7 +10,10 @@ https://xsglh58murtx.sg.larksuite.com/wiki/Nq3kw3YYDinDjnkW27nlHPNOgCe
 
 ## 服务器
 
+https://hxny4q0lcre.feishu.cn/docx/E5s2dv7Ibo3a4Zx99XMcd1E2nZc
+
 位置：日本
+提供商：阿里云
 操作系统：ubuntu 24
 
 ### 服务器（同 VPC 部署）

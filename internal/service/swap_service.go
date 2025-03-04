@@ -18,7 +18,12 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-type SwapService struct{}
+type SwapServiceImpl struct {
+}
+
+func NewSwapService() *SwapServiceImpl {
+	return &SwapServiceImpl{}
+}
 
 func CreateSwapPumpRequestBody(
 	fromaddress string,
@@ -105,7 +110,7 @@ func CreateSwapRaydiumRequestBody(
 
 const dateFormat = "20060102"
 
-func (s *SwapService) GetPumpSwapRoute(chainType model.ChainType, tradeType string, req request.SwapRouteRequest) *response.Response {
+func (s *SwapServiceImpl) GetPumpSwapRoute(chainType model.ChainType, tradeType string, req request.SwapRouteRequest) *response.Response {
 
 	startTime := time.Now()
 
@@ -267,7 +272,7 @@ func (s *SwapService) GetPumpSwapRoute(chainType model.ChainType, tradeType stri
 		defer resp.Body.Close()
 
 		globalServiceImpl := NewGlobalServiceImpl()
-		res := globalServiceImpl.SolUsdPrice()
+		res := globalServiceImpl.NativeTokePrice(model.ChainTypeSolana)
 		if res.Error != "" {
 			return &response.Response{
 				Code: http.StatusInternalServerError,
@@ -414,7 +419,7 @@ func ConstructSwapRouteResponse(req request.SwapRouteRequest, feeLamports int64,
 	return swapRouteResponse
 }
 
-func (s *SwapService) SendSwapRequest(swapTransaction string, isJito bool) *response.Response {
+func (s *SwapServiceImpl) SendSwapRequest(swapTransaction string, isJito bool) *response.Response {
 	resp, err := httpUtil.SendSwapTransaction(swapTransaction, isJito)
 	if err != nil {
 		return &response.Response{
@@ -436,7 +441,7 @@ func (s *SwapService) SendSwapRequest(swapTransaction string, isJito bool) *resp
 	}
 }
 
-func (s *SwapService) GetSwapRequestStatusBySignature(SwapTransaction string) *response.Response {
+func (s *SwapServiceImpl) GetSwapRequestStatusBySignature(SwapTransaction string) *response.Response {
 	resp, err := httpUtil.GetSwapRequestStatusBySignature(SwapTransaction)
 	if resp == nil {
 		return &response.Response{

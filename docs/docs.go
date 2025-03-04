@@ -15,14 +15,14 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/global/sol_balance": {
+        "/global/{chain_type}/balance": {
             "get": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "根据 JWT Token 获取当前用户的 SOL 余额",
+                "description": "根据链类型和用户地址获取用户的钱包原生代币余额。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
                 "consumes": [
                     "application/json"
                 ],
@@ -32,10 +32,19 @@ const docTemplate = `{
                 "tags": [
                     "全局数据"
                 ],
-                "summary": "获取当前用户的 SOL 余额",
+                "summary": "获取链的原生代币钱包余额",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "链类型（sol、eth、bsc）",
+                        "name": "chain_type",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "成功返回 SOL 余额",
+                        "description": "成功返回原生代币余额",
                         "schema": {
                             "allOf": [
                                 {
@@ -61,9 +70,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/global/sol_usd_price": {
+        "/global/{chain_type}/native_token_price": {
             "get": {
-                "description": "返回 SOL 对 USD 的当前价格，保留 8 位小数",
+                "description": "根据链类型获取原生代币的 USD 价格，保留 8 位小数",
                 "consumes": [
                     "application/json"
                 ],
@@ -73,10 +82,19 @@ const docTemplate = `{
                 "tags": [
                     "全局数据"
                 ],
-                "summary": "获取 SOL 对 USD 的当前价格",
+                "summary": "获取链的原生代币价格",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "链类型（sol、eth、bsc）",
+                        "name": "chain_type",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "成功返回 SOL 价格",
+                        "description": "成功返回原生代币价格",
                         "schema": {
                             "allOf": [
                                 {
@@ -125,14 +143,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/points": {
+        "/points/{chain_type}": {
             "get": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "根据用户 ID 获取用户的交易积分、邀请积分和可用积分",
+                "description": "根据链类型和用户 ID 获取用户的交易积分、邀请积分和可用积分。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
                 "consumes": [
                     "application/json"
                 ],
@@ -143,6 +161,15 @@ const docTemplate = `{
                     "用户"
                 ],
                 "summary": "获取用户积分数据",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "链类型（sol、eth、bsc）",
+                        "name": "chain_type",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "成功返回用户积分数据",
@@ -171,14 +198,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/points/detail": {
+        "/points/{chain_type}/detail": {
             "get": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "根据用户 ID 获取用户的积分明细数据",
+                "description": "根据链类型和用户 ID 获取用户的积分明细数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
                 "consumes": [
                     "application/json"
                 ],
@@ -192,8 +219,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "用户 ID",
-                        "name": "userID",
+                        "description": "链类型（sol、eth、bsc）",
+                        "name": "chain_type",
                         "in": "path",
                         "required": true
                     },
@@ -240,14 +267,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/points/estimated": {
+        "/points/{chain_type}/estimated": {
             "get": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "根据用户 ID 获取用户的预估积分数据",
+                "description": "根据链类型和用户 ID 获取用户的预估积分数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
                 "consumes": [
                     "application/json"
                 ],
@@ -258,6 +285,15 @@ const docTemplate = `{
                     "积分"
                 ],
                 "summary": "获取用户预估积分数据",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "链类型（sol、eth、bsc）",
+                        "name": "chain_type",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "成功返回用户预估积分数据",
@@ -286,9 +322,198 @@ const docTemplate = `{
                 }
             }
         },
-        "/tickers": {
+        "/swap/{chain_type}/get_transaction": {
             "get": {
-                "description": "根据排序、分页和搜索条件获取市场行情数据",
+                "description": "根据链类型、交易类型和请求参数获取 Swap 路由。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Swap"
+                ],
+                "summary": "获取 Swap 路由",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "链类型（sol、eth、bsc）",
+                        "name": "chain_type",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "交易类型（如 buy、sell）",
+                        "name": "tradeType",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "输入金额",
+                        "name": "inAmount",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "输入代币地址",
+                        "name": "tokenInAddress",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "输出代币地址",
+                        "name": "tokenOutAddress",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "发送地址",
+                        "name": "fromAddress",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "number",
+                        "description": "滑点（百分比）",
+                        "name": "slippage",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "number",
+                        "description": "手续费（SOL）",
+                        "name": "fee",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "是否启用 Anti-MEV（默认为 false）",
+                        "name": "isAntiMev",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回 Swap 路由信息",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/swap/{chain_type}/send_transaction": {
+            "post": {
+                "description": "根据链类型和 Swap 交易数据发送 Swap 请求。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Swap"
+                ],
+                "summary": "发送 Swap 请求",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "链类型（sol、eth、bsc）",
+                        "name": "chain_type",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Swap 交易数据（Base64 编码）",
+                        "name": "swap_transaction",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "是否启用 Anti-MEV（默认为 false）",
+                        "name": "is_anti_mev",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回交易结果",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/swap/{chain_type}/transaction_status": {
+            "get": {
+                "description": "根据链类型和交易签名获取 Swap 请求状态。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Swap"
+                ],
+                "summary": "获取 Swap 请求状态",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "链类型（sol、eth、bsc）",
+                        "name": "chain_type",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "交易签名",
+                        "name": "swap_transaction",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回交易状态",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/tickers/{chain_type}": {
+            "get": {
+                "description": "根据链类型、排序、分页和搜索条件获取市场行情数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
                 "consumes": [
                     "application/json"
                 ],
@@ -300,6 +525,13 @@ const docTemplate = `{
                 ],
                 "summary": "获取市场行情数据",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "链类型（sol、eth、bsc）",
+                        "name": "chain_type",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "enum": [
                             "MARKET_CAP",
@@ -392,9 +624,67 @@ const docTemplate = `{
                 }
             }
         },
-        "/tickers/swap_histories/{tickers_id}": {
+        "/tickers/{chain_type}/search": {
             "get": {
-                "description": "根据 Ticker ID 获取交易历史记录",
+                "description": "根据链类型、搜索参数、分页参数等条件搜索 Tickers。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "市场行情"
+                ],
+                "summary": "搜索 Tickers",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "链类型（sol、eth、bsc）",
+                        "name": "chain_type",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "搜索参数（如代币名称或地址）",
+                        "name": "param",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "分页大小",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "分页游标",
+                        "name": "cursor",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回 Tickers 列表",
+                        "schema": {
+                            "$ref": "#/definitions/response.SearchTickerResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/tickers/{chain_type}/swap_histories/{ticker_address}": {
+            "get": {
+                "description": "根据链类型和代币地址获取交易历史记录。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
                 "consumes": [
                     "application/json"
                 ],
@@ -408,9 +698,15 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "example": "\"SUPER\"",
-                        "description": "Ticker ID",
-                        "name": "tickers_id",
+                        "description": "链类型（sol、eth、bsc）",
+                        "name": "chain_type",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "代币地址",
+                        "name": "ticker_address",
                         "in": "path",
                         "required": true
                     }
@@ -434,8 +730,8 @@ const docTemplate = `{
                             ]
                         }
                     },
-                    "400": {
-                        "description": "参数错误",
+                    "500": {
+                        "description": "服务器内部错误",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -443,9 +739,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/tickers/{tickers_id}/distribution": {
+        "/tickers/{chain_type}/token_distribution/{ticker_address}": {
             "get": {
-                "description": "根据 Ticker ID 获取代币持有者的分布信息",
+                "description": "根据链类型和代币地址获取代币持有者的分布信息。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
                 "consumes": [
                     "application/json"
                 ],
@@ -459,9 +755,15 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "example": "\"SUPER\"",
-                        "description": "Ticker ID",
-                        "name": "tickers_id",
+                        "description": "链类型（sol、eth、bsc）",
+                        "name": "chain_type",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "代币地址",
+                        "name": "ticker_address",
                         "in": "path",
                         "required": true
                     }
@@ -494,9 +796,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/tickers/{token_symbol}": {
+        "/tickers/{chain_type}/{ticker_address}": {
             "get": {
-                "description": "根据 token_symbol 获取 Ticker 的详细信息",
+                "description": "根据链类型和代币地址获取 Ticker 的详细信息。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
                 "consumes": [
                     "application/json"
                 ],
@@ -509,17 +811,16 @@ const docTemplate = `{
                 "summary": "获取 Ticker 详情",
                 "parameters": [
                     {
-                        "enum": [
-                            "SUPER",
-                            "BTC",
-                            "ETH",
-                            "USDT",
-                            "BNB"
-                        ],
                         "type": "string",
-                        "example": "\"SUPER\"",
-                        "description": "代币符号",
-                        "name": "token_symbol",
+                        "description": "链类型（sol、eth、bsc）",
+                        "name": "chain_type",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "代币地址",
+                        "name": "ticker_address",
                         "in": "path",
                         "required": true
                     }
@@ -543,8 +844,8 @@ const docTemplate = `{
                             ]
                         }
                     },
-                    "400": {
-                        "description": "参数错误",
+                    "500": {
+                        "description": "服务器内部错误",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -552,9 +853,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/token_holdings/histories/{account}": {
+        "/token_holdings/{chain_type}/histories/{account}": {
             "get": {
-                "description": "根据用户账户获取代币持仓历史数据",
+                "description": "根据链类型和用户账户获取代币持仓历史数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
                 "consumes": [
                     "application/json"
                 ],
@@ -566,6 +867,13 @@ const docTemplate = `{
                 ],
                 "summary": "获取代币持仓历史数据",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "链类型（sol、eth、bsc）",
+                        "name": "chain_type",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "用户账户",
@@ -616,9 +924,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/token_holdings/{account}": {
+        "/token_holdings/{chain_type}/{account}": {
             "get": {
-                "description": "根据用户账户和目标账户获取代币持仓数据",
+                "description": "根据链类型、用户账户和目标账户获取代币持仓数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
                 "consumes": [
                     "application/json"
                 ],
@@ -630,6 +938,13 @@ const docTemplate = `{
                 ],
                 "summary": "获取代币持仓数据",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "链类型（sol、eth、bsc）",
+                        "name": "chain_type",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "用户账户",
@@ -793,14 +1108,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/invite/code": {
+        "/users/{chain_type}/invite/code": {
             "get": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "根据用户 ID 获取用户的邀请码和邀请数量",
+                "description": "根据链类型和用户 ID 获取用户的邀请码和邀请数量。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
                 "consumes": [
                     "application/json"
                 ],
@@ -811,6 +1126,15 @@ const docTemplate = `{
                     "用户"
                 ],
                 "summary": "获取用户邀请码信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "链类型（sol、eth、bsc）",
+                        "name": "chain_type",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "成功返回用户邀请码信息",
@@ -835,19 +1159,13 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
-                    },
-                    "500": {
-                        "description": "服务器内部错误",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
                     }
                 }
             }
         },
-        "/users/login": {
+        "/users/{chain_type}/login": {
             "post": {
-                "description": "通过钱包地址和签名进行登录",
+                "description": "通过钱包地址和签名进行登录。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
                 "consumes": [
                     "application/json"
                 ],
@@ -859,6 +1177,13 @@ const docTemplate = `{
                 ],
                 "summary": "用户钱包登录",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "链类型（sol、eth、bsc）",
+                        "name": "chain_type",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "description": "登录请求参数",
                         "name": "login",
@@ -885,14 +1210,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/my_info": {
+        "/users/{chain_type}/my_info": {
             "get": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "根据 JWT Token 获取当前用户的详细信息",
+                "description": "根据链类型和 JWT Token 获取当前用户的详细信息。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
                 "consumes": [
                     "application/json"
                 ],
@@ -903,6 +1228,15 @@ const docTemplate = `{
                     "用户"
                 ],
                 "summary": "获取当前用户信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "链类型（sol、eth、bsc）",
+                        "name": "chain_type",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "成功返回用户信息",
@@ -922,8 +1256,8 @@ const docTemplate = `{
                             ]
                         }
                     },
-                    "500": {
-                        "description": "服务器内部错误",
+                    "401": {
+                        "description": "未授权",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -1256,6 +1590,35 @@ const docTemplate = `{
                 }
             }
         },
+        "response.MarketResponse": {
+            "type": "object",
+            "properties": {
+                "market": {
+                    "description": "市场数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/response.Market"
+                        }
+                    ]
+                },
+                "market_metadata": {
+                    "description": "市场元数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/response.MarketMetadata"
+                        }
+                    ]
+                },
+                "market_ticker": {
+                    "description": "市场 Ticker 数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/response.MarketTicker"
+                        }
+                    ]
+                }
+            }
+        },
         "response.MarketTicker": {
             "description": "市场的行情数据",
             "type": "object",
@@ -1575,6 +1938,36 @@ const docTemplate = `{
                 },
                 "msg": {
                     "type": "string"
+                }
+            }
+        },
+        "response.SearchTickerResponse": {
+            "type": "object",
+            "properties": {
+                "cursor": {
+                    "description": "游标",
+                    "type": "string"
+                },
+                "has_more": {
+                    "description": "是否有更多数据",
+                    "type": "boolean"
+                },
+                "posts": {
+                    "description": "帖子列表",
+                    "type": "array",
+                    "items": {}
+                },
+                "tickers": {
+                    "description": "市场列表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.MarketResponse"
+                    }
+                },
+                "users": {
+                    "description": "用户列表",
+                    "type": "array",
+                    "items": {}
                 }
             }
         },
