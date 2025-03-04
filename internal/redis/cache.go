@@ -17,6 +17,7 @@ func Redis() {
 	db, _ := strconv.ParseUint(os.Getenv("REDIS_DB"), 10, 64)
 	client := redis.NewClient(&redis.Options{
 		Addr:       os.Getenv("REDIS_ADDR"),
+		Username:   os.Getenv("REDIS_USER"),
 		Password:   os.Getenv("REDIS_PW"),
 		DB:         int(db),
 		MaxRetries: 1,
