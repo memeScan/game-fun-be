@@ -78,7 +78,7 @@ func main() {
 
 	// 载入配置文件
 	if err := godotenv.Load(".env." + currentEnv.String()); err != nil {
-		log.Printf("Error loading env file: %v", err)
+		log.Fatalf("Error loading env file: %v", err)
 	}
 
 	// 初始化配置

@@ -57,8 +57,8 @@ func initLogDir() string {
 		return dir
 	}
 
-	// 统一使用固定路径
-	logDir := "/opt/my-token-ai-be/logs"
+	// 使用当前项目下的 logs 文件夹
+	logDir := filepath.Join(".", "logs")
 	if err := os.MkdirAll(logDir, 0755); err != nil {
 		panic(fmt.Sprintf("无法创建日志目录: %v", err))
 	}
