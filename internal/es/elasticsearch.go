@@ -37,6 +37,7 @@ func Elasticsearch() {
 	}
 
 	log.Printf("Elasticsearch returned with code %d and version %s\n", code, info.Version.Number)
+	util.Log().Info("Elasticsearch returned with code %d and version %s\n", code, info.Version.Number)
 	log.Println("Elasticsearch connected successfully")
 
 	//预创建索引结构
