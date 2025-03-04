@@ -1,42 +1,90 @@
 package api
 
 import (
-	"my-token-ai-be/internal/model"
 	"my-token-ai-be/internal/request"
 	"my-token-ai-be/internal/service"
+
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-func GetSwapRoute(c *gin.Context) {
+type SwapHandler struct {
+	swapService *service.SwapServiceImpl
+}
+
+func NewSwapHandler(swapService *service.SwapServiceImpl) *SwapHandler {
+	return &SwapHandler{swapService: swapService}
+}
+
+// GetSwapRoute 获取 Swap 路由
+// @Summary 获取 Swap 路由
+// @Description 根据链类型、交易类型和请求参数获取 Swap 路由
+// @Tags Swap
+// @Accept json
+// @Produce json
+// @Param chain_type path string true "链类型（如 solana、ethereum）"
+// @Param tradeType path string true "交易类型（如 buy、sell）"
+// @Param inAmount query string true "输入金额"
+// @Param tokenInAddress query string true "输入代币地址"
+// @Param tokenOutAddress query string true "输出代币地址"
+// @Param fromAddress query string true "发送地址"
+// @Param slippage query float64 true "滑点（百分比）"
+// @Param fee query float64 true "手续费（SOL）"
+// @Param isAntiMev query bool false "是否启用 Anti-MEV（默认为 false）"
+// @Success 200 {object} response.Response "成功返回 Swap 路由信息"
+// @Failure 500 {object} response.Response "服务器内部错误"
+// @Router /swap/{chain_type}/get_transaction [get]
+func (s *SwapHandler) GetTransaction(c *gin.Context) {
 	var req request.SwapRouteRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	chainType := c.Param("chainType")
+	chainType, errResp := ParseChainTypeWithResponse(c)
+	if errResp != nil {
+		c.JSON(errResp.Code, errResp)
+		return
+	}
 	tradeType := c.Param("tradeType")
-	swapService := service.SwapService{}
-	swapRoute := swapService.GetPumpSwapRoute(model.FromString(chainType), tradeType, req)
-	c.JSON(swapRoute.Code, swapRoute)
+	res := s.swapService.GetPumpSwapRoute(chainType, tradeType, req)
+	c.JSON(res.Code, res)
 }
 
-func SendSwapRequest(c *gin.Context) {
+// SendSwapRequest 发送 Swap 请求
+// @Summary 发送 Swap 请求
+// @Description 根据 Swap 交易数据发送 Swap 请求
+// @Tags Swap
+// @Accept json
+// @Produce json
+// @Param swap_transaction query string true "Swap 交易数据（Base64 编码）"
+// @Param is_anti_mev query bool false "是否启用 Anti-MEV（默认为 false）"
+// @Success 200 {object} response.Response "成功返回交易结果"
+// @Failure 500 {object} response.Response "服务器内部错误"
+// @Router /swap/{chain_type}/send_transaction [post]
+func (s *SwapHandler) SendTransaction(c *gin.Context) {
 	swapTransaction := c.Query("swap_transaction")
 	isJito := c.Query("is_anti_mev")
 	isJitoBool := false
 	if isJito == "true" {
 		isJitoBool = true
 	}
-	swapService := service.SwapService{}
-	swapResponse := swapService.SendSwapRequest(swapTransaction, isJitoBool)
-	c.JSON(swapResponse.Code, swapResponse)
+	res := s.swapService.SendSwapRequest(swapTransaction, isJitoBool)
+	c.JSON(res.Code, res)
 }
 
-func GetSwapRequestStatus(c *gin.Context) {
-	SwapTransaction := c.Query("swap_transaction")
-	swapService := service.SwapService{}
-	swapResponse := swapService.GetSwapRequestStatusBySignature(SwapTransaction)
-	c.JSON(swapResponse.Code, swapResponse)
+// GetSwapRequestStatus 获取 Swap 请求状态
+// @Summary 获取 Swap 请求状态
+// @Description 根据交易签名获取 Swap 请求状态
+// @Tags Swap
+// @Accept json
+// @Produce json
+// @Param swap_transaction query string true "交易签名"
+// @Success 200 {object} response.Response "成功返回交易状态"
+// @Failure 500 {object} response.Response "服务器内部错误"
+// @Router /swap/{chain_type}/transaction_status [get]
+func (s *SwapHandler) TransactionStatus(c *gin.Context) {
+	swapTransaction := c.Query("swap_transaction")
+	res := s.swapService.GetSwapRequestStatusBySignature(swapTransaction)
+	c.JSON(res.Code, res)
 }

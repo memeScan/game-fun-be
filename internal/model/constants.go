@@ -32,8 +32,10 @@ func (p PlatformType) String() string {
 type ChainType uint8
 
 const (
-	ChainTypeSolana ChainType = iota + 1
-	ChainTypeEthereum
+	ChainTypeUnknown  ChainType = iota // 0
+	ChainTypeSolana                    // 1
+	ChainTypeEthereum                  // 2
+	ChainTypeBSC                       // 3
 )
 
 // String 方法用于返回 ChainType 的字符串表示
@@ -43,8 +45,24 @@ func (c ChainType) String() string {
 		return "Solana"
 	case ChainTypeEthereum:
 		return "Ethereum"
+	case ChainTypeBSC:
+		return "Bsc"
 	default:
 		return "Unknown"
+	}
+}
+
+// FromString 根据字符串参数（如 sol/eth/bsc）返回 ChainType
+func ChainTypeFromString(chainStr string) ChainType {
+	switch chainStr {
+	case "sol", "Solana":
+		return ChainTypeSolana
+	case "eth", "Ethereum":
+		return ChainTypeEthereum
+	case "bsc", "BSC":
+		return ChainTypeBSC
+	default:
+		return ChainTypeUnknown
 	}
 }
 
@@ -81,17 +99,6 @@ func (p CreatedPlatformType) GetDecimals() uint8 {
 		return decimals
 	}
 	return 6 // 默认返回6
-}
-
-func FromString(chainStr string) ChainType {
-	switch chainStr {
-	case "sol", "Solana":
-		return ChainTypeSolana
-	case "eth", "Ethereum":
-		return ChainTypeEthereum
-	default:
-		return 0 // 返回一个无效的 ChainType 值,表示未知的链类型
-	}
 }
 
 // 链相关常量

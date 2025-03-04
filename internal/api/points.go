@@ -23,14 +23,19 @@ func NewPointsHandler(pointsService *service.PointsServiceImpl) *PointsHandler {
 // @Security ApiKeyAuth
 // @Success 200 {object} response.Response{data=response.PointsResponse} "成功返回用户积分数据"
 // @Failure 401 {object} response.Response "未授权"
-// @Router /points [get]
+// @Router /points/{chain_type} [get]
 func (p *PointsHandler) Points(c *gin.Context) {
 	userID, errResp := GetUserIDFromContext(c)
 	if errResp != nil {
 		c.JSON(errResp.Code, errResp)
 		return
 	}
-	res := p.pointsService.Points(userID)
+	chainType, errResp := ParseChainTypeWithResponse(c)
+	if errResp != nil {
+		c.JSON(errResp.Code, errResp)
+		return
+	}
+	res := p.pointsService.Points(userID, chainType)
 	c.JSON(res.Code, res)
 }
 
@@ -46,7 +51,7 @@ func (p *PointsHandler) Points(c *gin.Context) {
 // @Param limit query string true "每页数量"
 // @Success 200 {object} response.Response{data=response.PointsDetailsResponse} "成功返回用户积分明细"
 // @Failure 500 {object} response.Response "服务器内部错误"
-// @Router /points/detail [get]
+// @Router /points/{chain_type}/detail [get]
 func (p *PointsHandler) PointsDetail(c *gin.Context) {
 	userID, errResp := GetUserIDFromContext(c)
 	if errResp != nil {
@@ -58,7 +63,12 @@ func (p *PointsHandler) PointsDetail(c *gin.Context) {
 		c.JSON(errResp.Code, errResp)
 		return
 	}
-	res := p.pointsService.PointsDetail(userID, page, limit)
+	chainType, errResp := ParseChainTypeWithResponse(c)
+	if errResp != nil {
+		c.JSON(errResp.Code, errResp)
+		return
+	}
+	res := p.pointsService.PointsDetail(userID, page, limit, chainType)
 	c.JSON(res.Code, res)
 }
 
@@ -71,13 +81,18 @@ func (p *PointsHandler) PointsDetail(c *gin.Context) {
 // @Security ApiKeyAuth
 // @Success 200 {object} response.Response{data=response.PointsEstimatedResponse} "成功返回用户预估积分数据"
 // @Failure 401 {object} response.Response "未授权"
-// @Router /points/estimated [get]
+// @Router /points/{chain_type}/estimated [get]
 func (p *PointsHandler) PointsEstimated(c *gin.Context) {
 	userID, errResp := GetUserIDFromContext(c)
 	if errResp != nil {
 		c.JSON(errResp.Code, errResp)
 		return
 	}
-	res := p.pointsService.PointsEstimated(userID)
+	chainType, errResp := ParseChainTypeWithResponse(c)
+	if errResp != nil {
+		c.JSON(errResp.Code, errResp)
+		return
+	}
+	res := p.pointsService.PointsEstimated(userID, chainType)
 	c.JSON(res.Code, res)
 }

@@ -28,7 +28,7 @@ func NewTokenHoldingsHandler(tokenHoldingsService *service.TokenHoldingsServiceI
 // @Param allow_zero_balance query string false "是否包含零余额" default(false)
 // @Success 200 {object} response.Response{data=response.TokenHoldingsResponse} "成功返回代币持仓数据"
 // @Failure 500 {object} response.Response "服务器内部错误"
-// @Router /token_holdings/{account} [get]
+// @Router /token_holdings/{chain_type}/{account} [get]
 func (h *TokenHoldingsHandler) TokenHoldings(c *gin.Context) {
 	userAccount := c.Param("account")
 	if userAccount == "" {
@@ -41,7 +41,12 @@ func (h *TokenHoldingsHandler) TokenHoldings(c *gin.Context) {
 		return
 	}
 	allowZeroBalance := c.DefaultQuery("allow_zero_balance", "false")
-	res := h.tokenHoldingsService.TokenHoldings(userAccount, targetAccount, allowZeroBalance)
+	chainType, errResp := ParseChainTypeWithResponse(c)
+	if errResp != nil {
+		c.JSON(errResp.Code, errResp)
+		return
+	}
+	res := h.tokenHoldingsService.TokenHoldings(userAccount, targetAccount, allowZeroBalance, chainType)
 	c.JSON(res.Code, res)
 }
 
@@ -56,7 +61,7 @@ func (h *TokenHoldingsHandler) TokenHoldings(c *gin.Context) {
 // @Param limit query string false "每页数量" default(20)
 // @Success 200 {object} response.Response{data=response.TokenHoldingHistoriesResponse} "成功返回代币持仓历史数据"
 // @Failure 500 {object} response.Response "服务器内部错误"
-// @Router /token_holdings/histories/{account} [get]
+// @Router /token_holdings/{chain_type}/histories/{account} [get]
 func (h *TokenHoldingsHandler) TokenHoldingsHistories(c *gin.Context) {
 	userAccount := c.Param("account")
 	if userAccount == "" {
@@ -68,6 +73,11 @@ func (h *TokenHoldingsHandler) TokenHoldingsHistories(c *gin.Context) {
 		c.JSON(errResp.Code, errResp)
 		return
 	}
-	res := h.tokenHoldingsService.TokenHoldingsHistories(userAccount, page, limit)
+	chainType, errResp := ParseChainTypeWithResponse(c)
+	if errResp != nil {
+		c.JSON(errResp.Code, errResp)
+		return
+	}
+	res := h.tokenHoldingsService.TokenHoldingsHistories(userAccount, page, limit, chainType)
 	c.JSON(res.Code, res)
 }

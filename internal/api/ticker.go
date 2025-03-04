@@ -33,14 +33,19 @@ func NewTickersHandler(tickerService *service.TickerServiceImpl) *TickersHandler
 // @Param new_pairs_resolution query string false "新交易对的时间分辨率，例如 1D（1 天）" Enums(1D, 1H, 1M) example("1D")
 // @Success 200 {object} response.Response{data=response.TickersResponse} "成功返回市场行情数据"
 // @Failure 500 {object} response.Response "服务器内部错误"
-// @Router /tickers [get]
+// @Router /tickers/{chain_type} [get]
 func (t *TickersHandler) Tickers(c *gin.Context) {
 	var req request.TickersRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
 		c.JSON(http.StatusBadRequest, response.Err(http.StatusBadRequest, "Invalid request parameters", err))
 		return
 	}
-	res := t.tickerService.Tickers(req)
+	chainType, errResp := ParseChainTypeWithResponse(c)
+	if errResp != nil {
+		c.JSON(errResp.Code, errResp)
+		return
+	}
+	res := t.tickerService.Tickers(req, chainType)
 	c.JSON(res.Code, res)
 }
 
@@ -53,14 +58,19 @@ func (t *TickersHandler) Tickers(c *gin.Context) {
 // @Param token_symbol path string true "代币符号" Enums(SUPER, BTC, ETH, USDT, BNB) example("SUPER")
 // @Success 200 {object} response.Response{data=response.GetTickerResponse} "成功返回 Ticker 详情"
 // @Failure 400 {object} response.Response "参数错误"
-// @Router /tickers/{token_symbol} [get]
+// @Router /tickers/{chain_type}/{ticker_address} [get]
 func (t *TickersHandler) TickerDetail(c *gin.Context) {
-	tokenSymbol := c.Param("token_symbol")
-	if tokenSymbol == "" {
-		c.JSON(http.StatusBadRequest, response.Err(http.StatusBadRequest, "token_symbol cannot be empty", errors.New("token_symbol is required")))
+	tickerAddress := c.Param("ticker_address")
+	if tickerAddress == "" {
+		c.JSON(http.StatusBadRequest, response.Err(http.StatusBadRequest, "ticker_address cannot be empty", errors.New("ticker_address is required")))
 		return
 	}
-	res := t.tickerService.TickerDetail(tokenSymbol)
+	chainType, errResp := ParseChainTypeWithResponse(c)
+	if errResp != nil {
+		c.JSON(errResp.Code, errResp)
+		return
+	}
+	res := t.tickerService.TickerDetail(tickerAddress, chainType)
 	c.JSON(res.Code, res)
 }
 
@@ -105,11 +115,16 @@ func (t *TickersHandler) TickerDetail(c *gin.Context) {
 //	}
 //
 // @Failure 400 {object} response.Response "参数错误"
-// @Router /tickers/swap_histories/{tickers_id} [get]
+// @Router /tickers/{chain_type}/swap_histories/{ticker_address} [get]
 func (t *TickersHandler) SwapHistories(c *gin.Context) {
-	tickersId := c.Param("tickers_id")
-	if tickersId == "" {
-		c.JSON(http.StatusBadRequest, response.Err(http.StatusBadRequest, "tickers_id cannot be empty", errors.New("tickers_id is required")))
+	tickerAddress := c.Param("ticker_address")
+	if tickerAddress == "" {
+		c.JSON(http.StatusBadRequest, response.Err(http.StatusBadRequest, "ticker_address cannot be empty", errors.New("ticker_address is required")))
+		return
+	}
+	chainType, errResp := ParseChainTypeWithResponse(c)
+	if errResp != nil {
+		c.JSON(errResp.Code, errResp)
 		return
 	}
 	// chainType := c.Param("chainType")
@@ -118,7 +133,7 @@ func (t *TickersHandler) SwapHistories(c *gin.Context) {
 	// orderBook := tokenInfoService.GetTokenOrderBook(tokenAddress, uint8(model.FromString(chainType)))
 	// c.JSON(orderBook.Code, orderBook)
 
-	res := t.tickerService.SwapHistories(tickersId)
+	res := t.tickerService.SwapHistories(tickerAddress, chainType)
 	c.JSON(res.Code, res)
 }
 
@@ -131,17 +146,35 @@ func (t *TickersHandler) SwapHistories(c *gin.Context) {
 // @Param tickers_id path string true "Ticker ID" example("SUPER")
 // @Success 200 {object} response.Response{data=response.TokenDistributionResponse} "成功返回代币分布信息"
 // @Failure 500 {object} response.Response "服务器内部错误"
-// @Router /tickers/{tickers_id}/distribution [get]
+// @Router /tickers/{chain_type}/token_distribution/{ticker_address} [get]
 func (t *TickersHandler) TokenDistribution(c *gin.Context) {
-	tickersId := c.Param("tickers_id")
-	if tickersId == "" {
-		c.JSON(http.StatusBadRequest, response.Err(http.StatusBadRequest, "tickers_id cannot be empty", errors.New("tickers_id is required")))
+	tickerAddress := c.Param("ticker_address")
+	if tickerAddress == "" {
+		c.JSON(http.StatusBadRequest, response.Err(http.StatusBadRequest, "ticker_address cannot be empty", errors.New("ticker_address is required")))
 		return
 	}
-	res := t.tickerService.TokenDistribution(tickersId)
+	chainType, errResp := ParseChainTypeWithResponse(c)
+	if errResp != nil {
+		c.JSON(errResp.Code, errResp)
+		return
+	}
+	res := t.tickerService.TokenDistribution(tickerAddress, chainType)
 	c.JSON(res.Code, res)
 }
 
+// SearchTickers 根据条件搜索 Tickers
+// @Summary 搜索 Tickers
+// @Description 根据链类型、搜索参数、分页参数等条件搜索 Tickers
+// @Tags Tickers
+// @Accept json
+// @Produce json
+// @Param chain_type path string true "链类型（如 solana、ethereum）"
+// @Param param path string true "搜索参数（如代币名称或地址）"
+// @Param limit query string true "分页大小"
+// @Param cursor query string false "分页游标"
+// @Success 200 {object} response.SearchTickerResponse "成功返回 Tickers 列表"
+// @Failure 500 {object} response.Response "服务器内部错误"
+// @Router /tickers/{chain_type}/search [get]
 func (t *TickersHandler) SearchTickers(c *gin.Context) {
 	param := c.Param("param")
 	if param == "" {
@@ -153,7 +186,12 @@ func (t *TickersHandler) SearchTickers(c *gin.Context) {
 		c.JSON(errResp.Code, errResp)
 		return
 	}
+	chainType, errResp := ParseChainTypeWithResponse(c)
+	if errResp != nil {
+		c.JSON(errResp.Code, errResp)
+		return
+	}
 	cursor := c.Param("cursor")
-	res := t.tickerService.SearchTickers(param, limit, cursor)
+	res := t.tickerService.SearchTickers(param, limit, cursor, chainType)
 	c.JSON(res.Code, res)
 }

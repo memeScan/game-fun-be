@@ -13,7 +13,7 @@ func NewGlobalServiceImpl() *GlobalServiceImpl {
 	return &GlobalServiceImpl{}
 }
 
-func (s *GlobalServiceImpl) SolUsdPrice() response.Response {
+func (s *GlobalServiceImpl) UsdPrice(chainType model.ChainType) response.Response {
 	solUsdPrice, err := getSolPrice()
 	if err != nil {
 		return response.Err(http.StatusInternalServerError, "failed to get sol price", err)
@@ -24,8 +24,7 @@ func (s *GlobalServiceImpl) SolUsdPrice() response.Response {
 	return response.Success(responseData)
 }
 
-// SolBalance 获取 SOL 余额
-func (s *GlobalServiceImpl) SolBalance(address string) response.Response {
+func (s *GlobalServiceImpl) Balance(address string, chainType model.ChainType) response.Response {
 	tokenBalances, err := httpUtil.GetTokenBalance([]string{address}, model.SolanaWrappedSOLAddress)
 	if err != nil {
 		return response.Err(http.StatusInternalServerError, "Failed to get balance", err)

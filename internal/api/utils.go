@@ -1,9 +1,11 @@
 package api
 
 import (
-	"net/http"
-
+	"my-token-ai-be/internal/model"
 	"my-token-ai-be/internal/response"
+
+	"errors"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -78,4 +80,14 @@ func GetLimit(c *gin.Context) (limit string, errResp *response.Response) {
 	}
 
 	return limit, nil
+}
+
+// ParseChainTypeWithResponse 解析并验证 chain_type 参数，并返回 HTTP 响应
+func ParseChainTypeWithResponse(c *gin.Context) (model.ChainType, *response.Response) {
+	chainType := c.Param("chain_type")
+	if chainType == "" {
+		errResp := response.Err(http.StatusBadRequest, "chain_type cannot be empty", errors.New("chain_type is required"))
+		return model.ChainTypeUnknown, &errResp
+	}
+	return model.ChainTypeFromString(chainType), nil
 }

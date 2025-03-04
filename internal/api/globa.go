@@ -22,9 +22,14 @@ func NewGlobalHandler(globalService *service.GlobalServiceImpl) *GlobalHandler {
 // @Produce json
 // @Success 200 {object} response.Response{data=map[string]string} "成功返回 SOL 价格"
 // @Failure 500 {object} response.Response "服务器内部错误"
-// @Router /global/sol_usd_price [get]
-func (g *GlobalHandler) SolUsdPrice(c *gin.Context) {
-	res := g.globalService.SolUsdPrice()
+// @Router /global/{chain_type}/sol_usd_price [get]
+func (g *GlobalHandler) UsdPrice(c *gin.Context) {
+	chainType, errResp := ParseChainTypeWithResponse(c)
+	if errResp != nil {
+		c.JSON(errResp.Code, errResp)
+		return
+	}
+	res := g.globalService.UsdPrice(chainType)
 	c.JSON(res.Code, res)
 }
 
@@ -37,13 +42,18 @@ func (g *GlobalHandler) SolUsdPrice(c *gin.Context) {
 // @Security ApiKeyAuth
 // @Success 200 {object} response.Response{data=response.TokenBalance} "成功返回 SOL 余额"
 // @Failure 500 {object} response.Response "服务器内部错误"
-// @Router /global/sol_balance [get]
-func (g *GlobalHandler) SolBalance(c *gin.Context) {
+// @Router /global/{chain_type}/sol_balance [get]
+func (g *GlobalHandler) Balance(c *gin.Context) {
 	address, errResp := GetAddressFromContext(c)
 	if errResp != nil {
 		c.JSON(errResp.Code, errResp)
 		return
 	}
-	res := g.globalService.SolBalance(address)
+	chainType, errResp := ParseChainTypeWithResponse(c)
+	if errResp != nil {
+		c.JSON(errResp.Code, errResp)
+		return
+	}
+	res := g.globalService.Balance(address, chainType)
 	c.JSON(res.Code, res)
 }
