@@ -13,7 +13,7 @@ func NewGlobalServiceImpl() *GlobalServiceImpl {
 	return &GlobalServiceImpl{}
 }
 
-func (s *GlobalServiceImpl) UsdPrice(chainType model.ChainType) response.Response {
+func (s *GlobalServiceImpl) NativeTokePrice(chainType model.ChainType) response.Response {
 	solUsdPrice, err := getSolPrice()
 	if err != nil {
 		return response.Err(http.StatusInternalServerError, "failed to get sol price", err)

@@ -272,7 +272,7 @@ func (s *SwapServiceImpl) GetPumpSwapRoute(chainType model.ChainType, tradeType 
 		defer resp.Body.Close()
 
 		globalServiceImpl := NewGlobalServiceImpl()
-		res := globalServiceImpl.UsdPrice(model.ChainTypeSolana)
+		res := globalServiceImpl.NativeTokePrice(model.ChainTypeSolana)
 		if res.Error != "" {
 			return &response.Response{
 				Code: http.StatusInternalServerError,

@@ -97,7 +97,7 @@ func NewRouter() *gin.Engine {
 		v1.GET("swap/:chainType/get_transaction", swapHandler.GetTransaction)
 		v1.GET("swap/:chainType/send_transaction", swapHandler.SendTransaction)
 		v1.GET("swap/:chainType/transaction_status", swapHandler.TransactionStatus)
-		v1.GET("global/:chain_type/usd_price", globalHandler.UsdPrice)
+		v1.GET("global/:chain_type/native_token_price", globalHandler.NativeTokePrice)
 
 		auth := v1.Group("")
 		// token登陆验证路由
