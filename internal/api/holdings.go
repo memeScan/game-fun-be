@@ -19,10 +19,11 @@ func NewTokenHoldingsHandler(tokenHoldingsService *service.TokenHoldingsServiceI
 
 // TokenHoldings 获取代币持仓数据
 // @Summary 获取代币持仓数据
-// @Description 根据用户账户和目标账户获取代币持仓数据
+// @Description 根据链类型、用户账户和目标账户获取代币持仓数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。
 // @Tags 代币持仓
 // @Accept json
 // @Produce json
+// @Param chain_type path string true "链类型（sol、eth、bsc）"
 // @Param account path string true "用户账户"
 // @Param account query string true "目标账户"
 // @Param allow_zero_balance query string false "是否包含零余额" default(false)
@@ -52,10 +53,11 @@ func (h *TokenHoldingsHandler) TokenHoldings(c *gin.Context) {
 
 // TokenHoldingsHistories 获取代币持仓历史数据
 // @Summary 获取代币持仓历史数据
-// @Description 根据用户账户获取代币持仓历史数据
+// @Description 根据链类型和用户账户获取代币持仓历史数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。
 // @Tags 代币持仓
 // @Accept json
 // @Produce json
+// @Param chain_type path string true "链类型（sol、eth、bsc）"
 // @Param account path string true "用户账户"
 // @Param page query string false "分页页码" default(0)
 // @Param limit query string false "每页数量" default(20)

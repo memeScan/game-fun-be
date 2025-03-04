@@ -19,11 +19,11 @@ func NewSwapHandler(swapService *service.SwapServiceImpl) *SwapHandler {
 
 // GetSwapRoute 获取 Swap 路由
 // @Summary 获取 Swap 路由
-// @Description 根据链类型、交易类型和请求参数获取 Swap 路由
+// @Description 根据链类型、交易类型和请求参数获取 Swap 路由。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。
 // @Tags Swap
 // @Accept json
 // @Produce json
-// @Param chain_type path string true "链类型（如 solana、ethereum）"
+// @Param chain_type path string true "链类型（sol、eth、bsc）"
 // @Param tradeType path string true "交易类型（如 buy、sell）"
 // @Param inAmount query string true "输入金额"
 // @Param tokenInAddress query string true "输入代币地址"
@@ -53,10 +53,11 @@ func (s *SwapHandler) GetTransaction(c *gin.Context) {
 
 // SendSwapRequest 发送 Swap 请求
 // @Summary 发送 Swap 请求
-// @Description 根据 Swap 交易数据发送 Swap 请求
+// @Description 根据链类型和 Swap 交易数据发送 Swap 请求。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。
 // @Tags Swap
 // @Accept json
 // @Produce json
+// @Param chain_type path string true "链类型（sol、eth、bsc）"
 // @Param swap_transaction query string true "Swap 交易数据（Base64 编码）"
 // @Param is_anti_mev query bool false "是否启用 Anti-MEV（默认为 false）"
 // @Success 200 {object} response.Response "成功返回交易结果"
@@ -75,10 +76,11 @@ func (s *SwapHandler) SendTransaction(c *gin.Context) {
 
 // GetSwapRequestStatus 获取 Swap 请求状态
 // @Summary 获取 Swap 请求状态
-// @Description 根据交易签名获取 Swap 请求状态
+// @Description 根据链类型和交易签名获取 Swap 请求状态。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。
 // @Tags Swap
 // @Accept json
 // @Produce json
+// @Param chain_type path string true "链类型（sol、eth、bsc）"
 // @Param swap_transaction query string true "交易签名"
 // @Success 200 {object} response.Response "成功返回交易状态"
 // @Failure 500 {object} response.Response "服务器内部错误"

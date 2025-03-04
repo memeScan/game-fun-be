@@ -178,6 +178,21 @@ definitions:
         example: https://super.exchange
         type: string
     type: object
+  response.MarketResponse:
+    properties:
+      market:
+        allOf:
+        - $ref: '#/definitions/response.Market'
+        description: 市场数据
+      market_metadata:
+        allOf:
+        - $ref: '#/definitions/response.MarketMetadata'
+        description: 市场元数据
+      market_ticker:
+        allOf:
+        - $ref: '#/definitions/response.MarketTicker'
+        description: 市场 Ticker 数据
+    type: object
   response.MarketTicker:
     description: 市场的行情数据
     properties:
@@ -420,6 +435,28 @@ definitions:
         type: string
       msg:
         type: string
+    type: object
+  response.SearchTickerResponse:
+    properties:
+      cursor:
+        description: 游标
+        type: string
+      has_more:
+        description: 是否有更多数据
+        type: boolean
+      posts:
+        description: 帖子列表
+        items: {}
+        type: array
+      tickers:
+        description: 市场列表
+        items:
+          $ref: '#/definitions/response.MarketResponse'
+        type: array
+      users:
+        description: 用户列表
+        items: {}
+        type: array
     type: object
   response.SwapHistoriesResponse:
     properties:
@@ -708,16 +745,23 @@ info:
   title: My API
   version: "1.0"
 paths:
-  /global/sol_balance:
+  /global/{chain_type}/balance:
     get:
       consumes:
       - application/json
-      description: 根据 JWT Token 获取当前用户的 SOL 余额
+      description: 根据链类型和用户地址获取用户的钱包原生代币余额。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance
+        Smart Chain）。
+      parameters:
+      - description: 链类型（sol、eth、bsc）
+        in: path
+        name: chain_type
+        required: true
+        type: string
       produces:
       - application/json
       responses:
         "200":
-          description: 成功返回 SOL 余额
+          description: 成功返回原生代币余额
           schema:
             allOf:
             - $ref: '#/definitions/response.Response'
@@ -731,19 +775,25 @@ paths:
             $ref: '#/definitions/response.Response'
       security:
       - ApiKeyAuth: []
-      summary: 获取当前用户的 SOL 余额
+      summary: 获取链的原生代币钱包余额
       tags:
       - 全局数据
-  /global/sol_usd_price:
+  /global/{chain_type}/native_token_price:
     get:
       consumes:
       - application/json
-      description: 返回 SOL 对 USD 的当前价格，保留 8 位小数
+      description: 根据链类型获取原生代币的 USD 价格，保留 8 位小数
+      parameters:
+      - description: 链类型（sol、eth、bsc）
+        in: path
+        name: chain_type
+        required: true
+        type: string
       produces:
       - application/json
       responses:
         "200":
-          description: 成功返回 SOL 价格
+          description: 成功返回原生代币价格
           schema:
             allOf:
             - $ref: '#/definitions/response.Response'
@@ -757,7 +807,7 @@ paths:
           description: 服务器内部错误
           schema:
             $ref: '#/definitions/response.Response'
-      summary: 获取 SOL 对 USD 的当前价格
+      summary: 获取链的原生代币价格
       tags:
       - 全局数据
   /health:
@@ -773,11 +823,18 @@ paths:
       summary: Health check endpoint
       tags:
       - system
-  /points:
+  /points/{chain_type}:
     get:
       consumes:
       - application/json
-      description: 根据用户 ID 获取用户的交易积分、邀请积分和可用积分
+      description: 根据链类型和用户 ID 获取用户的交易积分、邀请积分和可用积分。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance
+        Smart Chain）。
+      parameters:
+      - description: 链类型（sol、eth、bsc）
+        in: path
+        name: chain_type
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -799,15 +856,16 @@ paths:
       summary: 获取用户积分数据
       tags:
       - 用户
-  /points/detail:
+  /points/{chain_type}/detail:
     get:
       consumes:
       - application/json
-      description: 根据用户 ID 获取用户的积分明细数据
+      description: 根据链类型和用户 ID 获取用户的积分明细数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance
+        Smart Chain）。
       parameters:
-      - description: 用户 ID
+      - description: 链类型（sol、eth、bsc）
         in: path
-        name: userID
+        name: chain_type
         required: true
         type: string
       - description: 分页页码
@@ -841,11 +899,18 @@ paths:
       summary: 获取用户积分明细
       tags:
       - 用户
-  /points/estimated:
+  /points/{chain_type}/estimated:
     get:
       consumes:
       - application/json
-      description: 根据用户 ID 获取用户的预估积分数据
+      description: 根据链类型和用户 ID 获取用户的预估积分数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance
+        Smart Chain）。
+      parameters:
+      - description: 链类型（sol、eth、bsc）
+        in: path
+        name: chain_type
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -867,12 +932,149 @@ paths:
       summary: 获取用户预估积分数据
       tags:
       - 积分
-  /tickers:
+  /swap/{chain_type}/get_transaction:
     get:
       consumes:
       - application/json
-      description: 根据排序、分页和搜索条件获取市场行情数据
+      description: 根据链类型、交易类型和请求参数获取 Swap 路由。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance
+        Smart Chain）。
       parameters:
+      - description: 链类型（sol、eth、bsc）
+        in: path
+        name: chain_type
+        required: true
+        type: string
+      - description: 交易类型（如 buy、sell）
+        in: path
+        name: tradeType
+        required: true
+        type: string
+      - description: 输入金额
+        in: query
+        name: inAmount
+        required: true
+        type: string
+      - description: 输入代币地址
+        in: query
+        name: tokenInAddress
+        required: true
+        type: string
+      - description: 输出代币地址
+        in: query
+        name: tokenOutAddress
+        required: true
+        type: string
+      - description: 发送地址
+        in: query
+        name: fromAddress
+        required: true
+        type: string
+      - description: 滑点（百分比）
+        in: query
+        name: slippage
+        required: true
+        type: number
+      - description: 手续费（SOL）
+        in: query
+        name: fee
+        required: true
+        type: number
+      - description: 是否启用 Anti-MEV（默认为 false）
+        in: query
+        name: isAntiMev
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回 Swap 路由信息
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取 Swap 路由
+      tags:
+      - Swap
+  /swap/{chain_type}/send_transaction:
+    post:
+      consumes:
+      - application/json
+      description: 根据链类型和 Swap 交易数据发送 Swap 请求。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance
+        Smart Chain）。
+      parameters:
+      - description: 链类型（sol、eth、bsc）
+        in: path
+        name: chain_type
+        required: true
+        type: string
+      - description: Swap 交易数据（Base64 编码）
+        in: query
+        name: swap_transaction
+        required: true
+        type: string
+      - description: 是否启用 Anti-MEV（默认为 false）
+        in: query
+        name: is_anti_mev
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回交易结果
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 发送 Swap 请求
+      tags:
+      - Swap
+  /swap/{chain_type}/transaction_status:
+    get:
+      consumes:
+      - application/json
+      description: 根据链类型和交易签名获取 Swap 请求状态。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance
+        Smart Chain）。
+      parameters:
+      - description: 链类型（sol、eth、bsc）
+        in: path
+        name: chain_type
+        required: true
+        type: string
+      - description: 交易签名
+        in: query
+        name: swap_transaction
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回交易状态
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取 Swap 请求状态
+      tags:
+      - Swap
+  /tickers/{chain_type}:
+    get:
+      consumes:
+      - application/json
+      description: 根据链类型、排序、分页和搜索条件获取市场行情数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance
+        Smart Chain）。
+      parameters:
+      - description: 链类型（sol、eth、bsc）
+        in: path
+        name: chain_type
+        required: true
+        type: string
       - description: 排序字段，支持以下值：MARKET_CAP, PRICE_CHANGE_5M, PRICE_CHANGE_1H, PRICE_CHANGE_24H,
           NATIVE_VOLUME_1H, NATIVE_VOLUME_24H, TX_COUNT_24H, HOLDERS, INITIALIZE_AT,
           Links
@@ -942,16 +1144,133 @@ paths:
       summary: 获取市场行情数据
       tags:
       - 市场行情
-  /tickers/{tickers_id}/distribution:
+  /tickers/{chain_type}/{ticker_address}:
     get:
       consumes:
       - application/json
-      description: 根据 Ticker ID 获取代币持有者的分布信息
+      description: 根据链类型和代币地址获取 Ticker 的详细信息。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance
+        Smart Chain）。
       parameters:
-      - description: Ticker ID
-        example: '"SUPER"'
+      - description: 链类型（sol、eth、bsc）
         in: path
-        name: tickers_id
+        name: chain_type
+        required: true
+        type: string
+      - description: 代币地址
+        in: path
+        name: ticker_address
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回 Ticker 详情
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.GetTickerResponse'
+              type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取 Ticker 详情
+      tags:
+      - 市场行情
+  /tickers/{chain_type}/search:
+    get:
+      consumes:
+      - application/json
+      description: 根据链类型、搜索参数、分页参数等条件搜索 Tickers。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance
+        Smart Chain）。
+      parameters:
+      - description: 链类型（sol、eth、bsc）
+        in: path
+        name: chain_type
+        required: true
+        type: string
+      - description: 搜索参数（如代币名称或地址）
+        in: path
+        name: param
+        required: true
+        type: string
+      - description: 分页大小
+        in: query
+        name: limit
+        required: true
+        type: string
+      - description: 分页游标
+        in: query
+        name: cursor
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回 Tickers 列表
+          schema:
+            $ref: '#/definitions/response.SearchTickerResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 搜索 Tickers
+      tags:
+      - 市场行情
+  /tickers/{chain_type}/swap_histories/{ticker_address}:
+    get:
+      consumes:
+      - application/json
+      description: 根据链类型和代币地址获取交易历史记录。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance
+        Smart Chain）。
+      parameters:
+      - description: 链类型（sol、eth、bsc）
+        in: path
+        name: chain_type
+        required: true
+        type: string
+      - description: 代币地址
+        in: path
+        name: ticker_address
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回交易历史记录
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.SwapHistoriesResponse'
+              type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取指定 Ticker 的交易历史记录
+      tags:
+      - 市场行情
+  /tickers/{chain_type}/token_distribution/{ticker_address}:
+    get:
+      consumes:
+      - application/json
+      description: 根据链类型和代币地址获取代币持有者的分布信息。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance
+        Smart Chain）。
+      parameters:
+      - description: 链类型（sol、eth、bsc）
+        in: path
+        name: chain_type
+        required: true
+        type: string
+      - description: 代币地址
+        in: path
+        name: ticker_address
         required: true
         type: string
       produces:
@@ -973,80 +1292,18 @@ paths:
       summary: 获取指定 Ticker 的代币分布信息
       tags:
       - 市场行情
-  /tickers/{token_symbol}:
+  /token_holdings/{chain_type}/{account}:
     get:
       consumes:
       - application/json
-      description: 根据 token_symbol 获取 Ticker 的详细信息
+      description: 根据链类型、用户账户和目标账户获取代币持仓数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance
+        Smart Chain）。
       parameters:
-      - description: 代币符号
-        enum:
-        - SUPER
-        - BTC
-        - ETH
-        - USDT
-        - BNB
-        example: '"SUPER"'
+      - description: 链类型（sol、eth、bsc）
         in: path
-        name: token_symbol
+        name: chain_type
         required: true
         type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 成功返回 Ticker 详情
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/response.GetTickerResponse'
-              type: object
-        "400":
-          description: 参数错误
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: 获取 Ticker 详情
-      tags:
-      - 市场行情
-  /tickers/swap_histories/{tickers_id}:
-    get:
-      consumes:
-      - application/json
-      description: 根据 Ticker ID 获取交易历史记录
-      parameters:
-      - description: Ticker ID
-        example: '"SUPER"'
-        in: path
-        name: tickers_id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 成功返回交易历史记录
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/response.SwapHistoriesResponse'
-              type: object
-        "400":
-          description: 参数错误
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: 获取指定 Ticker 的交易历史记录
-      tags:
-      - 市场行情
-  /token_holdings/{account}:
-    get:
-      consumes:
-      - application/json
-      description: 根据用户账户和目标账户获取代币持仓数据
-      parameters:
       - description: 用户账户
         in: path
         name: account
@@ -1081,12 +1338,18 @@ paths:
       summary: 获取代币持仓数据
       tags:
       - 代币持仓
-  /token_holdings/histories/{account}:
+  /token_holdings/{chain_type}/histories/{account}:
     get:
       consumes:
       - application/json
-      description: 根据用户账户获取代币持仓历史数据
+      description: 根据链类型和用户账户获取代币持仓历史数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance
+        Smart Chain）。
       parameters:
+      - description: 链类型（sol、eth、bsc）
+        in: path
+        name: chain_type
+        required: true
+        type: string
       - description: 用户账户
         in: path
         name: account
@@ -1190,11 +1453,18 @@ paths:
       summary: Get token kline data
       tags:
       - on-chain-data
-  /users/invite/code:
+  /users/{chain_type}/invite/code:
     get:
       consumes:
       - application/json
-      description: 根据用户 ID 获取用户的邀请码和邀请数量
+      description: 根据链类型和用户 ID 获取用户的邀请码和邀请数量。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance
+        Smart Chain）。
+      parameters:
+      - description: 链类型（sol、eth、bsc）
+        in: path
+        name: chain_type
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -1211,21 +1481,23 @@ paths:
           description: 未授权
           schema:
             $ref: '#/definitions/response.Response'
-        "500":
-          description: 服务器内部错误
-          schema:
-            $ref: '#/definitions/response.Response'
       security:
       - ApiKeyAuth: []
       summary: 获取用户邀请码信息
       tags:
       - 用户
-  /users/login:
+  /users/{chain_type}/login:
     post:
       consumes:
       - application/json
-      description: 通过钱包地址和签名进行登录
+      description: 通过钱包地址和签名进行登录。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart
+        Chain）。
       parameters:
+      - description: 链类型（sol、eth、bsc）
+        in: path
+        name: chain_type
+        required: true
+        type: string
       - description: 登录请求参数
         in: body
         name: login
@@ -1246,11 +1518,18 @@ paths:
       summary: 用户钱包登录
       tags:
       - 用户
-  /users/my_info:
+  /users/{chain_type}/my_info:
     get:
       consumes:
       - application/json
-      description: 根据 JWT Token 获取当前用户的详细信息
+      description: 根据链类型和 JWT Token 获取当前用户的详细信息。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance
+        Smart Chain）。
+      parameters:
+      - description: 链类型（sol、eth、bsc）
+        in: path
+        name: chain_type
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -1263,8 +1542,8 @@ paths:
                 data:
                   $ref: '#/definitions/response.MyInfoResponse'
               type: object
-        "500":
-          description: 服务器内部错误
+        "401":
+          description: 未授权
           schema:
             $ref: '#/definitions/response.Response'
       security:
