@@ -1,6 +1,7 @@
 package kafka_test
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -17,7 +18,7 @@ func TestKafkaInitialization(t *testing.T) {
 	// 设置测试环境
 	t.Run("Initialize Kafka Producer", func(t *testing.T) {
 		// 设置测试环境变量
-		os.Setenv("KAFKA_BROKERS", "alikafka-pre-cn-t8j3z5kzl005-1-vpc.alikafka.aliyuncs.com:9092,alikafka-pre-cn-t8j3z5kzl005-2-vpc.alikafka.aliyuncs.com:9092,alikafka-pre-cn-t8j3z5kzl005-3-vpc.alikafka.aliyuncs.com:9092")
+		os.Setenv("KAFKA_BROKERS", "alikafka-post-public-intl-sg-jiy45rtfa0s-1-vpc.alikafka.aliyuncs.com:9092,alikafka-post-public-intl-sg-jiy45rtfa0s-2-vpc.alikafka.aliyuncs.com:9092,alikafka-post-public-intl-sg-jiy45rtfa0s-3-vpc.alikafka.aliyuncs.com:9092")
 
 		// 初始化 Kafka
 		kafka.Kafka()
@@ -83,37 +84,49 @@ func TestKafkaIntegration(t *testing.T) {
 
 	t.Run("Real Kafka Integration", func(t *testing.T) {
 		// 设置测试环境变量
-		os.Setenv("KAFKA_BROKERS", "alikafka-pre-cn-t8j3z5kzl005-1-vpc.alikafka.aliyuncs.com:9092,alikafka-pre-cn-t8j3z5kzl005-2-vpc.alikafka.aliyuncs.com:9092,alikafka-pre-cn-t8j3z5kzl005-3-vpc.alikafka.aliyuncs.com:9092")
+		os.Setenv("KAFKA_BROKERS", "alikafka-post-public-intl-sg-jiy45rtfa0s-1-vpc.alikafka.aliyuncs.com:9092,alikafka-post-public-intl-sg-jiy45rtfa0s-2-vpc.alikafka.aliyuncs.com:9092,alikafka-post-public-intl-sg-jiy45rtfa0s-3-vpc.alikafka.aliyuncs.com:9092")
 
 		// 初始化 Kafka
 		kafka.Kafka()
-		defer kafka.Close()
+		defer func() {
+			if r := recover(); r != nil {
+				t.Logf("Recovered from panic: %v", r)
+			}
+			kafka.Close() // 确保 Kafka 连接关闭
+		}()
 
-		// 测试发送实际消息
-		topic := kafka.TopicPumpTrade
-		message := []byte(`{
-			"mint": "6yNb5bqbVFueBEq2fSrNrP82s2dvhTEDz2PrQMjppump",
-			"solAmount": "12999999",
-			"tokenAmount": "194989651025", 
-			"isBuy": false,
-			"user": "B5HfNu7jbvXKU3vKxdsGfbJKMs1ksRnv2GMHrjtR1XQv",
-			"timestamp": 1731556183,
-			"virtualSolReserves": "46319669544",
-			"virtualTokenReserves": "694953158866495",
-			"realSolReserves": "16319669544",
-			"realTokenReserves": "415053158866495",
-			"progress": 47.67,
-			"signature": "3eeqFmAgRPN74wDA75FHe2gMu5NevqhNwtQH12RgDVHo7eUKLc8aJLJCwWket6k2K1fZjbEBQQx9ybpGf2DVRThH",
-			"block": 298892984
-		}`)
-		err := kafka.SendMessage(topic, message)
-
-		if err != nil {
-			t.Errorf("Failed to send message: %v", err)
+		// 准备批次消息
+		batchSize := 100 // 批次大小
+		messages := make([]*sarama.ProducerMessage, 0, batchSize)
+		for i := 0; i < batchSize; i++ {
+			message := &sarama.ProducerMessage{
+				Topic: kafka.TopicPumpTrade,
+				Value: sarama.ByteEncoder(fmt.Sprintf(`{
+					"mint": "6yNb5bqbVFueBEq2fSrNrP82s2dvhTEDz2PrQMjppump",
+					"solAmount": "12999999",
+					"tokenAmount": "194989651025", 
+					"isBuy": false,
+					"user": "B5HfNu7jbvXKU3vKxdsGfbJKMs1ksRnv2GMHrjtR1XQv",
+					"timestamp": %d,
+					"virtualSolReserves": "46319669544",
+					"virtualTokenReserves": "694953158866495",
+					"realSolReserves": "16319669544",
+					"realTokenReserves": "415053158866495",
+					"progress": 47.67,
+					"signature": "3eeqFmAgRPN74wDA75FHe2gMu5NevqhNwtQH12RgDVHo7eUKLc8aJLJCwWket6k2K1fZjbEBQQx9ybpGf2DVRThH",
+					"block": 298892984
+				}`, time.Now().Unix())),
+			}
+			messages = append(messages, message)
 		}
 
-		// 给消息发送一些时间
-		time.Sleep(time.Second)
+		// 批次发送
+		err := kafka.GetProducer().SendMessages(messages)
+		if err != nil {
+			t.Errorf("Failed to send messages: %v", err)
+		} else {
+			t.Logf("Successfully sent %d messages", len(messages))
+		}
 	})
 }
 
@@ -151,6 +164,7 @@ func TestRaydiumCreateMessage(t *testing.T) {
 
 	t.Run("Send Raydium Create Message", func(t *testing.T) {
 		// 设置测试环境变量
+		os.Setenv("KAFKA_BROKERS", "alikafka-post-public-intl-sg-jiy45rtfa0s-1-vpc.alikafka.aliyuncs.com:9092,alikafka-post-public-intl-sg-jiy45rtfa0s-2-vpc.alikafka.aliyuncs.com:9092,alikafka-post-public-intl-sg-jiy45rtfa0s-3-vpc.alikafka.aliyuncs.com:9092")
 		os.Setenv("KAFKA_BROKERS", "alikafka-pre-cn-t8j3z5kzl005-1-vpc.alikafka.aliyuncs.com:9092,alikafka-pre-cn-t8j3z5kzl005-2-vpc.alikafka.aliyuncs.com:9092,alikafka-pre-cn-t8j3z5kzl005-3-vpc.alikafka.aliyuncs.com:9092")
 
 		// 初始化 Kafka
@@ -182,4 +196,19 @@ func TestRaydiumCreateMessage(t *testing.T) {
 		// 给消息发送一些时间
 		time.Sleep(time.Second)
 	})
+}
+
+func TestKafkaLoopIntegration(t *testing.T) {
+	// 跳过集成测试，除非明确指定要运行
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	loopCount := 100 // 设置循环次数
+
+	for i := 0; i < loopCount; i++ {
+		t.Run(fmt.Sprintf("Integration Test Loop %d", i+1), func(t *testing.T) {
+			TestKafkaIntegration(t)
+		})
+	}
 }

@@ -42,7 +42,7 @@ mkdir -p "$PROJECT_ROOT"
 if [ "$APP_ENV" = "test" ]; then
     BRANCH="test"
 else
-    BRANCH="master"
+    BRANCH="main"
 fi
 
 # 只克隆指定分支，使用 --single-branch 和 --depth 1 来最小化下载
