@@ -15,6 +15,7 @@ func NewTickerServiceImpl() *TickerServiceImpl {
 
 func (s *TickerServiceImpl) Tickers(req request.TickersRequest, chainType model.ChainType) response.Response {
 	var tickersResponse response.TickersResponse
+
 	return response.Success(tickersResponse)
 }
 
