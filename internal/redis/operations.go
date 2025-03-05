@@ -475,3 +475,20 @@ func EnsureKeyTTL(key string, ttl int64) error {
 
 	return nil
 }
+
+func GetToken(key string) (string, bool, error) {
+	ctx := context.Background()
+	value, err := RedisClient.Get(ctx, key).Result()
+	if err == redis.Nil {
+		return "", false, nil
+	} else if err != nil {
+		return "", false, err
+	}
+
+	var parsedValue string
+	if err := json.Unmarshal([]byte(value), &parsedValue); err == nil {
+		return parsedValue, true, nil
+	}
+
+	return value, true, nil
+}

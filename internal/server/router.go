@@ -4,6 +4,7 @@ import (
 	"game-fun-be/internal/api"
 	"game-fun-be/internal/api/ws"
 	"game-fun-be/internal/interceptor"
+	"game-fun-be/internal/model"
 	"game-fun-be/internal/service"
 
 	"time"
@@ -18,9 +19,10 @@ import (
 func NewRouter() *gin.Engine {
 
 	globalService := service.NewGlobalServiceImpl()
-	globalHandler := api.NewGlobalHandler(globalService)
 
-	userService := service.NewUserServiceImpl()
+	globalHandler := api.NewGlobalHandler(globalService)
+	userInfoRepo := model.NewUserInfoRepo()
+	userService := service.NewUserServiceImpl(userInfoRepo)
 	userHandler := api.NewUserHandler(userService)
 
 	tickerService := service.NewTickerServiceImpl()
