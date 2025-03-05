@@ -8,7 +8,7 @@ type LoginRequest struct {
 	// 评论ID（可选）
 	CommentID string `json:"comment_id" example:""`
 	// 邀请码（可选）
-	InviteCode *string `json:"invite_code" example:"INVITE123"`
+	InviteCode string `json:"invite_code" example:"INVITE123"`
 	// 登录消息
 	Message string `json:"message" example:"Sign in to the super.exchange\r\n\r\nTimestamp: 1740885327"`
 	// 帖子ID（可选）

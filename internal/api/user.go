@@ -56,7 +56,7 @@ func (u *UserHandler) Login(c *gin.Context) {
 // @Failure 401 {object} response.Response "未授权"
 // @Router /users/{chain_type}/my_info [get]
 func (u *UserHandler) MyInfo(c *gin.Context) {
-	userID, errResp := GetUserIDFromContext(c)
+	userAddress, errResp := GetAddressFromContext(c)
 	if errResp != nil {
 		c.JSON(errResp.Code, errResp)
 		return
@@ -66,7 +66,7 @@ func (u *UserHandler) MyInfo(c *gin.Context) {
 		c.JSON(errResp.Code, errResp)
 		return
 	}
-	res := u.userService.MyInfo(userID, chainType)
+	res := u.userService.MyInfo(userAddress, chainType)
 	c.JSON(res.Code, res)
 }
 
@@ -82,7 +82,7 @@ func (u *UserHandler) MyInfo(c *gin.Context) {
 // @Failure 401 {object} response.Response "未授权"
 // @Router /users/{chain_type}/invite/code [get]
 func (u *UserHandler) InviteCode(c *gin.Context) {
-	userID, errResp := GetUserIDFromContext(c)
+	userAddress, errResp := GetAddressFromContext(c)
 	if errResp != nil {
 		c.JSON(errResp.Code, errResp)
 		return
@@ -92,6 +92,6 @@ func (u *UserHandler) InviteCode(c *gin.Context) {
 		c.JSON(errResp.Code, errResp)
 		return
 	}
-	res := u.userService.GetCode(userID, chainType)
+	res := u.userService.GetCode(userAddress, chainType)
 	c.JSON(res.Code, res)
 }

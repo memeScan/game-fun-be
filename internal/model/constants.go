@@ -1,10 +1,22 @@
 package model
 
+import (
+	"time"
+)
+
 const (
 	PUMP_INITIAL_REAL_TOKEN_RESERVES    = "793100000000000"
 	PUMP_INITIAL_VIRTUAL_SOL_RESERVES   = "30000000000"
 	PUMP_INITIAL_VIRTUAL_TOKEN_RESERVES = "1073000000000000"
 	PUMP_INITIAL_REALSOL_TOKEN_RESERVES = "0"
+)
+
+const (
+	TokenExpireDuration = 24 * time.Hour
+)
+
+const (
+	LoginMessageTemplate = "Sign in to the game.exchange\r\n\r\nTimestamp: %s"
 )
 
 // PlatformType 定义交易平台类型

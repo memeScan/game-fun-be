@@ -3,7 +3,6 @@ package auth
 import (
 	"errors"
 	"fmt"
-	"game-fun-be/internal/redis"
 	"os"
 	"time"
 
@@ -67,15 +66,4 @@ func ParseToken(token string) (*Claims, error) {
 	}
 
 	return nil, errors.New("invalid token")
-}
-
-// CacheToken 缓存 JWT token
-func CacheToken(address, token string, expireDuration time.Duration) error {
-	// 将 token 缓存到 Redis
-	key := fmt.Sprintf("gmgn:exchange:token:%s", address)
-	err := redis.Set(key, token, expireDuration)
-	if err != nil {
-		return fmt.Errorf("failed to cache token: %w", err)
-	}
-	return nil
 }
