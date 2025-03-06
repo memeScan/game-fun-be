@@ -2,6 +2,7 @@ package service
 
 import (
 	"game-fun-be/internal/auth"
+	"game-fun-be/internal/constants"
 	"game-fun-be/internal/model"
 	"game-fun-be/internal/redis"
 	"game-fun-be/internal/request"
@@ -34,7 +35,7 @@ func (s UserServiceImpl) Login(req request.LoginRequest, chainType model.ChainTy
 
 		userIDStr := UintToString(userInfo.ID)
 
-		userTokenKey := GetUserTokenKey(userInfo.Address)
+		userTokenKey := GetRedisKey(constants.UserTokenKeyFormat, userInfo.Address)
 
 		token, exists, err := redis.GetToken(userTokenKey)
 		if err != nil {
@@ -121,22 +122,6 @@ func (s *UserServiceImpl) GetCode(userAddress string, chainType model.ChainType)
 	userInfo, inviteCount, err := s.userInfoRepo.GetInviteCodeAndCount(userAddress, uint8(chainType))
 	if err != nil {
 		return response.Err(http.StatusInternalServerError, "Failed to get invite code and count", err)
-	}
-
-	if userInfo.InvitationCode == "" && userInfo.FirstTradingTime != nil {
-		firstTradingTime := *userInfo.FirstTradingTime
-
-		timeSinceFirstTrade := time.Since(firstTradingTime)
-
-		if timeSinceFirstTrade >= 24*time.Hour {
-			inviteCode := GenerateInviteCode(userAddress)
-			userInfo.InvitationCode = inviteCode
-
-			err := s.userInfoRepo.UpdateInviteCode(userAddress, uint8(chainType), inviteCode)
-			if err != nil {
-				return response.Err(http.StatusInternalServerError, "Failed to update invite code", err)
-			}
-		}
 	}
 
 	inviteCodeResponse.InviteCode = userInfo.InvitationCode

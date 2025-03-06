@@ -3,6 +3,7 @@ package model
 import (
 	"errors"
 	"fmt"
+	"game-fun-be/internal/pkg/util"
 	"time"
 
 	"gorm.io/gorm"
@@ -58,11 +59,12 @@ func (r *UserInfoRepo) GetOrCreateUserByAddress(address string, chainType uint8,
 
 	now := time.Now()
 	user = UserInfo{
-		Address:    address,
-		Status:     1,
-		ChainType:  chainType,
-		CreateTime: now,
-		UpdateTime: now,
+		Address:        address,
+		Status:         1,
+		ChainType:      chainType,
+		CreateTime:     now,
+		UpdateTime:     now,
+		InvitationCode: util.GenerateInviteCode(address),
 	}
 
 	if inviteCode != "" {
@@ -109,26 +111,6 @@ func (r *UserInfoRepo) GetUserByInvitationCode(inviteCode string, chainType uint
 		return nil, result.Error
 	}
 	return &user, nil
-}
-
-func (r *UserInfoRepo) UpdateInviteCode(address string, chainType uint8, inviteCode string) error {
-	if inviteCode == "" {
-		return fmt.Errorf("invite code cannot be empty")
-	}
-
-	result := DB.Model(&UserInfo{}).
-		Where("address = ? AND chain_type = ?", address, chainType).
-		Update("invitation_code", inviteCode)
-
-	if result.Error != nil {
-		return result.Error
-	}
-
-	if result.RowsAffected == 0 {
-		return fmt.Errorf("no user found with address %s and chain type %d", address, chainType)
-	}
-
-	return nil
 }
 
 func (r *UserInfoRepo) GetUserByAddress(address string, chainType uint8) (*UserInfo, error) {

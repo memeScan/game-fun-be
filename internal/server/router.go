@@ -3,6 +3,7 @@ package server
 import (
 	"game-fun-be/internal/api"
 	"game-fun-be/internal/api/ws"
+	"game-fun-be/internal/clickhouse"
 	"game-fun-be/internal/interceptor"
 	"game-fun-be/internal/model"
 	"game-fun-be/internal/service"
@@ -19,13 +20,15 @@ import (
 func NewRouter() *gin.Engine {
 
 	globalService := service.NewGlobalServiceImpl()
-
 	globalHandler := api.NewGlobalHandler(globalService)
+
 	userInfoRepo := model.NewUserInfoRepo()
 	userService := service.NewUserServiceImpl(userInfoRepo)
 	userHandler := api.NewUserHandler(userService)
 
-	tickerService := service.NewTickerServiceImpl()
+	tickerInfoRepo := model.NewTokenInfoRepo()
+	TokenMarketAnalyticsRepo := clickhouse.NewTokenMarketAnalyticsRepo()
+	tickerService := service.NewTickerServiceImpl(tickerInfoRepo, TokenMarketAnalyticsRepo)
 	tickerHandler := api.NewTickersHandler(tickerService)
 
 	tokenHoldingsService := service.NewTokenHoldingsServiceImpl()
@@ -90,7 +93,8 @@ func NewRouter() *gin.Engine {
 	{
 		v1.POST("users/:chain_type/login", userHandler.Login)
 		v1.GET("tickers/:chain_type", tickerHandler.Tickers)
-		v1.GET("tickers/:chain_type/:ticker_address", tickerHandler.TickerDetail)
+		v1.GET("tickers/:chain_type/detail/:ticker_address", tickerHandler.TickerDetail)
+		v1.GET("tickers/:chain_type/Market/:ticker_address", tickerHandler.MarketTicker)
 		v1.GET("tickers/:chain_type/search", tickerHandler.SearchTickers)
 		v1.GET("tickers/:chain_type/swap_histories/:ticker_address", tickerHandler.SwapHistories)
 		v1.GET("tickers/:chain_type/token_distribution/:ticker_address", tickerHandler.TokenDistribution)

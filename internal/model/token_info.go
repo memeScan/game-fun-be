@@ -7,6 +7,12 @@ import (
 	"gorm.io/gorm"
 )
 
+type TokenInfoRepo struct{}
+
+func NewTokenInfoRepo() *TokenInfoRepo {
+	return &TokenInfoRepo{}
+}
+
 const (
 	FLAG_MINT_AUTHORITY    = 1 << 0  // 第 1 位 - mint_authority
 	FLAG_FREEZE_AUTHORITY  = 1 << 1  // 第 2 位 - freeze_authority
@@ -70,11 +76,14 @@ type ExtInfo struct {
 	Symbol      string `json:"symbol"`
 	Description string `json:"description"`
 	Image       string `json:"image"`
-	ShowName    bool   `json:"showName"`
 	CreatedOn   string `json:"createdOn"`
 	Twitter     string `json:"twitter"`
 	Website     string `json:"website"`
 	Telegram    string `json:"telegram"`
+	Banner      string `json:"banner"`
+	Rules       string `json:"rules"`
+	Sort        uint   `json:"sort"`
+	ShowName    bool   `json:"showName"`
 }
 
 func (t *TokenInfo) SetFlag(flag int) {
@@ -238,4 +247,15 @@ func ListTokenInfosByCursor(lastID int64, chainType uint8, createdPlatformType u
 		Find(&infos).Error
 
 	return infos, err
+}
+
+func (t *TokenInfoRepo) GetTokenInfoByAddress(tokenAddress string, chainType uint8) (*TokenInfo, error) {
+	var tokenInfo TokenInfo
+	err := DB.Model(&TokenInfo{}).
+		Where("token_address = ? AND chain_type = ?", tokenAddress, chainType).
+		First(&tokenInfo).Error
+	if err != nil {
+		return nil, err
+	}
+	return &tokenInfo, nil
 }
