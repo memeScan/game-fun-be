@@ -6,6 +6,12 @@ import (
 	"gorm.io/gorm"
 )
 
+type PointRecordsRepo struct{}
+
+func NewPointRecordsRepo() *PointRecordsRepo {
+	return &PointRecordsRepo{}
+}
+
 // PointRecords 积分记录表
 type PointRecords struct {
 	ID              uint      `gorm:"column:id;primaryKey;autoIncrement" json:"id"`
@@ -26,13 +32,13 @@ func (PointRecords) TableName() string {
 }
 
 // CreatePointRecord 创建积分记录
-func CreatePointRecord(record *PointRecords) error {
+func (r *PointRecordsRepo) CreatePointRecord(record *PointRecords) error {
 	return DB.Create(record).Error
 }
 
 // GetPointRecordsByUserIDWithCursor retrieves point records for a user with cursor-based pagination.
 // Returns records, next cursor (if any), hasMore flag, and error
-func GetPointRecordsByUserIDWithCursor(userID uint64, cursor *uint, limit int) ([]*PointRecords, *uint, bool, error) {
+func (r *PointRecordsRepo) GetPointRecordsByUserIDWithCursor(userID uint64, cursor *uint, limit int) ([]*PointRecords, *uint, bool, error) {
 	var records []*PointRecords
 	query := DB.Where("user_id = ?", userID).Order("id desc").Limit(limit + 1) // Request one extra record
 
