@@ -20,8 +20,11 @@ type UserInfo struct {
 	TwitterID        string     `gorm:"column:twitter_id;type:varchar(64);omitempty" json:"twitter_id"`
 	TwitterUsername  string     `gorm:"column:twitter_username;type:varchar(64);omitempty" json:"twitter_username"`
 	InviterID        uint       `gorm:"column:inviter_id;type:bigint unsigned;omitempty" json:"inviter_id"`
+	ParentInviteId   uint       `gorm:"column:parent_inviter_id;type:bigint unsigned;omitempty" json:"parent_inviter_id"`
 	InvitationCode   string     `gorm:"column:invitation_code;type:varchar(32);uniqueIndex;not null" json:"invitation_code"`
-	Points           float64    `gorm:"column:points;type:decimal(20,8);not null;default:0" json:"points"`
+	TradingPoints    float64    `gorm:"column:trading_points;type:decimal(20,8);not null;default:0" json:"trading_points"`
+	InvitePoints     float64    `gorm:"column:invite_points;type:decimal(20,8);not null;default:0" json:"invite_points"`
+	AvaliablePoints  float64    `gorm:"column:avaliable_points;type:decimal(20,8);not null;default:0" json:"avaliable_points"`
 	Status           uint8      `gorm:"column:status;type:tinyint(4);not null" json:"status"`
 	FirstTradingTime *time.Time `gorm:"column:first_trading_time;type:datetime;omitempty" json:"first_trading_time"`
 	ChainType        uint8      `gorm:"column:chain_type;type:tinyint;omitempty" json:"chain_type"`
@@ -139,6 +142,21 @@ func (r *UserInfoRepo) GetUserByAddress(address string, chainType uint8) (*UserI
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf("user not found with address %s and chain type %d", address, chainType)
+		}
+		return nil, result.Error
+	}
+
+	return &user, nil
+}
+
+func (r *UserInfoRepo) GetUserByUserID(userID uint64) (*UserInfo, error) {
+	var user UserInfo
+
+	// 查询用户信息
+	result := DB.Where("id = ? ", userID).First(&user)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("user not found with ID %d", userID)
 		}
 		return nil, result.Error
 	}
