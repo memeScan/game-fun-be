@@ -1,9 +1,3 @@
-// @title game-fun AI API
-// @version 1.0
-// @description This is the API server for My Token AI.
-// @host localhost:3000
-// @BasePath /api/v1
-
 package main
 
 import (
@@ -68,10 +62,10 @@ func (e Environment) IsValid() bool {
 	}
 }
 
-// @title My API
+// @title Game API
 // @version 1.0
 // @description This is a sample API for demonstration purposes.
-// @host 8.218.102.112:4998
+// @host https://v4-api.frogswap.org/
 // @BasePath /api/v1
 func main() {
 	currentEnv := ParseEnvironment(os.Getenv("APP_ENV"))
