@@ -1,7 +1,10 @@
 package api
 
 import (
+	"fmt"
 	"game-fun-be/internal/service"
+
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -36,7 +39,12 @@ func (p *PointsHandler) Points(c *gin.Context) {
 		c.JSON(errResp.Code, errResp)
 		return
 	}
-	res := p.pointsService.Points(userID, chainType)
+	userIDInt, err := strconv.ParseUint(userID, 10, 64)
+	if err != nil {
+		fmt.Println("Error converting string to int:", err)
+		return
+	}
+	res := p.pointsService.Points(userIDInt, chainType)
 	c.JSON(res.Code, res)
 }
 
@@ -59,17 +67,31 @@ func (p *PointsHandler) PointsDetail(c *gin.Context) {
 		c.JSON(errResp.Code, errResp)
 		return
 	}
-	page, limit, errResp := GetPageAndLimit(c)
-	if errResp != nil {
-		c.JSON(errResp.Code, errResp)
-		return
+	cursorStr := c.Query("cursor")
+	var cursor *uint
+	if cursorStr != "" {
+		if cursorVal, err := strconv.ParseUint(cursorStr, 10, 64); err == nil {
+			cursorUint := uint(cursorVal)
+			cursor = &cursorUint
+		}
 	}
+
+	limit := c.GetInt("limit")
 	chainType, errResp := ParseChainTypeWithResponse(c)
 	if errResp != nil {
 		c.JSON(errResp.Code, errResp)
 		return
 	}
-	res := p.pointsService.PointsDetail(userID, page, limit, chainType)
+	userIDInt, err := strconv.ParseUint(userID, 10, 64)
+	if err != nil {
+		fmt.Println("Error converting string to int:", err)
+		return
+	}
+	res, err := p.pointsService.PointsDetail(userIDInt, cursor, limit, chainType)
+	if err != nil {
+		c.JSON(res.Code, res)
+		return
+	}
 	c.JSON(res.Code, res)
 }
 
