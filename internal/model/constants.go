@@ -64,6 +64,25 @@ func (c ChainType) String() string {
 	}
 }
 
+// String 方法用于返回 ChainType 的字符串表示
+func (c ChainType) Uint8() uint8 {
+	return uint8(c)
+}
+
+// String 方法用于返回 ChainType 的字符串表示
+func (c ChainType) ToString() string {
+	switch c {
+	case ChainTypeSolana:
+		return "solana"
+	case ChainTypeEthereum:
+		return "ethereum"
+	case ChainTypeBSC:
+		return "bsc"
+	default:
+		return "Unknown"
+	}
+}
+
 // FromString 根据字符串参数（如 sol/eth/bsc）返回 ChainType
 func ChainTypeFromString(chainStr string) ChainType {
 	switch chainStr {

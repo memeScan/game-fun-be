@@ -1,6 +1,5 @@
 # 忽略 Go 编译生成的文件
 bin/
-pkg/
 dist/
 __debug_bin*
 game-fun-be
@@ -44,3 +43,8 @@ Desktop.ini
 # 忽略其他临时文件
 tmp/
 temp/
+
+main.go
+docs.go
+swagger.json
+swagger.yaml

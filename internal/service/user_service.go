@@ -14,7 +14,8 @@ import (
 )
 
 type UserServiceImpl struct {
-	userInfoRepo *model.UserInfoRepo
+	userInfoRepo              *model.UserInfoRepo
+	UserAuthenticationLogRepo *model.UserAuthenticationLogRepo
 }
 
 func NewUserServiceImpl(userInfoRepo *model.UserInfoRepo) *UserServiceImpl {
@@ -24,12 +25,32 @@ func NewUserServiceImpl(userInfoRepo *model.UserInfoRepo) *UserServiceImpl {
 }
 
 func (s UserServiceImpl) Login(req request.LoginRequest, chainType model.ChainType) response.Response {
+	// timestamp, err := time.Parse(time.RFC3339, req.Timestamp)
+	// if err != nil {
+	// 	s.insertAuthLog(req, 0, "invalid timestamp format", err)
+	// 	return response.Err(http.StatusBadRequest, "Invalid timestamp format", err)
+	// }
+	// if time.Since(timestamp) > 3*time.Minute {
+	// 	s.insertAuthLog(req, 0, "login timeout", nil)
+	// 	return response.Err(http.StatusBadRequest, "Login timeout, please try again", nil)
+	// }
+
+	isUsed, err := s.UserAuthenticationLogRepo.IsSignatureUsed(req.Address, req.Signature)
+	if err != nil {
+		s.insertAuthLog(req, 0, "failed to check signature", err)
+		return response.Err(http.StatusInternalServerError, "failed to check signature", err)
+	}
+	if isUsed {
+		s.insertAuthLog(req, 0, "signature already used", nil)
+		return response.Err(http.StatusBadRequest, "signature already used, please sign again", nil)
+	}
+
 	var loginResponse response.LoginResponse
 	switch chainType {
 	case model.ChainTypeSolana:
-
 		userInfo, err := s.userInfoRepo.GetOrCreateUserByAddress(req.Address, uint8(chainType), req.InviteCode)
 		if err != nil {
+			s.insertAuthLog(req, 0, "failed to get or create user", err)
 			return response.Err(http.StatusInternalServerError, "Failed to get or create user", err)
 		}
 
@@ -39,6 +60,7 @@ func (s UserServiceImpl) Login(req request.LoginRequest, chainType model.ChainTy
 
 		token, exists, err := redis.GetToken(userTokenKey)
 		if err != nil {
+			s.insertAuthLog(req, 0, "failed to get token from Redis", err)
 			return response.Err(http.StatusInternalServerError, "Failed to get token from Redis", err)
 		}
 
@@ -52,26 +74,53 @@ func (s UserServiceImpl) Login(req request.LoginRequest, chainType model.ChainTy
 
 		isValid, err := VerifySolanaSignature(req.Address, req.Signature, message)
 		if err != nil || !isValid {
+			s.insertAuthLog(req, 0, "signature verification failed", err)
 			return response.Err(response.CodeUnauthorized, "Signature verification failed", err)
 		}
 
 		token, expireTime, err := auth.GenerateJWT(userInfo.Address, userIDStr, model.TokenExpireDuration)
 		if err != nil {
+			s.insertAuthLog(req, 0, "failed to generate JWT", err)
 			return response.Err(http.StatusInternalServerError, "Failed to generate JWT", err)
 		}
 
 		err = redis.Set(userTokenKey, token, model.TokenExpireDuration)
 		if err != nil {
+			s.insertAuthLog(req, 0, "failed to store token in Redis", err)
 			return response.Err(http.StatusInternalServerError, "Failed to store token in Redis", err)
+		}
+
+		if err := s.insertAuthLog(req, 1, "login successful", nil); err != nil {
+			return response.Err(http.StatusInternalServerError, "Failed to create authentication log", err)
 		}
 
 		loginResponse = buildLoginResponse(token, expireTime, userInfo)
 
 	default:
+		s.insertAuthLog(req, 0, fmt.Sprintf("unsupported chain type: %v", chainType), nil)
 		return response.Err(response.CodeUnauthorized, fmt.Sprintf("Unsupported chain type: %v", chainType), nil)
 	}
 
 	return response.Success(loginResponse)
+}
+
+func (s UserServiceImpl) insertAuthLog(req request.LoginRequest, status int8, message string, err error) error {
+	timestamp, _ := time.Parse(time.RFC3339, req.Timestamp)
+	authLog := &model.UserAuthenticationLog{
+		Address:       req.Address,
+		Message:       req.Timestamp,
+		Signature:     req.Signature,
+		Status:        status,
+		SignatureTime: timestamp,
+		CreateTime:    time.Now(),
+		UpdateTime:    time.Now(),
+	}
+	if err != nil {
+		authLog.Message = fmt.Sprintf("%s: %v", message, err)
+	} else {
+		authLog.Message = message
+	}
+	return s.UserAuthenticationLogRepo.CreateUserAuthenticationLog(authLog)
 }
 
 func buildLoginResponse(token string, expireTime time.Time, userInfo *model.UserInfo) response.LoginResponse {

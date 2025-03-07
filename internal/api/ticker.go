@@ -86,7 +86,7 @@ func (t *TickersHandler) TickerDetail(c *gin.Context) {
 // @Param ticker_address path string true "代币地址"
 // @Success 200 {object} response.Response{data=response.GetTickerResponse} "成功返回 Ticker 详情"
 // @Failure 500 {object} response.Response "服务器内部错误"
-// @Router /tickers/{chain_type}/Market/{ticker_address} [get]
+// @Router /tickers/{chain_type}/market/{ticker_address} [get]
 func (t *TickersHandler) MarketTicker(c *gin.Context) {
 	tickerAddress := c.Param("ticker_address")
 	if tickerAddress == "" {

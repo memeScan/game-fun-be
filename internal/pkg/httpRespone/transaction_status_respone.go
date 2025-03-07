@@ -1,10 +1,10 @@
 package httpRespone
 
 type TransactionStatusResponse struct {
-    Code    int         `json:"code"`
-	Message string              `json:"message"`
+	Code    int                   `json:"code"`
+	Message string                `json:"message"`
 	Data    TransactionStatusData `json:"data"`
-}	
+}
 
 type TransactionStatusData struct {
 	Signature     string `json:"signature"`

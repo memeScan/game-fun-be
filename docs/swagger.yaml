@@ -77,7 +77,7 @@ definitions:
   response.LoginResponse:
     description: 登录成功后返回的具体数据
     properties:
-      invite_code:
+      expire_time:
         description: 邀请码
         example: ""
         type: string
@@ -94,7 +94,6 @@ definitions:
     description: 市场的基本信息
     properties:
       create_timestamp:
-        description: 创建时间戳
         example: 1740033455
         type: integer
       creator:
@@ -102,7 +101,6 @@ definitions:
         example: 3P3PMv28AM7SvNkGmAdHCusPwahSB9QG9z5o4gTvmNBX
         type: string
       holders:
-        description: 持有者数量
         example: 4204
         type: integer
       market:
@@ -119,8 +117,11 @@ definitions:
         type: string
       price:
         description: 当前价格
-        example: "0.000050417320729"
-        type: string
+        example: 5.0417320729e-05
+        type: number
+      rank:
+        example: 1
+        type: integer
       token_mint:
         description: 代币铸造地址
         example: suprkbfvwpFZXzWaoKjTzGkW1nkvvwK9n2E6g1zyLFo
@@ -196,18 +197,6 @@ definitions:
   response.MarketTicker:
     description: 市场的行情数据
     properties:
-      buy_native_volume_1h:
-        description: 1小时买入原生代币交易量
-        example: "19.071274881"
-        type: string
-      buy_native_volume_5m:
-        description: 5分钟买入原生代币交易量
-        example: "3.138140370"
-        type: string
-      buy_native_volume_24h:
-        description: 24小时买入原生代币交易量
-        example: "703.884254256"
-        type: string
       buy_token_volume_1h:
         description: 1小时买入代币交易量
         example: "379231.972430"
@@ -232,76 +221,48 @@ definitions:
         description: 24小时买入交易次数
         example: 7566
         type: integer
-      high_1h:
-        description: 1小时最高价
-        example: "0.000050417320729"
-        type: string
-      high_5m:
-        description: 5分钟最高价
-        example: "0.000050417320729"
-        type: string
-      high_24h:
-        description: 24小时最高价
-        example: "0.000050417320729"
-        type: string
       last_swap_at:
         description: 最后交易时间戳
         example: 1740887399
         type: integer
-      low_1h:
-        description: 1小时最低价
-        example: "0.000050161350930"
-        type: string
-      low_5m:
-        description: 5分钟最低价
-        example: "0.000050375183502"
-        type: string
-      low_24h:
-        description: 24小时最低价
-        example: "0.000041158184158"
-        type: string
       market_cap:
         description: 市值
         example: "50417.320729000000000"
         type: string
-      native_volume_1h:
-        description: 1小时原生代币交易量
-        example: "19.071274881"
-        type: string
-      native_volume_5m:
-        description: 5分钟原生代币交易量
-        example: "3.138140370"
-        type: string
-      native_volume_24h:
-        description: 24小时原生代币交易量
-        example: "704.558749824"
-        type: string
       price_change_1h:
-        description: 1小时价格变化
+        description: |-
+          NativeVolume1H     string `json:"native_volume_1h" example:"19.071274881"`        // 1小时原生代币交易量
+          BuyNativeVolume1H  string `json:"buy_native_volume_1h" example:"19.071274881"`    // 1小时买入原生代币交易量
         example: "0.005103"
         type: string
       price_change_5m:
-        description: 5分钟价格变化
+        description: |-
+          NativeVolume5M     string `json:"native_volume_5m" example:"3.138140370"`         // 5分钟原生代币交易量
+          BuyNativeVolume5M  string `json:"buy_native_volume_5m" example:"3.138140370"`     // 5分钟买入原生代币交易量
         example: "0.000836"
         type: string
       price_change_24h:
-        description: 24小时价格变化
+        description: |-
+          NativeVolume24H    string `json:"native_volume_24h" example:"704.558749824"`      // 24小时原生代币交易量
+          BuyNativeVolume24H string `json:"buy_native_volume_24h" example:"703.884254256"`  // 24小时买入原生代币交易量
         example: "0.224965"
         type: string
-      rank:
-        description: 排名
-        example: 1
-        type: integer
       token_volume_1h:
-        description: 1小时代币交易量
+        description: |-
+          High1H             string `json:"high_1h" example:"0.000050417320729"`            // 1小时最高价
+          Low1H              string `json:"low_1h" example:"0.000050161350930"`             // 1小时最低价
         example: "379231.972430"
         type: string
       token_volume_5m:
-        description: 5分钟代币交易量
+        description: |-
+          High5M             string `json:"high_5m" example:"0.000050417320729"`            // 5分钟最高价
+          Low5M              string `json:"low_5m" example:"0.000050375183502"`             // 5分钟最低价
         example: "62269.324250"
         type: string
       token_volume_24h:
-        description: 24小时代币交易量
+        description: |-
+          High24H            string `json:"high_24h" example:"0.000050417320729"`           // 24小时最高价
+          Low24H             string `json:"low_24h" example:"0.000041158184158"`            // 24小时最低价
         example: "15450301.872331"
         type: string
       tx_count_1h:
@@ -379,10 +340,6 @@ definitions:
     type: object
   response.PointsDetail:
     properties:
-      amount:
-        description: 金额
-        example: "0.000182"
-        type: string
       points:
         description: 积分
         example: "0.000182"
@@ -398,11 +355,17 @@ definitions:
     type: object
   response.PointsDetailsResponse:
     properties:
+      cursor:
+        description: 游标
+        type: integer
       details:
         description: 积分明细列表
         items:
           $ref: '#/definitions/response.PointsDetail'
         type: array
+      has_more:
+        description: 是否还有更多
+        type: boolean
     type: object
   response.PointsEstimatedResponse:
     properties:
@@ -470,7 +433,6 @@ definitions:
         type: array
     type: object
   response.TickerItem:
-    description: 单个市场的详细信息
     properties:
       market:
         allOf:
@@ -486,7 +448,6 @@ definitions:
         description: 市场行情
     type: object
   response.TickersResponse:
-    description: 市场行情的具体数据
     properties:
       cursor:
         description: 分页游标
@@ -529,6 +490,9 @@ definitions:
         description: 持有者钱包地址
         example: 669VYcBRq51iQzFiPTQcsW2CsvLfHM9AwVmaoM1mAAR7
         type: string
+      amount:
+        description: 持有代币的数量
+        type: string
       is_associated_bonding_curve:
         description: 是否与 Bonding Curve 关联
         example: false
@@ -549,6 +513,9 @@ definitions:
         description: 持有代币的百分比
         example: "100.000000"
         type: string
+      ui_amount:
+        description: 代币的 UI 显示数量
+        type: number
       user_profile:
         description: 用户资料（可能为空）
     type: object
@@ -723,20 +690,16 @@ definitions:
     description: 包含用户 ID、地址、昵称、头像和描述等信息。
     properties:
       address:
-        description: 用户地址
         type: string
-      avatar:
-        description: 用户头像
+      invite_code:
+        example: ""
         type: string
-      description:
-        description: 用户描述
+      twitter_id:
         type: string
-      nickname:
-        description: 用户昵称
+      twitter_username:
         type: string
       user_id:
-        description: 用户 ID
-        type: string
+        type: integer
     type: object
 host: 8.218.102.112:4998
 info:
@@ -1144,7 +1107,43 @@ paths:
       summary: 获取市场行情数据
       tags:
       - 市场行情
-  /tickers/{chain_type}/{ticker_address}:
+  /tickers/{chain_type}/Market/{ticker_address}:
+    get:
+      consumes:
+      - application/json
+      description: 根据链类型和代币地址获取 Ticker 的详细信息。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance
+        Smart Chain）。
+      parameters:
+      - description: 链类型（sol、eth、bsc）
+        in: path
+        name: chain_type
+        required: true
+        type: string
+      - description: 代币地址
+        in: path
+        name: ticker_address
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回 Ticker 详情
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.GetTickerResponse'
+              type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取 Ticker 详情
+      tags:
+      - 市场行情
+  /tickers/{chain_type}/detail/{ticker_address}:
     get:
       consumes:
       - application/json

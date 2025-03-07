@@ -25,7 +25,7 @@ type UserInfo struct {
 	InvitationCode   string     `gorm:"column:invitation_code;type:varchar(32);uniqueIndex;not null" json:"invitation_code"`
 	TradingPoints    float64    `gorm:"column:trading_points;type:decimal(20,8);not null;default:0" json:"trading_points"`
 	InvitePoints     float64    `gorm:"column:invite_points;type:decimal(20,8);not null;default:0" json:"invite_points"`
-	AvaliablePoints  float64    `gorm:"column:avaliable_points;type:decimal(20,8);not null;default:0" json:"avaliable_points"`
+	AvailablePoints  float64    `gorm:"column:available_points;type:decimal(20,8);not null;default:0" json:"avaliable_points"`
 	Status           uint8      `gorm:"column:status;type:tinyint(4);not null" json:"status"`
 	FirstTradingTime *time.Time `gorm:"column:first_trading_time;type:datetime;omitempty" json:"first_trading_time"`
 	ChainType        uint8      `gorm:"column:chain_type;type:tinyint;omitempty" json:"chain_type"`

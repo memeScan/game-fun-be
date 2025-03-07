@@ -2,11 +2,11 @@ package httpRespone
 
 // PriorityFeeLevels represents the different levels of gas fees
 type PriorityFeeLevels struct {
-	Min      float64 `json:"min"`
-	Low      float64 `json:"low"`
-	Medium   float64 `json:"medium"`
-	High     float64 `json:"high"`
-	VeryHigh float64 `json:"veryHigh"`
+	Min       float64 `json:"min"`
+	Low       float64 `json:"low"`
+	Medium    float64 `json:"medium"`
+	High      float64 `json:"high"`
+	VeryHigh  float64 `json:"veryHigh"`
 	UnsafeMax float64 `json:"unsafeMax"`
 }
 
@@ -21,4 +21,3 @@ type GasFee struct {
 	Data    GasFeeResponse `json:"data"`
 	Message string         `json:"message"`
 }
-

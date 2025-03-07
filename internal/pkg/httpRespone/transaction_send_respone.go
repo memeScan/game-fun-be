@@ -1,9 +1,9 @@
 package httpRespone
 
 type TransactionSendResponse struct {
-	Code    int    `json:"code"`
+	Code    int          `json:"code"`
 	Data    ResponseData `json:"data"`
-	Message string `json:"message"`
+	Message string       `json:"message"`
 }
 
 type ResponseData struct {

@@ -624,6 +624,120 @@ const docTemplate = `{
                 }
             }
         },
+        "/tickers/{chain_type}/Market/{ticker_address}": {
+            "get": {
+                "description": "根据链类型和代币地址获取 Ticker 的详细信息。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "市场行情"
+                ],
+                "summary": "获取 Ticker 详情",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "链类型（sol、eth、bsc）",
+                        "name": "chain_type",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "代币地址",
+                        "name": "ticker_address",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回 Ticker 详情",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.GetTickerResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/tickers/{chain_type}/detail/{ticker_address}": {
+            "get": {
+                "description": "根据链类型和代币地址获取 Ticker 的详细信息。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "市场行情"
+                ],
+                "summary": "获取 Ticker 详情",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "链类型（sol、eth、bsc）",
+                        "name": "chain_type",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "代币地址",
+                        "name": "ticker_address",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回 Ticker 详情",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.GetTickerResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/tickers/{chain_type}/search": {
             "get": {
                 "description": "根据链类型、搜索参数、分页参数等条件搜索 Tickers。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
@@ -781,63 +895,6 @@ const docTemplate = `{
                                     "properties": {
                                         "data": {
                                             "$ref": "#/definitions/response.TokenDistributionResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "500": {
-                        "description": "服务器内部错误",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/tickers/{chain_type}/{ticker_address}": {
-            "get": {
-                "description": "根据链类型和代币地址获取 Ticker 的详细信息。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "市场行情"
-                ],
-                "summary": "获取 Ticker 详情",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "链类型（sol、eth、bsc）",
-                        "name": "chain_type",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "代币地址",
-                        "name": "ticker_address",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "成功返回 Ticker 详情",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/response.GetTickerResponse"
                                         }
                                     }
                                 }
@@ -1458,7 +1515,7 @@ const docTemplate = `{
             "description": "登录成功后返回的具体数据",
             "type": "object",
             "properties": {
-                "invite_code": {
+                "expire_time": {
                     "description": "邀请码",
                     "type": "string",
                     "example": ""
@@ -1483,7 +1540,6 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "create_timestamp": {
-                    "description": "创建时间戳",
                     "type": "integer",
                     "example": 1740033455
                 },
@@ -1493,7 +1549,6 @@ const docTemplate = `{
                     "example": "3P3PMv28AM7SvNkGmAdHCusPwahSB9QG9z5o4gTvmNBX"
                 },
                 "holders": {
-                    "description": "持有者数量",
                     "type": "integer",
                     "example": 4204
                 },
@@ -1514,8 +1569,12 @@ const docTemplate = `{
                 },
                 "price": {
                     "description": "当前价格",
-                    "type": "string",
-                    "example": "0.000050417320729"
+                    "type": "number",
+                    "example": 0.000050417320729
+                },
+                "rank": {
+                    "type": "integer",
+                    "example": 1
                 },
                 "token_mint": {
                     "description": "代币铸造地址",
@@ -1623,21 +1682,6 @@ const docTemplate = `{
             "description": "市场的行情数据",
             "type": "object",
             "properties": {
-                "buy_native_volume_1h": {
-                    "description": "1小时买入原生代币交易量",
-                    "type": "string",
-                    "example": "19.071274881"
-                },
-                "buy_native_volume_24h": {
-                    "description": "24小时买入原生代币交易量",
-                    "type": "string",
-                    "example": "703.884254256"
-                },
-                "buy_native_volume_5m": {
-                    "description": "5分钟买入原生代币交易量",
-                    "type": "string",
-                    "example": "3.138140370"
-                },
                 "buy_token_volume_1h": {
                     "description": "1小时买入代币交易量",
                     "type": "string",
@@ -1668,93 +1712,43 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 25
                 },
-                "high_1h": {
-                    "description": "1小时最高价",
-                    "type": "string",
-                    "example": "0.000050417320729"
-                },
-                "high_24h": {
-                    "description": "24小时最高价",
-                    "type": "string",
-                    "example": "0.000050417320729"
-                },
-                "high_5m": {
-                    "description": "5分钟最高价",
-                    "type": "string",
-                    "example": "0.000050417320729"
-                },
                 "last_swap_at": {
                     "description": "最后交易时间戳",
                     "type": "integer",
                     "example": 1740887399
-                },
-                "low_1h": {
-                    "description": "1小时最低价",
-                    "type": "string",
-                    "example": "0.000050161350930"
-                },
-                "low_24h": {
-                    "description": "24小时最低价",
-                    "type": "string",
-                    "example": "0.000041158184158"
-                },
-                "low_5m": {
-                    "description": "5分钟最低价",
-                    "type": "string",
-                    "example": "0.000050375183502"
                 },
                 "market_cap": {
                     "description": "市值",
                     "type": "string",
                     "example": "50417.320729000000000"
                 },
-                "native_volume_1h": {
-                    "description": "1小时原生代币交易量",
-                    "type": "string",
-                    "example": "19.071274881"
-                },
-                "native_volume_24h": {
-                    "description": "24小时原生代币交易量",
-                    "type": "string",
-                    "example": "704.558749824"
-                },
-                "native_volume_5m": {
-                    "description": "5分钟原生代币交易量",
-                    "type": "string",
-                    "example": "3.138140370"
-                },
                 "price_change_1h": {
-                    "description": "1小时价格变化",
+                    "description": "NativeVolume1H     string ` + "`" + `json:\"native_volume_1h\" example:\"19.071274881\"` + "`" + `        // 1小时原生代币交易量\nBuyNativeVolume1H  string ` + "`" + `json:\"buy_native_volume_1h\" example:\"19.071274881\"` + "`" + `    // 1小时买入原生代币交易量",
                     "type": "string",
                     "example": "0.005103"
                 },
                 "price_change_24h": {
-                    "description": "24小时价格变化",
+                    "description": "NativeVolume24H    string ` + "`" + `json:\"native_volume_24h\" example:\"704.558749824\"` + "`" + `      // 24小时原生代币交易量\nBuyNativeVolume24H string ` + "`" + `json:\"buy_native_volume_24h\" example:\"703.884254256\"` + "`" + `  // 24小时买入原生代币交易量",
                     "type": "string",
                     "example": "0.224965"
                 },
                 "price_change_5m": {
-                    "description": "5分钟价格变化",
+                    "description": "NativeVolume5M     string ` + "`" + `json:\"native_volume_5m\" example:\"3.138140370\"` + "`" + `         // 5分钟原生代币交易量\nBuyNativeVolume5M  string ` + "`" + `json:\"buy_native_volume_5m\" example:\"3.138140370\"` + "`" + `     // 5分钟买入原生代币交易量",
                     "type": "string",
                     "example": "0.000836"
                 },
-                "rank": {
-                    "description": "排名",
-                    "type": "integer",
-                    "example": 1
-                },
                 "token_volume_1h": {
-                    "description": "1小时代币交易量",
+                    "description": "High1H             string ` + "`" + `json:\"high_1h\" example:\"0.000050417320729\"` + "`" + `            // 1小时最高价\nLow1H              string ` + "`" + `json:\"low_1h\" example:\"0.000050161350930\"` + "`" + `             // 1小时最低价",
                     "type": "string",
                     "example": "379231.972430"
                 },
                 "token_volume_24h": {
-                    "description": "24小时代币交易量",
+                    "description": "High24H            string ` + "`" + `json:\"high_24h\" example:\"0.000050417320729\"` + "`" + `           // 24小时最高价\nLow24H             string ` + "`" + `json:\"low_24h\" example:\"0.000041158184158\"` + "`" + `            // 24小时最低价",
                     "type": "string",
                     "example": "15450301.872331"
                 },
                 "token_volume_5m": {
-                    "description": "5分钟代币交易量",
+                    "description": "High5M             string ` + "`" + `json:\"high_5m\" example:\"0.000050417320729\"` + "`" + `            // 5分钟最高价\nLow5M              string ` + "`" + `json:\"low_5m\" example:\"0.000050375183502\"` + "`" + `             // 5分钟最低价",
                     "type": "string",
                     "example": "62269.324250"
                 },
@@ -1862,11 +1856,6 @@ const docTemplate = `{
         "response.PointsDetail": {
             "type": "object",
             "properties": {
-                "amount": {
-                    "description": "金额",
-                    "type": "string",
-                    "example": "0.000182"
-                },
                 "points": {
                     "description": "积分",
                     "type": "string",
@@ -1887,12 +1876,20 @@ const docTemplate = `{
         "response.PointsDetailsResponse": {
             "type": "object",
             "properties": {
+                "cursor": {
+                    "description": "游标",
+                    "type": "integer"
+                },
                 "details": {
                     "description": "积分明细列表",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/response.PointsDetail"
                     }
+                },
+                "has_more": {
+                    "description": "是否还有更多",
+                    "type": "boolean"
                 }
             }
         },
@@ -1988,7 +1985,6 @@ const docTemplate = `{
             }
         },
         "response.TickerItem": {
-            "description": "单个市场的详细信息",
             "type": "object",
             "properties": {
                 "market": {
@@ -2018,7 +2014,6 @@ const docTemplate = `{
             }
         },
         "response.TickersResponse": {
-            "description": "市场行情的具体数据",
             "type": "object",
             "properties": {
                 "cursor": {
@@ -2079,6 +2074,10 @@ const docTemplate = `{
                     "type": "string",
                     "example": "669VYcBRq51iQzFiPTQcsW2CsvLfHM9AwVmaoM1mAAR7"
                 },
+                "amount": {
+                    "description": "持有代币的数量",
+                    "type": "string"
+                },
                 "is_associated_bonding_curve": {
                     "description": "是否与 Bonding Curve 关联",
                     "type": "boolean",
@@ -2106,6 +2105,10 @@ const docTemplate = `{
                     "description": "持有代币的百分比",
                     "type": "string",
                     "example": "100.000000"
+                },
+                "ui_amount": {
+                    "description": "代币的 UI 显示数量",
+                    "type": "number"
                 },
                 "user_profile": {
                     "description": "用户资料（可能为空）"
@@ -2348,24 +2351,20 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "address": {
-                    "description": "用户地址",
                     "type": "string"
                 },
-                "avatar": {
-                    "description": "用户头像",
+                "invite_code": {
+                    "type": "string",
+                    "example": ""
+                },
+                "twitter_id": {
                     "type": "string"
                 },
-                "description": {
-                    "description": "用户描述",
-                    "type": "string"
-                },
-                "nickname": {
-                    "description": "用户昵称",
+                "twitter_username": {
                     "type": "string"
                 },
                 "user_id": {
-                    "description": "用户 ID",
-                    "type": "string"
+                    "type": "integer"
                 }
             }
         }

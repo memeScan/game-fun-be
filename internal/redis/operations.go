@@ -492,3 +492,15 @@ func GetToken(key string) (string, bool, error) {
 
 	return value, true, nil
 }
+
+// Unmarshal 将 JSON 字符串解析为指定对象
+func Unmarshal(value string, target interface{}) error {
+	if value == "" {
+		return fmt.Errorf("value is empty")
+	}
+
+	if err := json.Unmarshal([]byte(value), target); err != nil {
+		return fmt.Errorf("failed to unmarshal value: %w", err)
+	}
+	return nil
+}
