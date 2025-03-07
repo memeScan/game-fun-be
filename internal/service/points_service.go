@@ -7,11 +7,12 @@ import (
 )
 
 type PointsServiceImpl struct {
-	userInfoRepo *model.UserInfoRepo
+	userInfoRepo       *model.UserInfoRepo
+	pointRecordsRecord *model.PointRecordsRepo
 }
 
-func NewPointsServiceImpl(userInfoRepo *model.UserInfoRepo) *PointsServiceImpl {
-	return &PointsServiceImpl{userInfoRepo: userInfoRepo}
+func NewPointsServiceImpl(userInfoRepo *model.UserInfoRepo, pointRecordsRecord *model.PointRecordsRepo) *PointsServiceImpl {
+	return &PointsServiceImpl{userInfoRepo: userInfoRepo, pointRecordsRecord: pointRecordsRecord}
 }
 
 func (s *PointsServiceImpl) Points(userID uint64, chainType model.ChainType) response.Response {
@@ -22,7 +23,7 @@ func (s *PointsServiceImpl) Points(userID uint64, chainType model.ChainType) res
 }
 
 func (s *PointsServiceImpl) PointsDetail(userID uint64, cursor *uint, limit int, chainType model.ChainType) (response.Response, error) {
-	records, new_curs, has_more, err := model.GetPointRecordsByUserIDWithCursor(userID, cursor, limit)
+	records, new_curs, has_more, err := s.pointRecordsRecord.GetPointRecordsByUserIDWithCursor(userID, cursor, limit)
 	if err != nil {
 		return response.DBErr("", err), err
 	}

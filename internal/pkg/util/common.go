@@ -1,11 +1,17 @@
 package util
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
 	"math/rand"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
+
+const base62Chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
 // RandStringRunes 返回随机字符串
 func RandStringRunes(n int) string {
@@ -37,4 +43,25 @@ func GetEnvAsInt(key string, defaultValue int) int {
 		}
 	}
 	return defaultValue
+}
+
+func GenerateInviteCode(address string) string {
+	uniqueID := fmt.Sprintf("%s-%d", address, time.Now().UnixNano())
+	hash := sha256.Sum256([]byte(uniqueID))
+	hashHex := hex.EncodeToString(hash[:])
+
+	var codeBuilder strings.Builder
+	codeBuilder.Grow(10)
+
+	for i := 0; i < len(hashHex) && codeBuilder.Len() < 10; i++ {
+		char := hashHex[i]
+		index := int(char) % 62
+		codeBuilder.WriteByte(base62Chars[index])
+	}
+
+	for codeBuilder.Len() < 10 {
+		codeBuilder.WriteByte(base62Chars[0])
+	}
+
+	return codeBuilder.String()
 }

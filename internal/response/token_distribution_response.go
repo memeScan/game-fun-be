@@ -18,6 +18,10 @@ type TokenHolder struct {
 	IsAssociatedBondingCurve bool `json:"is_associated_bonding_curve" example:"false"`
 	// 用户资料（可能为空）
 	UserProfile interface{} `json:"user_profile"`
+	// 持有代币的数量
+	Amount string `json:"amount"`
+	// 代币的 UI 显示数量
+	UIAmount float64 `json:"ui_amount"`
 	// 持有者的管理员信息
 	Moderator Moderator `json:"moderator"`
 	// 是否为社区金库

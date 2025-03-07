@@ -1,8 +1,9 @@
 package constants
 
 const (
-	UserTokenKeyFormat = "auth:token:%s" // 定义常量格式
+	UserTokenKeyFormat = "auth:token"
 
+	TokenDistribution = "token:distribution"
 	// RedisKeySolLatestPrice 存储最新 SOL 价格的 Redis 键
 	RedisKeySolLatestPrice = "sol_latest_price"
 	// SolPriceMultiplier SOL 价格的乘数
