@@ -65,11 +65,7 @@ func (e Environment) IsValid() bool {
 // @title Game API
 // @version 1.0
 // @description This is a sample API for demonstration purposes.
-<<<<<<< HEAD
-// @host 192.168.31.48:4881
-=======
-// @host https://v4-api.frogswap.org/
->>>>>>> 1a564fc0762fd78a7ee031f51bd7a41319309a84
+// @host v4-api.frogswap.org
 // @BasePath /api/v1
 func main() {
 	currentEnv := ParseEnvironment(os.Getenv("APP_ENV"))

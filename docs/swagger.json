@@ -2,11 +2,11 @@
     "swagger": "2.0",
     "info": {
         "description": "This is a sample API for demonstration purposes.",
-        "title": "My API",
+        "title": "Game API",
         "contact": {},
         "version": "1.0"
     },
-    "host": "8.218.102.112:4998",
+    "host": "v4-api.frogswap.org",
     "basePath": "/api/v1",
     "paths": {
         "/global/{chain_type}/balance": {
@@ -112,26 +112,6 @@
                         "description": "服务器内部错误",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/health": {
-            "get": {
-                "description": "Check if the service is healthy",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "system"
-                ],
-                "summary": "Health check endpoint",
-                "responses": {
-                    "200": {
-                        "description": "ok",
-                        "schema": {
-                            "type": "string"
                         }
                     }
                 }
@@ -618,7 +598,7 @@
                 }
             }
         },
-        "/tickers/{chain_type}/Market/{ticker_address}": {
+        "/tickers/{chain_type}/detail/{ticker_address}": {
             "get": {
                 "description": "根据链类型和代币地址获取 Ticker 的详细信息。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
                 "consumes": [
@@ -675,7 +655,7 @@
                 }
             }
         },
-        "/tickers/{chain_type}/detail/{ticker_address}": {
+        "/tickers/{chain_type}/market/{ticker_address}": {
             "get": {
                 "description": "根据链类型和代币地址获取 Ticker 的详细信息。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
                 "consumes": [
@@ -1542,10 +1522,6 @@
                     "type": "string",
                     "example": "3P3PMv28AM7SvNkGmAdHCusPwahSB9QG9z5o4gTvmNBX"
                 },
-                "holders": {
-                    "type": "integer",
-                    "example": 4204
-                },
                 "market": {
                     "description": "市场地址",
                     "type": "string",
@@ -1610,6 +1586,9 @@
                     "description": "描述",
                     "type": "string",
                     "example": ""
+                },
+                "github": {
+                    "type": "string"
                 },
                 "image_url": {
                     "description": "图片URL",
@@ -1676,88 +1655,175 @@
             "description": "市场的行情数据",
             "type": "object",
             "properties": {
+                "Sell_tx_count_24h": {
+                    "type": "integer",
+                    "example": 7566
+                },
                 "buy_token_volume_1h": {
-                    "description": "1小时买入代币交易量",
+                    "type": "string",
+                    "example": "379231.972430"
+                },
+                "buy_token_volume_1h_usd": {
                     "type": "string",
                     "example": "379231.972430"
                 },
                 "buy_token_volume_24h": {
-                    "description": "24小时买入代币交易量",
                     "type": "string",
                     "example": "15435782.918031"
                 },
+                "buy_token_volume_24h_usd": {
+                    "type": "string",
+                    "example": "15435782.918031"
+                },
+                "buy_token_volume_30m": {
+                    "type": "string",
+                    "example": "62269.324250"
+                },
+                "buy_token_volume_30m_usd": {
+                    "type": "string",
+                    "example": "62269.324250"
+                },
                 "buy_token_volume_5m": {
-                    "description": "5分钟买入代币交易量",
+                    "type": "string",
+                    "example": "62269.324250"
+                },
+                "buy_token_volume_5m_usd": {
                     "type": "string",
                     "example": "62269.324250"
                 },
                 "buy_tx_count_1h": {
-                    "description": "1小时买入交易次数",
                     "type": "integer",
                     "example": 271
                 },
                 "buy_tx_count_24h": {
-                    "description": "24小时买入交易次数",
                     "type": "integer",
                     "example": 7566
                 },
-                "buy_tx_count_5m": {
-                    "description": "5分钟买入交易次数",
+                "buy_tx_count_30m": {
                     "type": "integer",
                     "example": 25
                 },
+                "buy_tx_count_5m": {
+                    "type": "integer",
+                    "example": 25
+                },
+                "holders": {
+                    "type": "integer",
+                    "example": 4204
+                },
                 "last_swap_at": {
-                    "description": "最后交易时间戳",
                     "type": "integer",
                     "example": 1740887399
                 },
                 "market_cap": {
-                    "description": "市值",
                     "type": "string",
                     "example": "50417.320729000000000"
                 },
                 "price_change_1h": {
-                    "description": "NativeVolume1H     string `json:\"native_volume_1h\" example:\"19.071274881\"`        // 1小时原生代币交易量\nBuyNativeVolume1H  string `json:\"buy_native_volume_1h\" example:\"19.071274881\"`    // 1小时买入原生代币交易量",
                     "type": "string",
                     "example": "0.005103"
                 },
                 "price_change_24h": {
-                    "description": "NativeVolume24H    string `json:\"native_volume_24h\" example:\"704.558749824\"`      // 24小时原生代币交易量\nBuyNativeVolume24H string `json:\"buy_native_volume_24h\" example:\"703.884254256\"`  // 24小时买入原生代币交易量",
                     "type": "string",
                     "example": "0.224965"
                 },
-                "price_change_5m": {
-                    "description": "NativeVolume5M     string `json:\"native_volume_5m\" example:\"3.138140370\"`         // 5分钟原生代币交易量\nBuyNativeVolume5M  string `json:\"buy_native_volume_5m\" example:\"3.138140370\"`     // 5分钟买入原生代币交易量",
+                "price_change_30m": {
                     "type": "string",
                     "example": "0.000836"
                 },
+                "price_change_5m": {
+                    "type": "string",
+                    "example": "0.000836"
+                },
+                "sell_token_volume_1h": {
+                    "type": "string",
+                    "example": "379231.972430"
+                },
+                "sell_token_volume_1h_usd": {
+                    "type": "string",
+                    "example": "379231.972430"
+                },
+                "sell_token_volume_24h": {
+                    "type": "string",
+                    "example": "15435782.918031"
+                },
+                "sell_token_volume_24h_usd": {
+                    "type": "string",
+                    "example": "15435782.918031"
+                },
+                "sell_token_volume_30m": {
+                    "type": "string",
+                    "example": "62269.324250"
+                },
+                "sell_token_volume_30m_usd": {
+                    "type": "string",
+                    "example": "62269.324250"
+                },
+                "sell_token_volume_5m": {
+                    "type": "string",
+                    "example": "62269.324250"
+                },
+                "sell_token_volume_5m_usd": {
+                    "type": "string",
+                    "example": "62269.324250"
+                },
+                "sell_tx_count_1h": {
+                    "type": "integer",
+                    "example": 271
+                },
+                "sell_tx_count_30m": {
+                    "type": "integer",
+                    "example": 25
+                },
+                "sell_tx_count_5m": {
+                    "type": "integer",
+                    "example": 25
+                },
                 "token_volume_1h": {
-                    "description": "High1H             string `json:\"high_1h\" example:\"0.000050417320729\"`            // 1小时最高价\nLow1H              string `json:\"low_1h\" example:\"0.000050161350930\"`             // 1小时最低价",
+                    "type": "string",
+                    "example": "379231.972430"
+                },
+                "token_volume_1h_usd": {
                     "type": "string",
                     "example": "379231.972430"
                 },
                 "token_volume_24h": {
-                    "description": "High24H            string `json:\"high_24h\" example:\"0.000050417320729\"`           // 24小时最高价\nLow24H             string `json:\"low_24h\" example:\"0.000041158184158\"`            // 24小时最低价",
                     "type": "string",
                     "example": "15450301.872331"
                 },
+                "token_volume_24h_usd": {
+                    "type": "string",
+                    "example": "15450301.872331"
+                },
+                "token_volume_30m": {
+                    "type": "string",
+                    "example": "62269.324250"
+                },
+                "token_volume_30m_usd": {
+                    "type": "string",
+                    "example": "62269.324250"
+                },
                 "token_volume_5m": {
-                    "description": "High5M             string `json:\"high_5m\" example:\"0.000050417320729\"`            // 5分钟最高价\nLow5M              string `json:\"low_5m\" example:\"0.000050375183502\"`             // 5分钟最低价",
+                    "type": "string",
+                    "example": "62269.324250"
+                },
+                "token_volume_5m_usd": {
                     "type": "string",
                     "example": "62269.324250"
                 },
                 "tx_count_1h": {
-                    "description": "1小时交易次数",
                     "type": "integer",
                     "example": 271
                 },
                 "tx_count_24h": {
-                    "description": "24小时交易次数",
                     "type": "integer",
                     "example": 7590
                 },
+                "tx_count_30m": {
+                    "type": "integer",
+                    "example": 25
+                },
                 "tx_count_5m": {
-                    "description": "5分钟交易次数",
                     "type": "integer",
                     "example": 25
                 }
