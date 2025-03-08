@@ -85,6 +85,10 @@ func ConsumePumpfunTopics() error {
 	// 添加未知代币处理器
 	topicConsumer.AddHandler(TopicUnknownToken, UnknownTokenHandler)
 
+	// 添加game相关处理器
+	topicConsumer.AddHandler(TopicGameOutTrade, gameOutTradeHandler)
+	topicConsumer.AddHandler(TopicGameInTrade, gameInTradeHandler)
+
 	// 开始消费主题
 	return topicConsumer.ConsumeTopics(AllTopics)
 }
@@ -928,9 +932,8 @@ func processElasticsearchData(transactions []*model.TokenTransaction, tokenInfoM
 
 	// 3. 记录批量索引结果
 	if resp != nil {
-		util.Log().Info("ES批量索引结果 - 成功: %d, 失败: %d, 耗时: %v",
-			len(resp.Succeeded()),
-			len(resp.Failed()),
+		util.Log().Info("ES批量索引结果 - 成功: %d, 耗时: %v",
+			len(resp.Items),
 			indexTime)
 
 		// 如果有失败的文档，记录详细信息
@@ -1243,4 +1246,35 @@ func UnknownTokenHandler(message []byte, topic string) error {
 		return nil
 	}
 
+}
+
+// gameOutTradeHandler 处理代理合约外盘买卖事件
+func gameOutTradeHandler(message []byte, topic string) error {
+	util.Log().Info("gameOutTradeHandler: Processing message from topic %s", topic)
+
+	var tradeMsg model.GameOutTradeMessage
+	if err := json.Unmarshal(message, &tradeMsg); err != nil {
+		util.Log().Error("Failed to unmarshal game-out-trade message: %v", err)
+		return fmt.Errorf("failed to unmarshal game-out-trade message: %v", err)
+	}
+
+	//TODO: 触发积分计算和结算逻辑（更新用户积分、积分记录表）
+	pointService := service.PointServiceImpl{}
+	pointService.CalculateVolumeStatistics()
+
+	return nil
+}
+
+// gameInTradeHandler 处理代理合约内盘买事件（积分兑换买）
+func gameInTradeHandler(message []byte, topic string) error {
+	util.Log().Info("gameInTradeHandler: Processing message from topic %s", topic)
+
+	var tradeMsg model.GameInTradeMessage
+	if err := json.Unmarshal(message, &tradeMsg); err != nil {
+		util.Log().Error("Failed to unmarshal game-in-trade message: %v", err)
+		return fmt.Errorf("failed to unmarshal game-in-trade message: %v", err)
+	}
+	//TODO: 更新积分记录表（类型兑换并购买）
+
+	return nil
 }

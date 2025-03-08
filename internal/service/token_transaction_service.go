@@ -28,6 +28,11 @@ func (service *TokenTransactionService) CreateTokenTransaction(tx *model.TokenTr
 	return tx, nil
 }
 
+// GetTokenTransactionByID 通过交易ID获取代币交易记录
+func (service *TokenTransactionService) GetTokenTransactionByID(date string, transactionID uint64) (*model.TokenTransaction, error) {
+	return model.GetTokenTransactionByID(date, transactionID)
+}
+
 // GetTokenTransactionByHash 通过交易哈希获取代币交易记录
 func (service *TokenTransactionService) GetTokenTransactionByHash(date string, transactionHash string, tokenAddress string) (*model.TokenTransaction, error) {
 	return model.GetTokenTransactionByHash(date, transactionHash, tokenAddress)
@@ -198,6 +203,7 @@ func (s *TokenTransactionService) GetESDoc(tx *model.TokenTransaction, tokenInfo
 	doc := make(map[string]interface{})
 
 	// token_transaction表字段
+	doc["id"] = strconv.FormatUint(tx.ID, 10)
 	doc["transaction_hash"] = tx.TransactionHash
 	doc["token_address"] = tx.TokenAddress
 	doc["user_address"] = tx.UserAddress
@@ -506,6 +512,18 @@ func (service *TokenTransactionService) ConvertRaydiumSwapMessagesToTransactions
 		tx.Progress = decimal.NewFromInt(100)
 		tx.IsComplete = true
 
+		// 判断是否是国库地址
+		if tx.UserAddress == model.TreasuryAddress {
+			tx.IsBuyback = true //是回购交易
+		} else {
+			tx.IsBuyback = false
+		}
+
+		// 判断是否是game代理地址
+		if msg.ParentInstAddress == model.GameProxyAddress {
+			tx.ProxyType = uint8(model.ProxyTypeGame)
+		}
+
 		transactions = append(transactions, tx)
 	}
 	return transactions
@@ -548,7 +566,7 @@ func (service *TokenTransactionService) GetLatestTokenTransaction(tokenAddress s
 
 	// 2. 用索引信息查询具体交易记录
 	dateStr := latestIndex.TransactionDate.Format("20060102")
-	tx, err := service.GetTokenTransactionByHash(dateStr, latestIndex.TransactionHash, tokenAddress)
+	tx, err := service.GetTokenTransactionByID(dateStr, latestIndex.TransactionID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil

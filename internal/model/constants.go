@@ -172,3 +172,17 @@ const (
 	TransactionTypeRemoveLiquidity                            // 4-减池子
 	TransactionTypeBurn                                       // 5-烧币
 )
+
+// ProxyType 代理类型
+type ProxyType uint8
+
+const (
+	ProxyTypeUnknown ProxyType = iota // 0-未知
+	ProxyTypeGame                     // 1-game
+)
+
+// 国库地址
+const TreasuryAddress = "GDN3u3pQmV7aW4QKtRJz7q5Qh5F3XKkY7V3B7hRqT5vF4"
+
+// GameProxyAddress game代理合约地址
+const GameProxyAddress = "GDN3u3pQmV7aW4QKtRJz7q5Qh5F3XKkY7V3B7hRqT5vF4"

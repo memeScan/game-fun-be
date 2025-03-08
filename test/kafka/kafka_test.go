@@ -96,7 +96,7 @@ func TestKafkaIntegration(t *testing.T) {
 		}()
 
 		// 准备批次消息
-		batchSize := 100 // 批次大小
+		batchSize := 1000 // 批次大小
 		messages := make([]*sarama.ProducerMessage, 0, batchSize)
 		for i := 0; i < batchSize; i++ {
 			message := &sarama.ProducerMessage{

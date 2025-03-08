@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"game-fun-be/internal/pkg/util"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -511,4 +512,46 @@ func Unmarshal(value string, target interface{}) error {
 		return fmt.Errorf("failed to unmarshal value: %w", err)
 	}
 	return nil
+}
+
+// GetBatchIDs 从Redis获取一批分布式ID
+func GetBatchIDs(key string, count int64) (int64, int64, error) {
+	// 创建带有超时的上下文
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var endID int64
+	var err error
+
+	// 重试机制
+	maxRetries := 3
+	for i := 0; i < maxRetries; i++ {
+		// 使用 INCRBY 原子操作增加计数器并获取结束ID
+		endID, err = RedisClient.IncrBy(ctx, key, count).Result()
+		if err == nil {
+			break
+		}
+
+		// 检查是否是超时错误
+		if err != nil && strings.Contains(err.Error(), "deadline exceeded") {
+			util.Log().Error("Redis operation timed out, retrying (%d/%d): %v", i+1, maxRetries, err)
+			time.Sleep(100 * time.Millisecond * time.Duration(i+1)) // 指数退避
+			continue
+		}
+
+		// 其他错误直接返回
+		util.Log().Error("Error getting batch IDs from Redis: %v", err)
+		return 0, 0, err
+	}
+
+	// 如果重试后仍然失败
+	if err != nil {
+		util.Log().Error("Failed to get batch IDs after %d retries: %v", maxRetries, err)
+		return 0, 0, err
+	}
+
+	// 计算起始ID
+	startID := endID - count + 1
+
+	return startID, endID, nil
 }

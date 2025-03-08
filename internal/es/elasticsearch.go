@@ -41,12 +41,31 @@ func Elasticsearch() {
 	log.Println("Elasticsearch connected successfully")
 
 	//预创建索引结构
-	err = CreateTokenTransactionIndex(ES_INDEX_TOKEN_TRANSACTIONS)
+	ctx := context.Background()
+	exists, err := ESClient.IndexExists(ES_INDEX_TOKEN_TRANSACTIONS).Do(ctx)
 	if err != nil {
-		log.Fatalf("Error creating token transactions index: %s", err)
+		log.Fatalf("Error checking if index exists: %s", err)
 	}
 
-	log.Printf("Elasticsearch index '%s' created or already exists", ES_INDEX_TOKEN_TRANSACTIONS)
+	if exists {
+		util.Log().Info("Elasticsearch index '%s' already exists", ES_INDEX_TOKEN_TRANSACTIONS)
+	} else {
+		err = CreateTokenTransactionIndex(ES_INDEX_TOKEN_TRANSACTIONS)
+		if err != nil {
+			log.Fatalf("Error creating token transactions index: %s", err)
+		}
+
+		// 创建别名指向索引
+		currentIndex := ES_INDEX_TOKEN_TRANSACTIONS
+		if aliasErr := CreateAlias(ES_INDEX_TOKEN_TRANSACTIONS_ALIAS, currentIndex); aliasErr != nil {
+			util.Log().Error("创建指向索引的别名失败: %v", aliasErr)
+		} else {
+			util.Log().Info("成功创建指向索引的别名: %s", ES_INDEX_TOKEN_TRANSACTIONS_ALIAS)
+		}
+		util.Log().Info("Elasticsearch index '%s' created successfully", ES_INDEX_TOKEN_TRANSACTIONS)
+	}
+
+	// ...
 }
 
 // 这里可以添加其他 Elasticsearch 相关的函数，例如：
@@ -134,7 +153,11 @@ func CreateTokenTransactionIndex(indexName string) error {
 						"ignore_above": 256
 						}
 					}
-				},				
+				},			
+				"id": { 
+            		 "type": "keyword", 
+             		"ignore_above": 20 
+     		 	},	
 				"token_address": {
 					"type": "text",
 					"fields": {
@@ -337,9 +360,9 @@ func BulkIndexDocuments(index string, documents []map[string]interface{}) (*elas
 	addStart := time.Now()
 	docSize := 0
 	for _, doc := range documents {
-		id, ok := doc["transaction_hash"].(string)
+		id, ok := doc["id"].(string)
 		if !ok {
-			return nil, fmt.Errorf("document missing transaction_hash")
+			return nil, fmt.Errorf("document missing id")
 		}
 
 		// 计算文档大小
@@ -492,7 +515,7 @@ func ReindexWithProgress(currentIndex, newIndex string) error {
 			"op_type": "create",
 		},
 		"script": map[string]interface{}{
-			"source": "ctx._id = ctx._source.transaction_hash",
+			"source": "ctx._id = ctx._source.id",
 			"lang":   "painless",
 		},
 		"conflicts": "proceed",
@@ -602,10 +625,10 @@ func ReindexWithProgressBatch(sourceIndex, destIndex string, batchSize int) erro
 				return fmt.Errorf("unmarshal document failed: %w", err)
 			}
 
-			// 安全地获取 transaction_hash
-			docID, ok := source["transaction_hash"].(string)
+			// 安全地获取
+			docID, ok := source["id"].(string)
 			if !ok {
-				util.Log().Info("document missing transaction_hash or invalid type: %v", source)
+				util.Log().Info("document missing id or invalid type: %v", source)
 				continue
 			}
 
