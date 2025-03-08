@@ -85,6 +85,7 @@ func (s *TransactionCkServiceImpl) ConvertToTransactionCks(transactions []*model
 		txCk := &clickhouse.TokenTransactionCk{}
 
 		// 设置基本信息
+		txCk.TransactionID = tx.ID
 		txCk.TransactionHash = tx.TransactionHash
 		txCk.ChainType = tx.ChainType
 		txCk.UserAddress = tx.UserAddress

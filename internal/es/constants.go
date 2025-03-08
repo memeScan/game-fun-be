@@ -7,7 +7,7 @@ const (
 	ES_INDEX_TOKEN_TRANSACTIONS_ALIAS = "token_transactions_alias"
 	// ES_INDEX_TOKEN_TRANSACTIONS 代表代币交易的实际索引名称
 	// 通常用于存储具体的代币交易数据
-	ES_INDEX_TOKEN_TRANSACTIONS = "token_transactions_new"
+	ES_INDEX_TOKEN_TRANSACTIONS = "token_transactions_new_v1"
 	// ES_INDEX_TOKEN_INFO 代表代币信息的索引名称
 	// 用于存储代币的基本信息数据
 	ES_INDEX_TOKEN_INFO = "token_info_v1"

@@ -33,4 +33,7 @@ const (
 
 	// RedisKeyPrefixTokenInfo 代币信息的 Redis key 前缀
 	RedisKeyPrefixTokenInfo = "token:pump:info"
+
+	// RedisKeyTokenTransactionID 代币交易记录的分布式ID生成器的Redis键
+	RedisKeyTokenTransactionID = "token:transaction:id"
 )

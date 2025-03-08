@@ -2,6 +2,8 @@ package model
 
 import (
 	"fmt"
+	"game-fun-be/internal/constants"
+	"game-fun-be/internal/redis"
 	"strings"
 	"time"
 
@@ -11,7 +13,8 @@ import (
 
 // TokenTransaction 代币交易记录模型
 type TokenTransaction struct {
-	TransactionHash       string          `gorm:"column:transaction_hash;primaryKey;type:varchar(88)" json:"transaction_hash"`
+	ID                    uint64          `gorm:"column:id;primaryKey;autoIncrement;type:bigint unsigned" json:"id"`
+	TransactionHash       string          `gorm:"column:transaction_hash;type:varchar(88)" json:"transaction_hash"`
 	TransactionType       uint8           `gorm:"column:transaction_type;type:tinyint unsigned" json:"transaction_type"`
 	MarketAddress         string          `gorm:"column:market_address;type:varchar(64)" json:"market_address"`
 	PoolAddress           string          `gorm:"column:pool_address;type:varchar(64)" json:"pool_address"`
@@ -62,14 +65,19 @@ func GetTokenTransactionByHash(date string, transactionHash string, tokenAddress
 	return &tx, nil
 }
 
+// GetTokenTransactionByID 通过交易ID获取代币交易记录
+func GetTokenTransactionByID(date string, transactionID uint64) (*TokenTransaction, error) {
+	var tx TokenTransaction
+	err := DB.Table(getTableName(date)).Where("id = ? ", transactionID).First(&tx).Error
+	if err != nil {
+		return nil, err
+	}
+	return &tx, nil
+}
+
 // UpdateTokenTransaction 更新代币交易记录
 func UpdateTokenTransaction(tx *TokenTransaction) error {
 	return DB.Save(tx).Error
-}
-
-// DeleteTokenTransaction 删除代币交易记
-func DeleteTokenTransaction(hash string) error {
-	return DB.Where("transaction_hash = ?", hash).Delete(&TokenTransaction{}).Error
 }
 
 // ListTokenTransactions 列出代币交易记录
@@ -98,6 +106,7 @@ func CreateTableForDate(date string) error {
 	tableName := (&TokenTransaction{}).TableName(date)
 	return DB.Exec(fmt.Sprintf(`
 		CREATE TABLE IF NOT EXISTS %s (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '分布式id',
 			transaction_hash VARCHAR(88) NOT NULL COMMENT '交易哈希',
 			transaction_type TINYINT UNSIGNED DEFAULT NULL COMMENT '交易类型：1-买, 2-卖, 3-加池子, 4-减池子, 5-烧币',
 			market_address VARCHAR(64) COMMENT '市场地址',
@@ -108,7 +117,7 @@ func CreateTableForDate(date string) error {
 			block BIGINT UNSIGNED NOT NULL COMMENT '区块高度',
 			platform_type TINYINT UNSIGNED DEFAULT NULL COMMENT '交易平台类型：1-Pump, 2-Raydium',
 			chain_type TINYINT UNSIGNED DEFAULT NULL COMMENT '链类型：1-Solana, 2-Ethereum',
-			native_token_amount BIGINT UNSIGNED NOT NULL COMMENT '链上原生代币数量����� SOL, ETH, BNB',
+			native_token_amount BIGINT UNSIGNED NOT NULL COMMENT '链上原生代币数量',
 			token_amount BIGINT UNSIGNED NOT NULL COMMENT 'Token 数量',
 			decimals TINYINT UNSIGNED DEFAULT 6 COMMENT '精度',
 			user_address VARCHAR(64) NOT NULL COMMENT '用户地址',
@@ -125,9 +134,10 @@ func CreateTableForDate(date string) error {
 			transaction_amount_usd DECIMAL(30, 18) DEFAULT NULL COMMENT '交易额(USD)',
 			create_time datetime DEFAULT NULL COMMENT '创建时间',
 			update_time datetime DEFAULT NULL COMMENT '更新时间',
-			PRIMARY KEY (transaction_hash),
+			PRIMARY KEY (id),
 			KEY IDX_CHAIN_TYPE_TOKEN_ADDRESS (chain_type, token_address),
-			KEY IDX_USER_ADDRESS (user_address)
+			KEY IDX_USER_ADDRESS (user_address),
+			KEY IDX_HASH (transaction_hash)
 		) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT='代币交易记录表'
 	`, tableName)).Error
 }
@@ -145,17 +155,31 @@ func BatchCreateTokenTransactions(txs []*TokenTransaction, date string) error {
 
 	tableName := getTableName(date)
 
+	// 从Redis获取一批分布式ID
+	startID, _, err := redis.GetBatchIDs(constants.RedisKeyTokenTransactionID, int64(len(txs)))
+	if err != nil {
+		return fmt.Errorf("获取分布式ID失败: %v", err)
+	}
+
+	// 为每个交易分配ID
+	currentID := startID
+	for _, tx := range txs {
+		tx.ID = uint64(currentID)
+		currentID++
+	}
+
 	// 用占位符和参数绑定
-	placeholder := "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+	placeholder := "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
 	placeholders := make([]string, len(txs))
 	for i := range placeholders {
 		placeholders[i] = placeholder
 	}
 
 	// 构建参数数组
-	valueArgs := make([]interface{}, 0, len(txs)*27)
+	valueArgs := make([]interface{}, 0, len(txs)*28)
 	for _, tx := range txs {
 		valueArgs = append(valueArgs,
+			tx.ID,
 			tx.TransactionHash,
 			tx.TransactionType,
 			tx.MarketAddress,
@@ -187,6 +211,7 @@ func BatchCreateTokenTransactions(txs []*TokenTransaction, date string) error {
 	}
 
 	query := fmt.Sprintf(`INSERT IGNORE INTO %s (
+		id,
 		transaction_hash,
 		transaction_type,
 		market_address,

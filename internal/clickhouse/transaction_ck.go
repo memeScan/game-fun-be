@@ -9,6 +9,7 @@ import (
 )
 
 type TokenTransactionCk struct {
+	TransactionID        uint64          `db:"transaction_id"`
 	TransactionHash      string          `db:"transaction_hash"`
 	ChainType            uint8           `db:"chain_type"`
 	UserAddress          string          `db:"user_address"`
@@ -46,7 +47,7 @@ type Kline struct {
 func InsertTransaction(tx *TokenTransactionCk) error {
 	query := `
         INSERT INTO token_transaction_ck_new (
-            transaction_hash, chain_type, user_address, token_address,
+            transaction_id, transaction_hash, chain_type, user_address, token_address,
             pool_address, base_token_amount, quote_token_amount, decimals,
             base_token_price, quote_token_price, transaction_amount_usd,
             transaction_type, platform_type, transaction_time
@@ -56,6 +57,7 @@ func InsertTransaction(tx *TokenTransactionCk) error {
     `
 
 	err := ClickHouseClient.Exec(context.Background(), query,
+		tx.TransactionID,
 		tx.TransactionHash,
 		tx.ChainType,
 		tx.UserAddress,
@@ -82,7 +84,7 @@ func InsertTransaction(tx *TokenTransactionCk) error {
 func BatchInsertTransactions(txs []*TokenTransactionCk) error {
 	batch, err := ClickHouseClient.PrepareBatch(context.Background(), `
         INSERT INTO token_transaction_ck_new (
-            transaction_hash, chain_type, user_address, token_address,
+            transaction_id, transaction_hash, chain_type, user_address, token_address,
             pool_address, base_token_amount, quote_token_amount, decimals,
             base_token_price, quote_token_price, transaction_amount_usd,
             transaction_type, platform_type, transaction_time
@@ -95,6 +97,7 @@ func BatchInsertTransactions(txs []*TokenTransactionCk) error {
 
 	for _, tx := range txs {
 		err := batch.Append(
+			tx.TransactionID,
 			tx.TransactionHash,
 			tx.ChainType,
 			tx.UserAddress,
@@ -228,6 +231,7 @@ func GetTokenTransactions(tokenAddress string, limit int) ([]TokenTransactionCk,
 	for rows.Next() {
 		var tx TokenTransactionCk
 		if err := rows.Scan(
+			&tx.TransactionID,
 			&tx.TransactionHash,
 			&tx.ChainType,
 			&tx.UserAddress,

@@ -928,9 +928,8 @@ func processElasticsearchData(transactions []*model.TokenTransaction, tokenInfoM
 
 	// 3. 记录批量索引结果
 	if resp != nil {
-		util.Log().Info("ES批量索引结果 - 成功: %d, 失败: %d, 耗时: %v",
-			len(resp.Succeeded()),
-			len(resp.Failed()),
+		util.Log().Info("ES批量索引结果 - 成功: %d, 耗时: %v",
+			len(resp.Items),
 			indexTime)
 
 		// 如果有失败的文档，记录详细信息

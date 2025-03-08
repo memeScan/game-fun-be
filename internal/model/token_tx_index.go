@@ -11,7 +11,7 @@ import (
 
 // TokenTxIndex 代币交易索引模型
 type TokenTxIndex struct {
-	TransactionHash string    `gorm:"column:transaction_hash;primaryKey;type:varchar(88)" json:"transaction_hash"`
+	TransactionID   uint64    `gorm:"column:transaction_id;primaryKey;type:bigint(20) unsigned" json:"transaction_id"`
 	TokenAddress    string    `gorm:"column:token_address;type:varchar(64);not null" json:"token_address"`
 	TransactionDate time.Time `gorm:"column:transaction_date;type:date;not null" json:"transaction_date"`
 	ChainType       uint8     `gorm:"column:chain_type;type:tinyint;not null" json:"chain_type"`
@@ -38,12 +38,6 @@ func UpdateTokenTxIndex(index *TokenTxIndex) error {
 	return DB.Table(index.GetShardTableName()).Save(index).Error
 }
 
-// DeleteTokenTxIndex 删除代币交易索引记录
-func DeleteTokenTxIndex(hash string, tokenAddress string) error {
-	index := &TokenTxIndex{TransactionHash: hash, TokenAddress: tokenAddress}
-	return DB.Table(index.GetShardTableName()).Where("transaction_hash = ?", hash).Delete(index).Error
-}
-
 // ListTokenTxIndices 列出代币交易索引记录
 func ListTokenTxIndices(chainType uint8, tokenAddress string, limit, offset int) ([]TokenTxIndex, error) {
 	var indices []TokenTxIndex
@@ -61,11 +55,11 @@ func CreateTokenTxIndexTables() error {
 		tableName := fmt.Sprintf("token_tx_index_%03d", i)
 		err := DB.Exec(fmt.Sprintf(`
 			CREATE TABLE IF NOT EXISTS %s (
-				transaction_hash VARCHAR(88) NOT NULL COMMENT '交易哈希',
+				transaction_id BIGINT(20) UNSIGNED NOT NULL COMMENT '交易id',
 				token_address VARCHAR(64) NOT NULL COMMENT '代币合约地址',
 				transaction_date DATE NOT NULL COMMENT '交易日期',
 				chain_type TINYINT NOT NULL COMMENT '链类型：1-Solana, 2-Ethereum',
-				PRIMARY KEY (transaction_hash),
+				PRIMARY KEY (transaction_id),
 				KEY idx_chain_token (chain_type, token_address)
 			) COMMENT = '代币交易索引表'
 		`, tableName)).Error
@@ -104,7 +98,7 @@ func BatchCreateTokenTxIndexes(indexes []*TokenTxIndex) error {
 		valueArgs := make([]interface{}, 0, len(groupIndexes)*4) // 4个字段
 		for _, index := range groupIndexes {
 			valueArgs = append(valueArgs,
-				index.TransactionHash,
+				index.TransactionID,
 				index.TokenAddress,
 				index.ChainType,
 				index.TransactionDate,
@@ -113,7 +107,7 @@ func BatchCreateTokenTxIndexes(indexes []*TokenTxIndex) error {
 
 		// 构建 SQL
 		query := fmt.Sprintf(`INSERT IGNORE INTO %s (
-			transaction_hash,
+			transaction_id,
 			token_address,
 			chain_type,
 			transaction_date
