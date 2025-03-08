@@ -37,6 +37,27 @@ func (UserInfo) TableName() string {
 	return "user_info"
 }
 
+func (r *UserInfoRepo) getInviteUser(inviteCode string, chainType uint8) (*UserInfo, error) {
+	if inviteCode == "" {
+		return nil, nil
+	}
+	inviteUser, err := r.GetUserByInvitationCode(inviteCode, chainType)
+	if err != nil {
+		util.Log().Error("Failed to get user by invitation code: %v, inviteCode: %s, chainType: %d", err, inviteCode, chainType)
+		return nil, err
+	}
+	return inviteUser, nil
+}
+
+func (r *UserInfoRepo) setInviterInfo(user *UserInfo, inviteUser *UserInfo) {
+	if inviteUser != nil {
+		user.InviterID = inviteUser.ID
+		if inviteUser.InviterID != 0 {
+			user.ParentInviteId = inviteUser.InviterID
+		}
+	}
+}
+
 func (r *UserInfoRepo) GetOrCreateUserByAddress(address string, chainType uint8, inviteCode string) (*UserInfo, error) {
 	var user UserInfo
 	result := DB.Where("address = ? AND chain_type = ?", address, chainType).First(&user)
@@ -44,13 +65,11 @@ func (r *UserInfoRepo) GetOrCreateUserByAddress(address string, chainType uint8,
 		if user.Status == 0 {
 			user.Status = 1
 			if user.InviterID == 0 && inviteCode != "" {
-				inviteUser, err := r.GetUserByInvitationCode(inviteCode, chainType)
+				inviteUser, err := r.getInviteUser(inviteCode, chainType)
 				if err != nil {
 					return nil, fmt.Errorf("failed to get user by invitation code: %v", err)
 				}
-				if inviteUser != nil {
-					user.InviterID = inviteUser.ID
-				}
+				r.setInviterInfo(&user, inviteUser)
 			}
 			user.UpdateTime = time.Now()
 			if err := DB.Save(&user).Error; err != nil {
@@ -58,6 +77,11 @@ func (r *UserInfoRepo) GetOrCreateUserByAddress(address string, chainType uint8,
 			}
 		}
 		return &user, nil
+	}
+
+	inviteUser, err := r.getInviteUser(inviteCode, chainType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user by invitation code: %v", err)
 	}
 
 	now := time.Now()
@@ -70,15 +94,7 @@ func (r *UserInfoRepo) GetOrCreateUserByAddress(address string, chainType uint8,
 		InvitationCode: util.GenerateInviteCode(address),
 	}
 
-	if inviteCode != "" {
-		inviteUser, err := r.GetUserByInvitationCode(inviteCode, chainType)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get user by invitation code: %v", err)
-		}
-		if inviteUser != nil {
-			user.InviterID = inviteUser.ID
-		}
-	}
+	r.setInviterInfo(&user, inviteUser)
 
 	result = DB.Create(&user)
 	if result.Error != nil {
@@ -119,7 +135,6 @@ func (r *UserInfoRepo) GetUserByInvitationCode(inviteCode string, chainType uint
 func (r *UserInfoRepo) GetUserByAddress(address string, chainType uint8) (*UserInfo, error) {
 	var user UserInfo
 
-	// 查询用户信息
 	result := DB.Where("address = ? AND chain_type = ?", address, chainType).First(&user)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {

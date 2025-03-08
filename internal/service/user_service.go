@@ -10,6 +10,7 @@ import (
 
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -25,15 +26,16 @@ func NewUserServiceImpl(userInfoRepo *model.UserInfoRepo) *UserServiceImpl {
 }
 
 func (s UserServiceImpl) Login(req request.LoginRequest, chainType model.ChainType) response.Response {
-	// timestamp, err := time.Parse(time.RFC3339, req.Timestamp)
-	// if err != nil {
-	// 	s.insertAuthLog(req, 0, "invalid timestamp format", err)
-	// 	return response.Err(http.StatusBadRequest, "Invalid timestamp format", err)
-	// }
-	// if time.Since(timestamp) > 3*time.Minute {
-	// 	s.insertAuthLog(req, 0, "login timeout", nil)
-	// 	return response.Err(http.StatusBadRequest, "Login timeout, please try again", nil)
-	// }
+	timestampInt, err := strconv.ParseInt(req.Timestamp, 10, 64)
+	if err != nil {
+		s.insertAuthLog(req, 0, "invalid timestamp format", err)
+		return response.Err(http.StatusBadRequest, "Invalid timestamp format", err)
+	}
+	timestamp := time.Unix(timestampInt, 0)
+	if time.Since(timestamp) > 3*time.Minute {
+		s.insertAuthLog(req, 0, "login timeout", nil)
+		return response.Err(http.StatusBadRequest, "Login timeout, please try again", nil)
+	}
 
 	isUsed, err := s.UserAuthenticationLogRepo.IsSignatureUsed(req.Address, req.Signature)
 	if err != nil {
@@ -160,6 +162,8 @@ func (s *UserServiceImpl) MyInfo(userAddress string, chainType model.ChainType) 
 
 	myInfoResponse.FollowStatus = "not_followed"
 	myInfoResponse.InviteCode = user.InvitationCode
+	myInfoResponse.InviterID = user.InviterID
+	myInfoResponse.ParentInviteId = user.ParentInviteId
 	myInfoResponse.HasBound = user.TwitterID != ""
 
 	return response.Success(myInfoResponse)
