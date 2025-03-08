@@ -749,7 +749,7 @@ definitions:
       user_id:
         type: integer
     type: object
-host: 192.168.31.48:4881
+host: v4-api.frogswap.org
 info:
   contact: {}
   description: This is a sample API for demonstration purposes.

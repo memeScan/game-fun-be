@@ -20,6 +20,8 @@ import (
 	"time"
 
 	"net/http"
+
+	"github.com/shopspring/decimal"
 )
 
 type TickerServiceImpl struct {
@@ -99,6 +101,7 @@ func (s *TickerServiceImpl) TickerDetail(tokenAddress string, chainType model.Ch
 			Sort:        &extInfo.Sort,
 		}
 	} else {
+
 		redisKey := GetRedisKey(constants.TokenMetaData, tokenAddress)
 		var tokenMetaData httpRespone.TokenMetaData // 改为非指针类型
 
@@ -127,7 +130,7 @@ func (s *TickerServiceImpl) TickerDetail(tokenAddress string, chainType model.Ch
 			}
 
 			// 4. 如果 API 返回的数据有效，缓存到 Redis
-			if err := redis.Set(redisKey, tokenMetaData, 10*time.Minute); err != nil {
+			if err := redis.Set(redisKey, tokenMetaData); err != nil {
 				util.Log().Error("Failed to set token meta data in Redis: %v", err)
 			}
 		}
@@ -143,6 +146,27 @@ func (s *TickerServiceImpl) TickerDetail(tokenAddress string, chainType model.Ch
 			Banner:      nil,
 			Rules:       nil,
 			Sort:        nil,
+		}
+
+		tokenMarketDataRes, err := GetOrFetchTokenMarketData(tokenAddress, chainType)
+		if err != nil {
+			return response.Err(http.StatusInternalServerError, "Failed to get token market data", err)
+		}
+
+		tickerRespons.Market = response.Market{
+			MarketID:  0,
+			TokenMint: tokenMetaData.Address,
+			// 待确定
+			// Market:          userInfo.MarketAddress,
+			// TokenVault:      userInfo.TokenVault,
+			// NativeVault:     userInfo.NativeVault,
+			TokenName:   tokenMetaData.Name,
+			TokenSymbol: tokenMetaData.Symbol,
+			// Creator:     tokenInfo.Creator,
+			URI:   tokenMetaData.LogoURI,
+			Price: decimal.NewFromFloat(tokenMarketDataRes.Data.Price),
+			// CreateTimestamp: ,
+			// Rank:            0,
 		}
 	}
 

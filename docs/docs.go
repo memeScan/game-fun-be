@@ -2440,11 +2440,11 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "192.168.31.48:4881",
-	BasePath:         "/api/v1",
+	Host:             "v4-api.frogswap.org",
+    BasePath:         "/api/v1",
 	Schemes:          []string{},
 	Title:            "Game API",
-	Description:      "This is a sample API for demonstration purposes.",
+    Description:      "This is a sample API for demonstration purposes.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",
