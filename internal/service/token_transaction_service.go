@@ -512,6 +512,18 @@ func (service *TokenTransactionService) ConvertRaydiumSwapMessagesToTransactions
 		tx.Progress = decimal.NewFromInt(100)
 		tx.IsComplete = true
 
+		// 判断是否是国库地址
+		if tx.UserAddress == model.TreasuryAddress {
+			tx.IsBuyback = true //是回购交易
+		} else {
+			tx.IsBuyback = false
+		}
+
+		// 判断是否是game代理地址
+		if msg.ParentInstAddress == model.GameProxyAddress {
+			tx.ProxyType = uint8(model.ProxyTypeGame)
+		}
+
 		transactions = append(transactions, tx)
 	}
 	return transactions

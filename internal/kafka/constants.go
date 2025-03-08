@@ -20,6 +20,9 @@ const (
 	PumpSetParamsPrefix = "market.pump.setparams."
 
 	UnknownTokenPrefix = "market.unknown.token."
+
+	GameOutTradePrefix = "market.game.out.trade."
+	GameInTradePrefix  = "market.game.in.trade."
 )
 
 var (
@@ -45,6 +48,10 @@ var (
 
 	TopicUnknownToken = UnknownTokenPrefix + envSuffix
 
+	// Game trading topics
+	TopicGameOutTrade = GameOutTradePrefix + envSuffix // 代理合约外盘买卖事件
+	TopicGameInTrade  = GameInTradePrefix + envSuffix  // 代理合约内盘买事件（积分兑换买）
+
 	// 所有需要监听的 topics
 	AllTopics = []string{
 		TopicRayCreate,
@@ -56,5 +63,7 @@ var (
 		TopicPumpComplete,
 		TopicPumpSetParams,
 		TopicUnknownToken,
+		TopicGameOutTrade,
+		TopicGameInTrade,
 	}
 )
