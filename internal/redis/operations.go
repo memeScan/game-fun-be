@@ -13,7 +13,7 @@ import (
 )
 
 // Set 将键值对存储到 Redis
-func Set(key string, value interface{}, expiration time.Duration) error {
+func Set(key string, value interface{}, expiration ...time.Duration) error {
 	// 将 value 序列化为 JSON
 	jsonValue, err := json.Marshal(value)
 	if err != nil {
@@ -21,8 +21,16 @@ func Set(key string, value interface{}, expiration time.Duration) error {
 		return err
 	}
 
+	// 如果没有传入 expiration，则永久存储
+	var exp time.Duration
+	if len(expiration) > 0 {
+		exp = expiration[0]
+	} else {
+		exp = 0 // 0 表示永久存储
+	}
+
 	// 使用 Redis 客户端设置值
-	err = RedisClient.Set(context.Background(), key, jsonValue, expiration).Err()
+	err = RedisClient.Set(context.Background(), key, jsonValue, exp).Err()
 	if err != nil {
 		util.Log().Error("Error setting value in Redis: %v", err)
 		return err

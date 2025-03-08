@@ -2441,10 +2441,10 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "v4-api.frogswap.org",
-	BasePath:         "/api/v1",
+    BasePath:         "/api/v1",
 	Schemes:          []string{},
 	Title:            "Game API",
-	Description:      "This is a sample API for demonstration purposes.",
+    Description:      "This is a sample API for demonstration purposes.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

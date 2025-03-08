@@ -3,6 +3,8 @@ package model
 import (
 	"time"
 
+	"errors"
+
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
@@ -255,7 +257,10 @@ func (t *TokenInfoRepo) GetTokenInfoByAddress(tokenAddress string, chainType uin
 		Where("token_address = ? AND chain_type = ?", tokenAddress, chainType).
 		First(&tokenInfo).Error
 	if err != nil {
-		return nil, err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil // 未找到记录，返回 nil
+		}
+		return nil, err // 其他错误，返回错误
 	}
 	return &tokenInfo, nil
 }
