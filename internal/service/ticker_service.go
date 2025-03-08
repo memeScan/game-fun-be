@@ -278,6 +278,48 @@ func populateMarketTicker(tradeData httpRespone.TradeData) response.MarketTicker
 
 func (s *TickerServiceImpl) SwapHistories(tickersId string, chainType model.ChainType) response.Response {
 	var swapHistoriesResponse response.SwapHistoriesResponse
+
+	// Get token transactions from ClickHouse
+	service := TransactionCkServiceImpl{}
+	resp := service.GetTokenOrderBook(tickersId, uint8(chainType))
+
+	// Check if there was an error
+	if resp.Code != response.CodeSuccess {
+		return resp
+	}
+
+	// Convert the token order book items to transaction histories
+	items, ok := resp.Data.([]response.TokenOrderBookItem)
+	if !ok {
+		return response.Err(response.CodeServerUnknown, "Failed to convert token order book data", nil)
+	}
+
+	// Create transaction histories
+	transactionHistories := make([]response.TransactionHistory, 0, len(items))
+	for _, item := range items {
+		// Convert transaction type to isBuy (1 is buy, 2 is sell)
+		isBuy := item.TransactionType == 1
+
+		// Format the transaction time
+		blockTime := time.Unix(item.TransactionTime, 0).Format(time.RFC3339)
+
+		// Create a new transaction history
+		history := response.TransactionHistory{
+			IsBuy:        isBuy,
+			Payer:        item.UserAddress,
+			Signature:    item.TransactionHash,
+			BlockTime:    blockTime,
+			TokenAmount:  item.QuoteTokenAmount.String(),
+			NativeAmount: item.BaseTokenAmount.String(),
+		}
+
+		transactionHistories = append(transactionHistories, history)
+	}
+
+	// Set the response data
+	swapHistoriesResponse.TransactionHistories = transactionHistories
+	swapHistoriesResponse.HasMore = len(transactionHistories) >= 100 // Assuming limit is 100
+
 	return response.Success(swapHistoriesResponse)
 }
 

@@ -124,11 +124,6 @@ func (t *TickersHandler) SwapHistories(c *gin.Context) {
 		c.JSON(errResp.Code, errResp)
 		return
 	}
-	// chainType := c.Param("chainType")
-	// tokenAddress := c.Param("tokenAddress")
-	// tokenInfoService := &service.TokenInfoService{}
-	// orderBook := tokenInfoService.GetTokenOrderBook(tokenAddress, uint8(model.FromString(chainType)))
-	// c.JSON(orderBook.Code, orderBook)
 
 	res := t.tickerService.SwapHistories(tickerAddress, chainType)
 	c.JSON(res.Code, res)
