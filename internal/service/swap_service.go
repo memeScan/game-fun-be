@@ -99,12 +99,6 @@ func CreateSwapRaydiumRequestBody(
 		Mev:             mev,
 		Jitotip:         jitotip,
 	}
-	// 变成json 字符串
-	jsonData, err := json.Marshal(swapData)
-	if err != nil {
-		return httpRequest.SwapRaydiumStruct{}, fmt.Errorf("failed to marshal swap data: %w", err)
-	}
-	log.Println("swapData", string(jsonData))
 	return swapData, nil
 }
 

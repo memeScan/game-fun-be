@@ -43,8 +43,3 @@ Desktop.ini
 # 忽略其他临时文件
 tmp/
 temp/
-
-main.go
-docs.go
-swagger.json
-swagger.yaml
