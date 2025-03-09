@@ -15,119 +15,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/v1/klines/{klineType}/{chainType}/{tokenAddress}": {
-            "get": {
-                "description": "Get historical kline (candlestick) data for a specific token",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "token-data"
-                ],
-                "summary": "Get token kline data",
-                "parameters": [
-                    {
-                        "enum": [
-                            "kline",
-                            "mcapkline"
-                        ],
-                        "type": "string",
-                        "description": "Kline type (kline for price data, mcapkline for market cap data)",
-                        "name": "klineType",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "enum": [
-                            "sol",
-                            "eth",
-                            "bsc"
-                        ],
-                        "type": "string",
-                        "description": "Chain type",
-                        "name": "chainType",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Token address",
-                        "name": "tokenAddress",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "enum": [
-                            "1S",
-                            "1",
-                            "5",
-                            "15",
-                            "60",
-                            "240",
-                            "720",
-                            "1D"
-                        ],
-                        "type": "string",
-                        "description": "Resolution of kline data",
-                        "name": "resolution",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Start timestamp in seconds",
-                        "name": "from",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "End timestamp in seconds",
-                        "name": "till",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/response.KlineData"
-                                            }
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid parameters",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Server error",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
         "/global/{chain_type}/balance": {
             "get": {
                 "security": [
@@ -229,6 +116,119 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/klines/{klineType}/{chainType}/{tokenAddress}": {
+            "get": {
+                "description": "Get historical kline (candlestick) data for a specific token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kline-data"
+                ],
+                "summary": "Get token kline data",
+                "parameters": [
+                    {
+                        "enum": [
+                            "kline",
+                            "mcapkline"
+                        ],
+                        "type": "string",
+                        "description": "Kline type (kline for price data, mcapkline for market cap data)",
+                        "name": "klineType",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "sol",
+                            "eth",
+                            "bsc"
+                        ],
+                        "type": "string",
+                        "description": "Chain type",
+                        "name": "chainType",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Token address",
+                        "name": "tokenAddress",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "1S",
+                            "1",
+                            "5",
+                            "15",
+                            "60",
+                            "240",
+                            "720",
+                            "1D"
+                        ],
+                        "type": "string",
+                        "description": "Resolution of kline data",
+                        "name": "resolution",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Start timestamp in seconds",
+                        "name": "from",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "End timestamp in seconds",
+                        "name": "till",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/response.KlineData"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid parameters",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -1312,7 +1312,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "WebSocket"
+                    "kline-data"
                 ],
                 "summary": "K线数据 WebSocket 接口",
                 "parameters": [
@@ -1880,8 +1880,14 @@ const docTemplate = `{
                     "description": "邀请码",
                     "type": "string"
                 },
+                "inviter_id": {
+                    "type": "integer"
+                },
                 "mention_count": {
                     "description": "提及数量",
+                    "type": "integer"
+                },
+                "parent_inviter_id": {
                     "type": "integer"
                 },
                 "user": {

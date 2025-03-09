@@ -360,8 +360,12 @@ definitions:
       invite_code:
         description: 邀请码
         type: string
+      inviter_id:
+        type: integer
       mention_count:
         description: 提及数量
+        type: integer
+      parent_inviter_id:
         type: integer
       user:
         allOf:
@@ -716,7 +720,72 @@ info:
   title: Game API
   version: "1.0"
 paths:
-  /api/v1/klines/{klineType}/{chainType}/{tokenAddress}:
+  /global/{chain_type}/balance:
+    get:
+      consumes:
+      - application/json
+      description: 根据链类型和用户地址获取用户的钱包原生代币余额。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance
+        Smart Chain）。
+      parameters:
+      - description: 链类型（sol、eth、bsc）
+        in: path
+        name: chain_type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回原生代币余额
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.TokenBalance'
+              type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取链的原生代币钱包余额
+      tags:
+      - 全局数据
+  /global/{chain_type}/native_token_price:
+    get:
+      consumes:
+      - application/json
+      description: 根据链类型获取原生代币的 USD 价格，保留 8 位小数
+      parameters:
+      - description: 链类型（sol、eth、bsc）
+        in: path
+        name: chain_type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回原生代币价格
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  additionalProperties:
+                    type: string
+                  type: object
+              type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取链的原生代币价格
+      tags:
+      - 全局数据
+  /klines/{klineType}/{chainType}/{tokenAddress}:
     get:
       consumes:
       - application/json
@@ -792,72 +861,7 @@ paths:
             $ref: '#/definitions/response.Response'
       summary: Get token kline data
       tags:
-      - token-data
-  /global/{chain_type}/balance:
-    get:
-      consumes:
-      - application/json
-      description: 根据链类型和用户地址获取用户的钱包原生代币余额。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance
-        Smart Chain）。
-      parameters:
-      - description: 链类型（sol、eth、bsc）
-        in: path
-        name: chain_type
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 成功返回原生代币余额
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/response.TokenBalance'
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: 获取链的原生代币钱包余额
-      tags:
-      - 全局数据
-  /global/{chain_type}/native_token_price:
-    get:
-      consumes:
-      - application/json
-      description: 根据链类型获取原生代币的 USD 价格，保留 8 位小数
-      parameters:
-      - description: 链类型（sol、eth、bsc）
-        in: path
-        name: chain_type
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 成功返回原生代币价格
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  additionalProperties:
-                    type: string
-                  type: object
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: 获取链的原生代币价格
-      tags:
-      - 全局数据
+      - kline-data
   /points/{chain_type}:
     get:
       consumes:
@@ -1607,5 +1611,5 @@ paths:
               type: object
       summary: K线数据 WebSocket 接口
       tags:
-      - WebSocket
+      - kline-data
 swagger: "2.0"

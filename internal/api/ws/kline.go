@@ -28,7 +28,7 @@ const (
 // @Description 通过 WebSocket 实时推送 K 线数据。连接成功后，服务器将每秒推送最新的K线数据。
 // @Description 连接格式: ws://host/ws/kline/{tokenAddress}?resolution={resolution}
 // @Description 示例: ws://localhost:8080/ws/kline/0x1234...?resolution=1S
-// @Tags WebSocket
+// @Tags kline-data
 // @Accept  json
 // @Produce  json
 // @Param tokenAddress path string true "代币地址" example(0x1234567890abcdef1234567890abcdef12345678)

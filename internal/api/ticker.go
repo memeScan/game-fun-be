@@ -195,7 +195,7 @@ func (t *TickersHandler) SearchTickers(c *gin.Context) {
 // GetTokenKlines godoc
 // @Summary Get token kline data
 // @Description Get historical kline (candlestick) data for a specific token
-// @Tags token-data
+// @Tags kline-data
 // @Accept json
 // @Produce json
 // @Param klineType path string true "Kline type (kline for price data, mcapkline for market cap data)" Enums(kline, mcapkline)
@@ -207,7 +207,7 @@ func (t *TickersHandler) SearchTickers(c *gin.Context) {
 // @Success 200 {object} response.Response{data=[]response.KlineData} "Success"
 // @Failure 400 {object} response.Response "Invalid parameters"
 // @Failure 500 {object} response.Response "Server error"
-// @Router /api/v1/klines/{klineType}/{chainType}/{tokenAddress} [get]
+// @Router /klines/{klineType}/{chainType}/{tokenAddress} [get]
 func (t *TickersHandler) GetTokenKlines(c *gin.Context) {
 	// klineType := c.Param("klineType") TODO: 后续再支持链类型和klineType
 	// chainType := c.Param("chainType")
