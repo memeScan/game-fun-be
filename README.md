@@ -27,3 +27,45 @@ https://hxny4q0lcre.feishu.cn/docx/E5s2dv7Ibo3a4Zx99XMcd1E2nZc
 - mysql 8.0 以上版本，一主一从
 - redis 6.0 以上版本，一主一从，4g 内存
 - clickhouse 23.8 以上版本，8 核 32g 双副本
+
+---
+
+## ssh config
+
+```sh
+
+# ~/.ssh/config
+
+Host sg-jump
+  HostName 8.129.133.197
+  User ecs-user
+  IdentityFile ~/.ssh/sg.pem
+  StrictHostKeyChecking no
+
+Host sg-be-api-node1
+  HostName 172.16.21.135
+  User ecs-user
+  ProxyJump sg-jump
+  StrictHostKeyChecking no
+  IdentityFile ~/.ssh/sg.pem
+  IdentitiesOnly yes
+  # PermitLocalCommand yes
+  # RequestTTY force
+  # ForwardAgent yes
+
+Host sg-be-consumer-node3
+    HostName 172.16.21.1
+    User ecs-user
+    ProxyJump sg-jump
+    StrictHostKeyChecking no
+    IdentityFile ~/.ssh/sg.pem
+    IdentitiesOnly yes
+
+Host sg-be-block-node2
+    HostName 172.16.21.134
+    User ecs-user
+    ProxyJump sg-jump
+    StrictHostKeyChecking no
+    IdentityFile ~/.ssh/sg.pem
+    IdentitiesOnly yes
+```
