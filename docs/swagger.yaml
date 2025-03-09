@@ -100,6 +100,13 @@ definitions:
         description: 创建者地址
         example: 3P3PMv28AM7SvNkGmAdHCusPwahSB9QG9z5o4gTvmNBX
         type: string
+      decimals:
+        description: 代币铸造地址
+        example: 6
+        type: integer
+      holders:
+        example: 4204
+        type: integer
       market:
         description: 市场地址
         example: B3o198GX45DZ9HeJZ56wuruyWWCfGVBSn5qC71q5AHZz
@@ -234,9 +241,6 @@ definitions:
         type: integer
       buy_tx_count_30m:
         example: 25
-        type: integer
-      holders:
-        example: 4204
         type: integer
       last_swap_at:
         example: 1740887399
@@ -681,10 +685,7 @@ definitions:
     properties:
       block_time:
         description: 区块时间
-        type: string
-      is_buy:
-        description: 是否为买入
-        type: boolean
+        type: integer
       native_amount:
         description: 原生代币数量
         type: string
@@ -697,6 +698,9 @@ definitions:
       token_amount:
         description: Index        int    `json:"index"`         // 交易索引
         type: string
+      trade_type:
+        description: 交易类型：1=买，2=卖，3=回购
+        type: integer
     type: object
   response.UserInfo:
     description: 包含用户 ID、地址、昵称、头像和描述等信息。
@@ -720,6 +724,62 @@ info:
   title: Game API
   version: "1.0"
 paths:
+  /api/v1/ws/kline/{tokenAddress}:
+    get:
+      consumes:
+      - application/json
+      description: |-
+        通过 WebSocket 实时推送 K 线数据。连接成功后，服务器将每秒推送最新的K线数据。
+        连接格式: ws://host/api/v1/ws/kline/{tokenAddress}?resolution={resolution}
+        示例(Solana): ws://localhost:4881/api/v1/ws/kline/8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump?resolution=1S
+        连接成功后，可以发送 "subscribe" 消息来开始接收数据
+      parameters:
+      - description: 代币地址
+        example: 8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump
+        in: path
+        name: tokenAddress
+        required: true
+        type: string
+      - description: K线周期
+        enum:
+        - 1S
+        - "1"
+        - "5"
+        - "15"
+        - "60"
+        - "240"
+        - "720"
+        - 1D
+        example: 1S
+        in: query
+        name: resolution
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "101":
+          description: WebSocket连接成功后的推送数据格式
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.KlineData'
+            - properties:
+                close:
+                  type: string
+                high:
+                  type: string
+                low:
+                  type: string
+                open:
+                  type: string
+                timestamp:
+                  type: integer
+                volume:
+                  type: string
+              type: object
+      summary: K线数据 WebSocket 接口
+      tags:
+      - kline-data
   /global/{chain_type}/balance:
     get:
       consumes:
@@ -1557,59 +1617,4 @@ paths:
       summary: 获取当前用户信息
       tags:
       - 用户
-  /ws/kline/{tokenAddress}:
-    get:
-      consumes:
-      - application/json
-      description: |-
-        通过 WebSocket 实时推送 K 线数据。连接成功后，服务器将每秒推送最新的K线数据。
-        连接格式: ws://host/ws/kline/{tokenAddress}?resolution={resolution}
-        示例: ws://localhost:8080/ws/kline/0x1234...?resolution=1S
-      parameters:
-      - description: 代币地址
-        example: 0x1234567890abcdef1234567890abcdef12345678
-        in: path
-        name: tokenAddress
-        required: true
-        type: string
-      - description: K线周期
-        enum:
-        - 1S
-        - "1"
-        - "5"
-        - "15"
-        - "60"
-        - "240"
-        - "720"
-        - 1D
-        example: 1S
-        in: query
-        name: resolution
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "101":
-          description: WebSocket连接成功后的推送数据格式
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.KlineData'
-            - properties:
-                close:
-                  type: string
-                high:
-                  type: string
-                low:
-                  type: string
-                open:
-                  type: string
-                timestamp:
-                  type: integer
-                volume:
-                  type: string
-              type: object
-      summary: K线数据 WebSocket 接口
-      tags:
-      - kline-data
 swagger: "2.0"

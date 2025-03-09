@@ -15,6 +15,84 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/v1/ws/kline/{tokenAddress}": {
+            "get": {
+                "description": "通过 WebSocket 实时推送 K 线数据。连接成功后，服务器将每秒推送最新的K线数据。\n连接格式: ws://host/api/v1/ws/kline/{tokenAddress}?resolution={resolution}\n示例(Solana): ws://localhost:4881/api/v1/ws/kline/8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump?resolution=1S\n连接成功后，可以发送 \"subscribe\" 消息来开始接收数据",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kline-data"
+                ],
+                "summary": "K线数据 WebSocket 接口",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump",
+                        "description": "代币地址",
+                        "name": "tokenAddress",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "1S",
+                            "1",
+                            "5",
+                            "15",
+                            "60",
+                            "240",
+                            "720",
+                            "1D"
+                        ],
+                        "type": "string",
+                        "example": "1S",
+                        "description": "K线周期",
+                        "name": "resolution",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "101": {
+                        "description": "WebSocket连接成功后的推送数据格式",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.KlineData"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "close": {
+                                            "type": "string"
+                                        },
+                                        "high": {
+                                            "type": "string"
+                                        },
+                                        "low": {
+                                            "type": "string"
+                                        },
+                                        "open": {
+                                            "type": "string"
+                                        },
+                                        "timestamp": {
+                                            "type": "integer"
+                                        },
+                                        "volume": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/global/{chain_type}/balance": {
             "get": {
                 "security": [
@@ -1301,84 +1379,6 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/ws/kline/{tokenAddress}": {
-            "get": {
-                "description": "通过 WebSocket 实时推送 K 线数据。连接成功后，服务器将每秒推送最新的K线数据。\n连接格式: ws://host/ws/kline/{tokenAddress}?resolution={resolution}\n示例: ws://localhost:8080/ws/kline/0x1234...?resolution=1S",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "kline-data"
-                ],
-                "summary": "K线数据 WebSocket 接口",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "example": "0x1234567890abcdef1234567890abcdef12345678",
-                        "description": "代币地址",
-                        "name": "tokenAddress",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "enum": [
-                            "1S",
-                            "1",
-                            "5",
-                            "15",
-                            "60",
-                            "240",
-                            "720",
-                            "1D"
-                        ],
-                        "type": "string",
-                        "example": "1S",
-                        "description": "K线周期",
-                        "name": "resolution",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "101": {
-                        "description": "WebSocket连接成功后的推送数据格式",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.KlineData"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "close": {
-                                            "type": "string"
-                                        },
-                                        "high": {
-                                            "type": "string"
-                                        },
-                                        "low": {
-                                            "type": "string"
-                                        },
-                                        "open": {
-                                            "type": "string"
-                                        },
-                                        "timestamp": {
-                                            "type": "integer"
-                                        },
-                                        "volume": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
@@ -1527,6 +1527,15 @@ const docTemplate = `{
                     "description": "创建者地址",
                     "type": "string",
                     "example": "3P3PMv28AM7SvNkGmAdHCusPwahSB9QG9z5o4gTvmNBX"
+                },
+                "decimals": {
+                    "description": "代币铸造地址",
+                    "type": "integer",
+                    "example": 6
+                },
+                "holders": {
+                    "type": "integer",
+                    "example": 4204
                 },
                 "market": {
                     "description": "市场地址",
@@ -1712,10 +1721,6 @@ const docTemplate = `{
                 "buy_tx_count_5m": {
                     "type": "integer",
                     "example": 25
-                },
-                "holders": {
-                    "type": "integer",
-                    "example": 4204
                 },
                 "last_swap_at": {
                     "type": "integer",
@@ -2337,11 +2342,7 @@ const docTemplate = `{
             "properties": {
                 "block_time": {
                     "description": "区块时间",
-                    "type": "string"
-                },
-                "is_buy": {
-                    "description": "是否为买入",
-                    "type": "boolean"
+                    "type": "integer"
                 },
                 "native_amount": {
                     "description": "原生代币数量",
@@ -2358,6 +2359,10 @@ const docTemplate = `{
                 "token_amount": {
                     "description": "Index        int    ` + "`" + `json:\"index\"` + "`" + `         // 交易索引",
                     "type": "string"
+                },
+                "trade_type": {
+                    "description": "交易类型：1=买，2=卖，3=回购",
+                    "type": "integer"
                 }
             }
         },

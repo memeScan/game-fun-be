@@ -26,15 +26,16 @@ const (
 
 // @Summary K线数据 WebSocket 接口
 // @Description 通过 WebSocket 实时推送 K 线数据。连接成功后，服务器将每秒推送最新的K线数据。
-// @Description 连接格式: ws://host/ws/kline/{tokenAddress}?resolution={resolution}
-// @Description 示例: ws://localhost:8080/ws/kline/0x1234...?resolution=1S
+// @Description 连接格式: ws://host/api/v1/ws/kline/{tokenAddress}?resolution={resolution}
+// @Description 示例(Solana): ws://localhost:4881/api/v1/ws/kline/8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump?resolution=1S
+// @Description 连接成功后，可以发送 "subscribe" 消息来开始接收数据
 // @Tags kline-data
 // @Accept  json
 // @Produce  json
-// @Param tokenAddress path string true "代币地址" example(0x1234567890abcdef1234567890abcdef12345678)
+// @Param tokenAddress path string true "代币地址" example(8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump)
 // @Param resolution query string true "K线周期" Enums(1S,1,5,15,60,240,720,1D) example(1S)
 // @Success 101 {object} response.KlineData{timestamp=int64,open=string,high=string,low=string,close=string,volume=string} "WebSocket连接成功后的推送数据格式"
-// @Router /ws/kline/{tokenAddress} [get]
+// @Router /api/v1/ws/kline/{tokenAddress} [get]
 func HandleKlineWS(c *gin.Context) {
 	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
