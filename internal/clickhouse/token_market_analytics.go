@@ -43,7 +43,7 @@ func (t *TokenMarketAnalyticsRepo) GetTokenMarketAnalytics(tokenAddress string, 
 			token_address,
 			TxCount5M, TxCount1H, TxCount24H,
 			BuyTxCount5M, BuyTxCount1H, BuyTxCount24H,
-            TokenVolume5M, TokenVolume1H, TokenVolume24H
+            TokenVolume5M, TokenVolume1H, TokenVolume24H,
 			BuyTokenVolume5M, BuyTokenVolume1H, BuyTokenVolume24H,
 			Price5M, Price1H, Price24H, CurrentPrice,
 			(CurrentPrice - Price5M) / Price5M * 100 AS PriceChange5M,
@@ -83,10 +83,13 @@ func (t *TokenMarketAnalyticsRepo) GetTokenMarketAnalytics(tokenAddress string, 
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
+			// No rows found, return nil and no error
 			return nil, nil
 		}
+		// Return the error with context about the query
 		return nil, fmt.Errorf("failed to query token_transaction_stats_mv: %v", err)
 	}
 
+	// Return the fetched analytics
 	return &analytics, nil
 }

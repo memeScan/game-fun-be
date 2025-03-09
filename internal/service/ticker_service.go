@@ -160,6 +160,7 @@ func (s *TickerServiceImpl) TickerDetail(tokenAddress string, chainType model.Ch
 		token.ChainType = uint8(chainType)
 		token.CreatedPlatformType = uint8(model.CreatedPlatformTypeGamPump)
 		token.TransactionHash = tokenCreationInfo.Data.TxHash
+		token.URI = tokenMetaData.LogoURI
 		token.TransactionTime = time.Unix(tokenCreationInfo.Data.BlockUnixTime, 0)
 		token.MarketCap = decimal.NewFromFloat(tokenMarketDataRes.Data.MarketCap)
 		token.Price = decimal.NewFromFloat(tokenMarketDataRes.Data.Price)
@@ -264,52 +265,52 @@ func (s *TickerServiceImpl) getTokenMetaDataFromAPI(tokenAddress string, chainTy
 
 func (s *TickerServiceImpl) MarketTicker(tokenAddress string, chainType model.ChainType) response.Response {
 	var marketTicker response.MarketTicker
-	// 从clickhoues 获取
-	tokenMarketAnalytics, err := s.tokenMarketAnalyticsRepo.GetTokenMarketAnalytics(tokenAddress, chainType.Uint8())
-	if err != nil {
-		return response.Err(http.StatusInternalServerError, "Failed to unmarshal ExtInfo", err)
-	}
+	// // 从clickhoues 获取
+	// tokenMarketAnalytics, err := s.tokenMarketAnalyticsRepo.GetTokenMarketAnalytics(tokenAddress, chainType.Uint8())
+	// if err != nil {
+	// 	return response.Err(http.StatusInternalServerError, "Failed to retrieve token market analytics from ClickHouse", err)
+	// }
 
-	if tokenMarketAnalytics != nil {
-		marketTicker = response.MarketTicker{
-			// High24H:            fmt.Sprintf("%f", tokenMarketAnalytics.Price24H),
-			// Low24H:             fmt.Sprintf("%f", tokenMarketAnalytics.Price24H),
-			TokenVolume24H:     fmt.Sprintf("%f", tokenMarketAnalytics.TokenVolume24H),
-			BuyTokenVolume24H:  fmt.Sprintf("%f", tokenMarketAnalytics.BuyTokenVolume24H),
-			SellTokenVolume24H: fmt.Sprintf("%f", tokenMarketAnalytics.TokenVolume24H-tokenMarketAnalytics.BuyTokenVolume24H), PriceChange24H: fmt.Sprintf("%f", tokenMarketAnalytics.PriceChange24H),
-			TxCount24H:     int(tokenMarketAnalytics.TxCount24H),
-			BuyTxCount24H:  int(tokenMarketAnalytics.BuyTxCount24H),
-			SellTxCount24H: int(tokenMarketAnalytics.TxCount24H) - int(tokenMarketAnalytics.BuyTxCount24H),
-			// NativeVolume24H:    "0",
-			// BuyNativeVolume24H: "0",
-			// High1H:             fmt.Sprintf("%f", tokenMarketAnalytics.Price1H),
-			// Low1H:              fmt.Sprintf("%f", tokenMarketAnalytics.Price1H),
-			TokenVolume1H:     fmt.Sprintf("%f", tokenMarketAnalytics.TokenVolume1H),
-			BuyTokenVolume1H:  fmt.Sprintf("%f", tokenMarketAnalytics.BuyTokenVolume1H),
-			SellTokenVolume1H: fmt.Sprintf("%f", tokenMarketAnalytics.TokenVolume1H-tokenMarketAnalytics.BuyTokenVolume1H),
-			PriceChange1H:     fmt.Sprintf("%f", tokenMarketAnalytics.PriceChange1H),
-			TxCount1H:         int(tokenMarketAnalytics.TxCount1H),
-			BuyTxCount1H:      int(tokenMarketAnalytics.BuyTxCount1H),
-			SellTxCount1H:     int(tokenMarketAnalytics.TxCount1H) - int(tokenMarketAnalytics.BuyTxCount1H),
-			// NativeVolume1H:     "0",
-			// BuyNativeVolume1H:  "0",
-			// High5M:             fmt.Sprintf("%f", tokenMarketAnalytics.Price5M),
-			// Low5M:              fmt.Sprintf("%f", tokenMarketAnalytics.Price5M),
-			TokenVolume5M:     fmt.Sprintf("%f", tokenMarketAnalytics.TokenVolume5M),
-			BuyTokenVolume5M:  fmt.Sprintf("%f", tokenMarketAnalytics.BuyTokenVolume5M),
-			SellTokenVolume5M: fmt.Sprintf("%f", tokenMarketAnalytics.TokenVolume5M-tokenMarketAnalytics.BuyTokenVolume5M),
-			PriceChange5M:     fmt.Sprintf("%f", tokenMarketAnalytics.PriceChange5M),
-			TxCount5M:         int(tokenMarketAnalytics.TxCount5M),
-			BuyTxCount5M:      int(tokenMarketAnalytics.BuyTxCount5M),
-			SellTxCount5M:     int(tokenMarketAnalytics.TxCount5M) - int(tokenMarketAnalytics.BuyTxCount5M),
-			// NativeVolume5M:     "0",
-			// BuyNativeVolume5M:  "0",
-			// 查询es
-			// LastSwapAt:    tokenInfo.TransactionTime.Unix(),
-			// MarketCap:     tokenInfo.MarketCap.String(),
-		}
-		return response.Success(marketTicker)
-	}
+	// if tokenMarketAnalytics != nil {
+	// 	marketTicker = response.MarketTicker{
+	// 		// High24H:            fmt.Sprintf("%f", tokenMarketAnalytics.Price24H),
+	// 		// Low24H:             fmt.Sprintf("%f", tokenMarketAnalytics.Price24H),
+	// 		TokenVolume24H:     fmt.Sprintf("%f", tokenMarketAnalytics.TokenVolume24H),
+	// 		BuyTokenVolume24H:  fmt.Sprintf("%f", tokenMarketAnalytics.BuyTokenVolume24H),
+	// 		SellTokenVolume24H: fmt.Sprintf("%f", tokenMarketAnalytics.TokenVolume24H-tokenMarketAnalytics.BuyTokenVolume24H), PriceChange24H: fmt.Sprintf("%f", tokenMarketAnalytics.PriceChange24H),
+	// 		TxCount24H:     int(tokenMarketAnalytics.TxCount24H),
+	// 		BuyTxCount24H:  int(tokenMarketAnalytics.BuyTxCount24H),
+	// 		SellTxCount24H: int(tokenMarketAnalytics.TxCount24H) - int(tokenMarketAnalytics.BuyTxCount24H),
+	// 		// NativeVolume24H:    "0",
+	// 		// BuyNativeVolume24H: "0",
+	// 		// High1H:             fmt.Sprintf("%f", tokenMarketAnalytics.Price1H),
+	// 		// Low1H:              fmt.Sprintf("%f", tokenMarketAnalytics.Price1H),
+	// 		TokenVolume1H:     fmt.Sprintf("%f", tokenMarketAnalytics.TokenVolume1H),
+	// 		BuyTokenVolume1H:  fmt.Sprintf("%f", tokenMarketAnalytics.BuyTokenVolume1H),
+	// 		SellTokenVolume1H: fmt.Sprintf("%f", tokenMarketAnalytics.TokenVolume1H-tokenMarketAnalytics.BuyTokenVolume1H),
+	// 		PriceChange1H:     fmt.Sprintf("%f", tokenMarketAnalytics.PriceChange1H),
+	// 		TxCount1H:         int(tokenMarketAnalytics.TxCount1H),
+	// 		BuyTxCount1H:      int(tokenMarketAnalytics.BuyTxCount1H),
+	// 		SellTxCount1H:     int(tokenMarketAnalytics.TxCount1H) - int(tokenMarketAnalytics.BuyTxCount1H),
+	// 		// NativeVolume1H:     "0",
+	// 		// BuyNativeVolume1H:  "0",
+	// 		// High5M:             fmt.Sprintf("%f", tokenMarketAnalytics.Price5M),
+	// 		// Low5M:              fmt.Sprintf("%f", tokenMarketAnalytics.Price5M),
+	// 		TokenVolume5M:     fmt.Sprintf("%f", tokenMarketAnalytics.TokenVolume5M),
+	// 		BuyTokenVolume5M:  fmt.Sprintf("%f", tokenMarketAnalytics.BuyTokenVolume5M),
+	// 		SellTokenVolume5M: fmt.Sprintf("%f", tokenMarketAnalytics.TokenVolume5M-tokenMarketAnalytics.BuyTokenVolume5M),
+	// 		PriceChange5M:     fmt.Sprintf("%f", tokenMarketAnalytics.PriceChange5M),
+	// 		TxCount5M:         int(tokenMarketAnalytics.TxCount5M),
+	// 		BuyTxCount5M:      int(tokenMarketAnalytics.BuyTxCount5M),
+	// 		SellTxCount5M:     int(tokenMarketAnalytics.TxCount5M) - int(tokenMarketAnalytics.BuyTxCount5M),
+	// 		// NativeVolume5M:     "0",
+	// 		// BuyNativeVolume5M:  "0",
+	// 		// 查询es
+	// 		// LastSwapAt:    tokenInfo.TransactionTime.Unix(),
+	// 		// MarketCap:     tokenInfo.MarketCap.String(),
+	// 	}
+	// 	return response.Success(marketTicker)
+	// }
 
 	redisKey := GetRedisKey(constants.TokenTradeData, tokenAddress)
 
