@@ -329,15 +329,12 @@ func (s *TickerServiceImpl) SwapHistories(tickersId string, chainType model.Chai
 			TransactionType = 3
 		}
 
-		// Format the transaction time
-		blockTime := time.Unix(item.TransactionTime, 0).Format(time.RFC3339)
-
 		// Create a new transaction history
 		history := response.TransactionHistory{
 			TradeType:    TransactionType,
 			Payer:        item.UserAddress,
 			Signature:    item.TransactionHash,
-			BlockTime:    blockTime,
+			BlockTime:    item.TransactionTime,
 			TokenAmount:  item.QuoteTokenAmount.String(),
 			NativeAmount: item.BaseTokenAmount.String(),
 		}
