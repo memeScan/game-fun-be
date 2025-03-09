@@ -371,21 +371,6 @@ definitions:
         description: 投票数量
         type: integer
     type: object
-  response.PayerProfile:
-    properties:
-      avatar:
-        description: 用户头像
-        type: string
-      nickname:
-        description: 用户昵称
-        type: string
-      user_id:
-        description: 用户 ID
-        type: string
-      username:
-        description: 用户名
-        type: string
-    type: object
   response.PointsDetail:
     properties:
       points:
@@ -693,45 +678,20 @@ definitions:
       block_time:
         description: 区块时间
         type: string
-      fee:
-        description: 手续费
-        type: string
-      id:
-        description: 交易 ID
-        type: integer
-      index:
-        description: 交易索引
-        type: integer
       is_buy:
         description: 是否为买入
         type: boolean
-      market_id:
-        description: 市场 ID
-        type: integer
       native_amount:
         description: 原生代币数量
         type: string
       payer:
         description: 支付方地址
         type: string
-      payer_profile:
-        allOf:
-        - $ref: '#/definitions/response.PayerProfile'
-        description: 支付方信息
-      recipient:
-        description: 接收方地址
-        type: string
       signature:
         description: 交易签名
         type: string
-      slot:
-        description: 区块槽位
-        type: integer
       token_amount:
-        description: 代币数量
-        type: string
-      total_native_amount:
-        description: 总原生代币数量
+        description: Index        int    `json:"index"`         // 交易索引
         type: string
     type: object
   response.UserInfo:
@@ -756,6 +716,83 @@ info:
   title: Game API
   version: "1.0"
 paths:
+  /api/v1/klines/{klineType}/{chainType}/{tokenAddress}:
+    get:
+      consumes:
+      - application/json
+      description: Get historical kline (candlestick) data for a specific token
+      parameters:
+      - description: Kline type (kline for price data, mcapkline for market cap data)
+        enum:
+        - kline
+        - mcapkline
+        in: path
+        name: klineType
+        required: true
+        type: string
+      - description: Chain type
+        enum:
+        - sol
+        - eth
+        - bsc
+        in: path
+        name: chainType
+        required: true
+        type: string
+      - description: Token address
+        in: path
+        name: tokenAddress
+        required: true
+        type: string
+      - description: Resolution of kline data
+        enum:
+        - 1S
+        - "1"
+        - "5"
+        - "15"
+        - "60"
+        - "240"
+        - "720"
+        - 1D
+        in: query
+        name: resolution
+        required: true
+        type: string
+      - description: Start timestamp in seconds
+        in: query
+        name: from
+        required: true
+        type: integer
+      - description: End timestamp in seconds
+        in: query
+        name: till
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/response.KlineData'
+                  type: array
+              type: object
+        "400":
+          description: Invalid parameters
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Get token kline data
+      tags:
+      - token-data
   /global/{chain_type}/balance:
     get:
       consumes:
@@ -1418,75 +1455,6 @@ paths:
       summary: 获取代币持仓历史数据
       tags:
       - 代币持仓
-  /tokens/{klineType}/{chainType}/{tokenAddress}:
-    get:
-      consumes:
-      - application/json
-      description: Get historical kline (candlestick) data for a specific token
-      parameters:
-      - description: Kline type
-        enum:
-        - kline
-        - mcapkline
-        in: path
-        name: klineType
-        required: true
-        type: string
-      - description: Chain type
-        enum:
-        - sol
-        - eth
-        - btc
-        in: path
-        name: chainType
-        required: true
-        type: string
-      - description: Token address
-        in: path
-        name: tokenAddress
-        required: true
-        type: string
-      - description: Resolution (1S=1sec, 1=1min, 5=5min, 15=15min, 60=1hour, 240=4hour,
-          720=12hour, 1D=1day)
-        in: query
-        name: resolution
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  items:
-                    $ref: '#/definitions/response.KlineData'
-                  type: array
-              type: object
-        "400":
-          description: Invalid parameters
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "500":
-          description: Server error
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-      summary: Get token kline data
-      tags:
-      - on-chain-data
   /users/{chain_type}/invite/code:
     get:
       consumes:

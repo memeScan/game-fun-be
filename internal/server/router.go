@@ -99,6 +99,7 @@ func NewRouter() *gin.Engine {
 		v1.GET("tickers/:chain_type/search", tickerHandler.SearchTickers)
 		v1.GET("tickers/:chain_type/swap_histories/:ticker_address", tickerHandler.SwapHistories)
 		v1.GET("tickers/:chain_type/token_distribution/:ticker_address", tickerHandler.TokenDistribution)
+		v1.GET("klines/:klineType/:chainType/:tokenAddress", tickerHandler.GetTokenKlines)
 		v1.GET("token_holdings/:chain_type/:account", tokenHoldingsHandler.TokenHoldings)
 		v1.GET("token_holdings/:chain_type/histories/:account", tokenHoldingsHandler.TokenHoldingsHistories)
 		v1.GET("swap/:chainType/get_transaction", swapHandler.GetTransaction)
@@ -115,8 +116,6 @@ func NewRouter() *gin.Engine {
 		auth.GET("points/:chain_type/detail", pointsHandler.PointsDetail)
 		auth.GET("points/:chain_type/estimated", pointsHandler.PointsEstimated)
 		auth.GET("global/:chain_type/balance", globalHandler.Balance)
-
-		v1.GET("tokens/:klineType/:chainType/:tokenAddress", api.GetTokenKlines)
 
 		// WebSocket 路由
 		v1.GET("ws/kline/:tokenAddress", ws.HandleKlineWS)

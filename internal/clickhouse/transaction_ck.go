@@ -126,9 +126,6 @@ func BatchInsertTransactions(txs []*TokenTransactionCk) error {
 
 // GetKlines 查询K数据
 func GetKlines(tokenAddress string, interval string, start, end time.Time) ([]Kline, error) {
-	// 转换为 UTC 时间
-	startUTC := start.UTC()
-	endUTC := end.UTC()
 
 	rows, err := ClickHouseClient.Query(context.Background(), `
         SELECT
@@ -155,7 +152,7 @@ func GetKlines(tokenAddress string, interval string, start, end time.Time) ([]Kl
           AND timestamp < ?
         GROUP BY token_address, interval_timestamp
         ORDER BY token_address, interval_timestamp;
-    `, getIntervalSeconds(interval), tokenAddress, startUTC, endUTC)
+    `, getIntervalSeconds(interval), tokenAddress, start, end)
 
 	if err != nil {
 		return nil, fmt.Errorf("query failed: %w", err)

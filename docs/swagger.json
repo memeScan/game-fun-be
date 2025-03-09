@@ -9,6 +9,119 @@
     "host": "v4-api.frogswap.org",
     "basePath": "/api/v1",
     "paths": {
+        "/api/v1/klines/{klineType}/{chainType}/{tokenAddress}": {
+            "get": {
+                "description": "Get historical kline (candlestick) data for a specific token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "token-data"
+                ],
+                "summary": "Get token kline data",
+                "parameters": [
+                    {
+                        "enum": [
+                            "kline",
+                            "mcapkline"
+                        ],
+                        "type": "string",
+                        "description": "Kline type (kline for price data, mcapkline for market cap data)",
+                        "name": "klineType",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "sol",
+                            "eth",
+                            "bsc"
+                        ],
+                        "type": "string",
+                        "description": "Chain type",
+                        "name": "chainType",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Token address",
+                        "name": "tokenAddress",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "1S",
+                            "1",
+                            "5",
+                            "15",
+                            "60",
+                            "240",
+                            "720",
+                            "1D"
+                        ],
+                        "type": "string",
+                        "description": "Resolution of kline data",
+                        "name": "resolution",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Start timestamp in seconds",
+                        "name": "from",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "End timestamp in seconds",
+                        "name": "till",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/response.KlineData"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid parameters",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/global/{chain_type}/balance": {
             "get": {
                 "security": [
@@ -1026,119 +1139,6 @@
                 }
             }
         },
-        "/tokens/{klineType}/{chainType}/{tokenAddress}": {
-            "get": {
-                "description": "Get historical kline (candlestick) data for a specific token",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "on-chain-data"
-                ],
-                "summary": "Get token kline data",
-                "parameters": [
-                    {
-                        "enum": [
-                            "kline",
-                            "mcapkline"
-                        ],
-                        "type": "string",
-                        "description": "Kline type",
-                        "name": "klineType",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "enum": [
-                            "sol",
-                            "eth",
-                            "btc"
-                        ],
-                        "type": "string",
-                        "description": "Chain type",
-                        "name": "chainType",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Token address",
-                        "name": "tokenAddress",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Resolution (1S=1sec, 1=1min, 5=5min, 15=15min, 60=1hour, 240=4hour, 720=12hour, 1D=1day)",
-                        "name": "resolution",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/response.KlineData"
-                                            }
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid parameters",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "500": {
-                        "description": "Server error",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
         "/users/{chain_type}/invite/code": {
             "get": {
                 "security": [
@@ -1892,27 +1892,6 @@
                 }
             }
         },
-        "response.PayerProfile": {
-            "type": "object",
-            "properties": {
-                "avatar": {
-                    "description": "用户头像",
-                    "type": "string"
-                },
-                "nickname": {
-                    "description": "用户昵称",
-                    "type": "string"
-                },
-                "user_id": {
-                    "description": "用户 ID",
-                    "type": "string"
-                },
-                "username": {
-                    "description": "用户名",
-                    "type": "string"
-                }
-            }
-        },
         "response.PointsDetail": {
             "type": "object",
             "properties": {
@@ -2348,25 +2327,9 @@
                     "description": "区块时间",
                     "type": "string"
                 },
-                "fee": {
-                    "description": "手续费",
-                    "type": "string"
-                },
-                "id": {
-                    "description": "交易 ID",
-                    "type": "integer"
-                },
-                "index": {
-                    "description": "交易索引",
-                    "type": "integer"
-                },
                 "is_buy": {
                     "description": "是否为买入",
                     "type": "boolean"
-                },
-                "market_id": {
-                    "description": "市场 ID",
-                    "type": "integer"
                 },
                 "native_amount": {
                     "description": "原生代币数量",
@@ -2376,32 +2339,12 @@
                     "description": "支付方地址",
                     "type": "string"
                 },
-                "payer_profile": {
-                    "description": "支付方信息",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/response.PayerProfile"
-                        }
-                    ]
-                },
-                "recipient": {
-                    "description": "接收方地址",
-                    "type": "string"
-                },
                 "signature": {
                     "description": "交易签名",
                     "type": "string"
                 },
-                "slot": {
-                    "description": "区块槽位",
-                    "type": "integer"
-                },
                 "token_amount": {
-                    "description": "代币数量",
-                    "type": "string"
-                },
-                "total_native_amount": {
-                    "description": "总原生代币数量",
+                    "description": "Index        int    `json:\"index\"`         // 交易索引",
                     "type": "string"
                 }
             }

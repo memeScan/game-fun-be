@@ -102,7 +102,7 @@ func TestKafkaIntegration(t *testing.T) {
 			message := &sarama.ProducerMessage{
 				Topic: kafka.TopicPumpTrade,
 				Value: sarama.ByteEncoder(fmt.Sprintf(`{
-					"mint": "6yNb5bqbVFueBEq2fSrNrP82s2dvhTEDz2PrQMjppump",
+					"mint": "8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump",
 					"solAmount": "12999999",
 					"tokenAmount": "194989651025", 
 					"isBuy": false,
