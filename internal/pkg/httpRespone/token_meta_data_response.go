@@ -9,7 +9,7 @@ type TokenMetaData struct {
 	Address    string      `json:"address"`
 	Symbol     string      `json:"symbol"`
 	Name       string      `json:"name"`
-	Decimals   int         `json:"decimals"`
+	Decimals   uint8       `json:"decimals"`
 	Extensions *Extensions `json:"extensions"`
 	LogoURI    string      `json:"logo_uri"`
 }

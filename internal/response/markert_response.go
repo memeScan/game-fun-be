@@ -10,6 +10,7 @@ type Market struct {
 	MarketID        int64           `json:"market_id" example:"1"`                                               // 市场ID
 	Market          string          `json:"market" example:"B3o198GX45DZ9HeJZ56wuruyWWCfGVBSn5qC71q5AHZz"`       // 市场地址
 	TokenMint       string          `json:"token_mint" example:"suprkbfvwpFZXzWaoKjTzGkW1nkvvwK9n2E6g1zyLFo"`    // 代币铸造地址
+	Decimals        uint8           `json:"decimals" example:"6"`                                                // 代币铸造地址
 	TokenVault      string          `json:"token_vault" example:"9SQy9T4pzadupDcWdYYgFmUgXLVydfQwgKZEbzeACNAQ"`  // 代币金库地址
 	NativeVault     string          `json:"native_vault" example:"98J2RACW3wk8u36k1cPmDenzHdPjhcd5qXsm5g471kdh"` // 原生代币金库地址
 	TokenName       string          `json:"token_name" example:"§uper Exchange"`                                 // 代币名称

@@ -8,7 +8,7 @@
             "mode": "debug",
             "program": "${workspaceFolder}/main.go",
             "env": {
-                "PORT": "4881",
+                "PORT": "4882",
                 "APP_ENV": "test",
                 "kafka": "1"
             },

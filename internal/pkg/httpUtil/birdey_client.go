@@ -119,3 +119,13 @@ func GetTokenMetaData(tokenAddresses []string, chain string) (*httpRespone.Token
 	}
 	return &response, nil
 }
+
+// GetTokenCreationInfo 获取代币创建信息
+func GetTokenCreationInfo(tokenAddress string, chain string) (*httpRespone.TokenCreationInfoResponse, error) {
+	url := fmt.Sprintf("%s/token_creation_info?address=%s", BaseURL, tokenAddress)
+	var response httpRespone.TokenCreationInfoResponse
+	if err := sendRequest(http.MethodGet, url, nil, &response, chain); err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
