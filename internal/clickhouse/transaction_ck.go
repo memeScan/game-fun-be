@@ -23,6 +23,7 @@ type TokenTransactionCk struct {
 	TransactionAmountUSD decimal.Decimal `db:"transaction_amount_usd"`
 	TransactionType      uint8           `db:"transaction_type"`
 	PlatformType         uint8           `db:"platform_type"`
+	IsBuyback            bool            `db:"is_buyback"`
 	TransactionTime      time.Time       `db:"transaction_time"`
 	CreateTime           time.Time       `db:"create_time"`
 }
@@ -50,9 +51,9 @@ func InsertTransaction(tx *TokenTransactionCk) error {
             transaction_id, transaction_hash, chain_type, user_address, token_address,
             pool_address, base_token_amount, quote_token_amount, decimals,
             base_token_price, quote_token_price, transaction_amount_usd,
-            transaction_type, platform_type, transaction_time
+            transaction_type, platform_type, is_buyback, transaction_time
         ) VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         )
     `
 
@@ -71,6 +72,7 @@ func InsertTransaction(tx *TokenTransactionCk) error {
 		tx.TransactionAmountUSD,
 		tx.TransactionType,
 		tx.PlatformType,
+		tx.IsBuyback,
 		tx.TransactionTime,
 	)
 
@@ -87,7 +89,7 @@ func BatchInsertTransactions(txs []*TokenTransactionCk) error {
             transaction_id, transaction_hash, chain_type, user_address, token_address,
             pool_address, base_token_amount, quote_token_amount, decimals,
             base_token_price, quote_token_price, transaction_amount_usd,
-            transaction_type, platform_type, transaction_time
+            transaction_type, platform_type, is_buyback, transaction_time
         )
     `)
 	if err != nil {
@@ -111,6 +113,7 @@ func BatchInsertTransactions(txs []*TokenTransactionCk) error {
 			tx.TransactionAmountUSD,
 			tx.TransactionType,
 			tx.PlatformType,
+			tx.IsBuyback,
 			tx.TransactionTime,
 		)
 		if err != nil {
@@ -242,6 +245,7 @@ func GetTokenTransactions(tokenAddress string, limit int) ([]TokenTransactionCk,
 			&tx.TransactionAmountUSD,
 			&tx.TransactionType,
 			&tx.PlatformType,
+			&tx.IsBuyback,
 			&tx.TransactionTime,
 			&tx.CreateTime,
 		); err != nil {

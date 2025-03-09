@@ -61,6 +61,7 @@ func (service *TransactionCkServiceImpl) GetTokenOrderBook(tokenAddress string, 
 		item.PlatformType = tx.PlatformType
 		item.TransactionTime = tx.TransactionTime.Unix()
 		item.UsdAmount = usdAmount
+		item.IsBuyback = tx.IsBuyback
 
 		// 将item赋值给切片
 		convertedTransactions[i] = item
@@ -108,6 +109,7 @@ func (s *TransactionCkServiceImpl) ConvertToTransactionCks(transactions []*model
 		txCk.TransactionType = tx.TransactionType
 		txCk.PlatformType = tx.PlatformType
 		txCk.TransactionTime = tx.TransactionTime
+		txCk.IsBuyback = tx.IsBuyback
 
 		txCks = append(txCks, txCk)
 	}

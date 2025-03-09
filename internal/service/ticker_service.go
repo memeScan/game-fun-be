@@ -324,14 +324,17 @@ func (s *TickerServiceImpl) SwapHistories(tickersId string, chainType model.Chai
 	transactionHistories := make([]response.TransactionHistory, 0, len(items))
 	for _, item := range items {
 		// Convert transaction type to isBuy (1 is buy, 2 is sell)
-		isBuy := item.TransactionType == 1
+		TransactionType := item.TransactionType
+		if item.IsBuyback {
+			TransactionType = 3
+		}
 
 		// Format the transaction time
 		blockTime := time.Unix(item.TransactionTime, 0).Format(time.RFC3339)
 
 		// Create a new transaction history
 		history := response.TransactionHistory{
-			IsBuy:        isBuy,
+			TradeType:    TransactionType,
 			Payer:        item.UserAddress,
 			Signature:    item.TransactionHash,
 			BlockTime:    blockTime,

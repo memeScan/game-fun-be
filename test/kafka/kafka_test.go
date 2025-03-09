@@ -100,21 +100,22 @@ func TestKafkaIntegration(t *testing.T) {
 		messages := make([]*sarama.ProducerMessage, 0, batchSize)
 		for i := 0; i < batchSize; i++ {
 			message := &sarama.ProducerMessage{
-				Topic: kafka.TopicPumpTrade,
+				Topic: kafka.TopicRaySwap,
 				Value: sarama.ByteEncoder(fmt.Sprintf(`{
-					"mint": "8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump",
-					"solAmount": "12999999",
-					"tokenAmount": "194989651025", 
-					"isBuy": false,
-					"user": "B5HfNu7jbvXKU3vKxdsGfbJKMs1ksRnv2GMHrjtR1XQv",
 					"timestamp": %d,
-					"virtualSolReserves": "46319669544",
-					"virtualTokenReserves": "694953158866495",
-					"realSolReserves": "16319669544",
-					"realTokenReserves": "415053158866495",
-					"progress": 47.67,
-					"signature": "3eeqFmAgRPN74wDA75FHe2gMu5NevqhNwtQH12RgDVHo7eUKLc8aJLJCwWket6k2K1fZjbEBQQx9ybpGf2DVRThH",
-					"block": 298892984
+					"block": 313097846,
+					"signature": "2ZZf2p6RH4Zr4nKbGV9zmNkGjr3wEgpER9xxJD3WkfqVkCHzoW2HCZtg4JtKwqPmKBB5o6Um8cDjqxksVrBg8UUU",
+					"user": "B5HfNu7jbvXKU3vKxdsGfbJKMs1ksRnv2GMHrjtR1XQv",
+					"poolAddress": "F3UWHvZWy41HpsbWfbBFbvAemYuCn8RJ2qvKfr2346Qf",
+					"isBuy": true,
+					"quoteToken": "8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump",
+					"baseToken": "So11111111111111111111111111111111111111112",
+					"marketAddress": "",
+					"poolQuoteReserve": "18640745631097",
+					"poolBaseReserve": "539997130105",
+					"quoteAmount": "54610438",
+					"baseAmount": "1585960",
+					"decimals": 6
 				}`, time.Now().Unix())),
 			}
 			messages = append(messages, message)

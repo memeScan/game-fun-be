@@ -8,7 +8,7 @@ type SwapHistoriesResponse struct {
 
 // TransactionHistory 表示单笔交易历史记录。
 type TransactionHistory struct {
-	IsBuy     bool   `json:"is_buy"`     // 是否为买入
+	TradeType uint8  `json:"trade_type"` // 交易类型：1=买，2=卖，3=回购
 	Payer     string `json:"payer"`      // 支付方地址
 	Signature string `json:"signature"`  // 交易签名
 	BlockTime string `json:"block_time"` // 区块时间

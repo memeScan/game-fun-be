@@ -20,6 +20,7 @@ type TokenOrderBookItem struct {
 	PlatformType     uint8           `json:"platform_type"`      // The type of platform where the transaction occurred
 	TransactionTime  int64           `json:"transaction_time"`   // The timestamp of the transaction in unix seconds
 	UsdAmount        decimal.Decimal `json:"usd_amount"`         // The transaction amount in USD
+	IsBuyback        bool            `json:"is_buyback"`         // Whether the transaction is a buyback
 }
 
 // BuildTokenOrderBookResponse creates a standardized response for token order book data
