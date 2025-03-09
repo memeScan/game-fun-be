@@ -167,6 +167,15 @@ func getBackoffDuration(attempt int) time.Duration {
 	return backoff
 }
 
+func GetPumpFunTradeTx(swapStruct httpRequest.SwapPumpStruct) (*http.Response, error) {
+	url := ApiPumpfunTrade
+	resp, err := postRequest(url, swapStruct, false)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send swap request: %w", err)
+	}
+	return resp, nil
+}
+
 func postRequest(url string, body interface{}, useMetrics bool) (*http.Response, error) {
 	bodyBytes, err := json.Marshal(body)
 	if err != nil {
@@ -316,9 +325,8 @@ func GetPythResponse() (*[]httpRespone.PythResponse, error) {
 	return &[]httpRespone.PythResponse{pythResp}, nil
 }
 
-func SendSwapTransaction(swapTransaction string, isJito bool) (*http.Response, error) {
+func SendTransaction(swapTransaction string, isJito bool) (*http.Response, error) {
 	url := ApiTransactionSend
-
 	body := map[string]interface{}{
 		"signedTransaction": swapTransaction,
 		"mev":               isJito,
@@ -331,7 +339,7 @@ func SendSwapTransaction(swapTransaction string, isJito bool) (*http.Response, e
 	return resp, nil
 }
 
-func GetSwapRequestStatusBySignature(signature string) (*http.Response, error) {
+func GetSwapStatusBySignature(signature string) (*http.Response, error) {
 	url := fmt.Sprintf("%s?signature=%s", ApiTransactionStatus, signature)
 
 	resp, err := httpClient.Get(url)

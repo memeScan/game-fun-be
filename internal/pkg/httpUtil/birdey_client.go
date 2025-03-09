@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"game-fun-be/internal/pkg/httpRespone"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -15,7 +16,7 @@ import (
 const SOLANA = "solana"
 
 // 全局变量，用于存储配置
-var BaseURL = "https://public-api.birdeye.so/defi/v3"
+var BaseURL = "https://public-api.birdeye.so/defi"
 
 // sendRequest 统一请求封装，支持 GET 和 POST，支持传递链参数
 func sendRequest(method, url string, bodyData interface{}, target interface{}, chain string) error {
@@ -67,7 +68,7 @@ func sendRequest(method, url string, bodyData interface{}, target interface{}, c
 
 // GetTokenHolders 获取代币持有者信息
 func GetTokenHolders(tokenAddress string, offset, limit int, chain string) (*httpRespone.TokenHoldersResponse, error) {
-	url := fmt.Sprintf("%s/token/holder?address=%s&offset=%d&limit=%d", BaseURL, tokenAddress, offset, limit)
+	url := fmt.Sprintf("%s/v3/token/holder?address=%s&offset=%d&limit=%d", BaseURL, tokenAddress, offset, limit)
 	var response httpRespone.TokenHoldersResponse
 	if err := sendRequest(http.MethodGet, url, nil, &response, chain); err != nil {
 		return nil, err
@@ -77,18 +78,8 @@ func GetTokenHolders(tokenAddress string, offset, limit int, chain string) (*htt
 
 // GetTokenMarketData 获取代币市场数据
 func GetTokenMarketData(tokenAddress string, chain string) (*httpRespone.TokenMarketDataResponse, error) {
-	url := fmt.Sprintf("%s/token/market-data?address=%s", BaseURL, tokenAddress)
+	url := fmt.Sprintf("%s/v3/token/market-data?address=%s", BaseURL, tokenAddress)
 	var response httpRespone.TokenMarketDataResponse
-	if err := sendRequest(http.MethodGet, url, nil, &response, chain); err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// GetTokenPrice 获取代币价格
-func GetTokenPrice(tokenAddress string, chain string) (*httpRespone.PriceResponse, error) {
-	url := fmt.Sprintf("%s/price?address=%s", BaseURL, tokenAddress)
-	var response httpRespone.PriceResponse
 	if err := sendRequest(http.MethodGet, url, nil, &response, chain); err != nil {
 		return nil, err
 	}
@@ -97,7 +88,7 @@ func GetTokenPrice(tokenAddress string, chain string) (*httpRespone.PriceRespons
 
 // GetTradeData 获取代币交易数据
 func GetTradeData(tokenAddress string, chain string) (*httpRespone.TradeDataResponse, error) {
-	url := fmt.Sprintf("%s/token/trade-data/single?address=%s", BaseURL, tokenAddress)
+	url := fmt.Sprintf("%s/v3/token/trade-data/single?address=%s", BaseURL, tokenAddress)
 	var response httpRespone.TradeDataResponse
 	if err := sendRequest(http.MethodGet, url, nil, &response, chain); err != nil {
 		return nil, err
@@ -111,7 +102,7 @@ func GetTokenMetaData(tokenAddresses []string, chain string) (*httpRespone.Token
 	addressList := strings.Join(tokenAddresses, "%2C")
 
 	// 构建请求 URL
-	url := fmt.Sprintf("%s/token/meta-data/multiple?list_address=%s", BaseURL, addressList)
+	url := fmt.Sprintf("%s/v3/token/meta-data/multiple?list_address=%s", BaseURL, addressList)
 	var response httpRespone.TokenMetaDataResponse
 
 	if err := sendRequest(http.MethodGet, url, nil, &response, chain); err != nil {
@@ -123,6 +114,7 @@ func GetTokenMetaData(tokenAddresses []string, chain string) (*httpRespone.Token
 // GetTokenCreationInfo 获取代币创建信息
 func GetTokenCreationInfo(tokenAddress string, chain string) (*httpRespone.TokenCreationInfoResponse, error) {
 	url := fmt.Sprintf("%s/token_creation_info?address=%s", BaseURL, tokenAddress)
+	log.Print(url)
 	var response httpRespone.TokenCreationInfoResponse
 	if err := sendRequest(http.MethodGet, url, nil, &response, chain); err != nil {
 		return nil, err

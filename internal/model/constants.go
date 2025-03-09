@@ -104,6 +104,11 @@ const (
 	CreatedPlatformTypeUnknown  CreatedPlatformType = iota // Unknown/其他 = 0
 	CreatedPlatformTypePump                                // Pump 平台 = 1
 	CreatedPlatformTypeMoonshot                            // Moonshot 平台 = 2
+	CreatedPlatformTypeGamPump                             // GamPump 平台 = 3
+)
+
+const (
+	SOL_DECIMALS uint8 = 9
 )
 
 // 平台对应的代币数量精度

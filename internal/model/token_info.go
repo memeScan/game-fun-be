@@ -264,3 +264,23 @@ func (t *TokenInfoRepo) GetTokenInfoByAddress(tokenAddress string, chainType uin
 	}
 	return &tokenInfo, nil
 }
+
+// CreateTokenInfo 创建新的代币记录
+func (t *TokenInfoRepo) CreateTokenInfo(tokenInfo *TokenInfo) error {
+	// 先检查数据库中是否已存在该 token
+	var existing TokenInfo
+	err := DB.Model(&TokenInfo{}).
+		Where("token_address = ? AND chain_type = ?", tokenInfo.TokenAddress, tokenInfo.ChainType).
+		First(&existing).Error
+
+	if err == nil {
+		// 记录已存在，返回错误
+		return errors.New("token already exists")
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		// 其他数据库错误
+		return err
+	}
+
+	// 插入新记录
+	return DB.Create(tokenInfo).Error
+}

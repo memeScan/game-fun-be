@@ -45,8 +45,7 @@ func (s *SwapHandler) GetTransaction(c *gin.Context) {
 		c.JSON(errResp.Code, errResp)
 		return
 	}
-	tradeType := c.Param("tradeType")
-	res := s.swapService.GetPumpSwapRoute(chainType, tradeType, req)
+	res := s.swapService.GetSwapRoute(req, chainType.Uint8())
 	c.JSON(res.Code, res)
 }
 
@@ -69,7 +68,7 @@ func (s *SwapHandler) SendTransaction(c *gin.Context) {
 	if isJito == "true" {
 		isJitoBool = true
 	}
-	res := s.swapService.SendSwapRequest(swapTransaction, isJitoBool)
+	res := s.swapService.SendTransaction(swapTransaction, isJitoBool)
 	c.JSON(res.Code, res)
 }
 
@@ -86,6 +85,6 @@ func (s *SwapHandler) SendTransaction(c *gin.Context) {
 // @Router /swap/{chain_type}/transaction_status [get]
 func (s *SwapHandler) TransactionStatus(c *gin.Context) {
 	swapTransaction := c.Query("swap_transaction")
-	res := s.swapService.GetSwapRequestStatusBySignature(swapTransaction)
+	res := s.swapService.GetSwapStatusBySignature(swapTransaction)
 	c.JSON(res.Code, res)
 }

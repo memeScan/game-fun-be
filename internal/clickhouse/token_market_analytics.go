@@ -15,9 +15,9 @@ func NewTokenMarketAnalyticsRepo() *TokenMarketAnalyticsRepo {
 type TokenMarketAnalytics struct {
 	ChainType         uint8   `json:"chain_type"`
 	TokenAddress      string  `json:"token_address"`
-	TxCount5M         uint64  `json:"tx_count_5m"`
-	TxCount1H         uint64  `json:"tx_count_1h"`
-	TxCount24H        uint64  `json:"tx_count_24h"`
+	TxCount5M         int     `json:"tx_count_5m"`
+	TxCount1H         int     `json:"tx_count_1h"`
+	TxCount24H        int     `json:"tx_count_24h"`
 	BuyTxCount5M      uint64  `json:"buy_tx_count_5m"`
 	BuyTxCount1H      uint64  `json:"buy_tx_count_1h"`
 	BuyTxCount24H     uint64  `json:"buy_tx_count_24h"`

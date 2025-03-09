@@ -62,8 +62,10 @@ func (s *TickerServiceImpl) Tickers(req request.TickersRequest, chainType model.
 }
 
 func (s *TickerServiceImpl) TickerDetail(tokenAddress string, chainType model.ChainType) response.Response {
+	redisKey := GetRedisKey(constants.TokenInfo, tokenAddress)
 	// 1. 获取代币信息
-	tokenInfo, err := s.getTokenInfo(tokenAddress, chainType)
+	chainTypeStr := chainType.ToString()
+	tokenInfo, err := s.getTokenInfo(tokenAddress, chainType, redisKey)
 	if err != nil {
 		return response.Err(http.StatusInternalServerError, "Failed to get token info", err)
 	}
@@ -100,27 +102,36 @@ func (s *TickerServiceImpl) TickerDetail(tokenAddress string, chainType model.Ch
 			Sort:        &extInfo.Sort,
 		}
 	} else {
-		// 如果 MySQL 中没有数据，从 API 获取并填充
-		tokenMetaData, err := s.getTokenMetaDataFromAPI(tokenAddress, chainType)
+		// 查询代币源数据
+		tokenMetaData, err := s.getTokenMetaDataFromAPI(tokenAddress, chainTypeStr)
 		if err != nil {
 			return response.Err(http.StatusInternalServerError, "Failed to get token meta data from API", err)
 		}
 
-		tokenMarketDataRes, err := GetOrFetchTokenMarketData(tokenAddress, chainType)
+		// 查询代币市场信息
+		tokenMarketDataRes, err := GetOrFetchTokenMarketData(tokenAddress, chainTypeStr)
 		if err != nil {
 			return response.Err(http.StatusInternalServerError, "Failed to get token market data", err)
 		}
 
-		tickerResponse.Market = response.Market{
-			MarketID:    0,
-			TokenMint:   tokenMetaData.Address,
-			Decimals:    tokenMetaData.Decimals,
-			TokenName:   tokenMetaData.Name,
-			TokenSymbol: tokenMetaData.Symbol,
+		tokenCreationInfo, err := httpUtil.GetTokenCreationInfo(tokenAddress, chainTypeStr)
+		if err != nil {
+			return response.Err(http.StatusInternalServerError, "Failed to get token createtion info from API", err)
+		}
 
+		tickerResponse.Market = response.Market{
+			MarketID:        0,
+			Market:          "",
+			TokenMint:       tokenMetaData.Address,
+			NativeVault:     "",
+			TokenVault:      "",
+			Decimals:        tokenMetaData.Decimals,
+			TokenName:       tokenMetaData.Name,
+			TokenSymbol:     tokenMetaData.Symbol,
+			Creator:         tokenCreationInfo.Data.Owner,
 			URI:             tokenMetaData.LogoURI,
 			Price:           decimal.NewFromFloat(tokenMarketDataRes.Data.Price),
-			CreateTimestamp: 0, // 需要从 API 或其他地方获取
+			CreateTimestamp: tokenCreationInfo.Data.BlockUnixTime,
 			Rank:            0,
 		}
 
@@ -136,17 +147,59 @@ func (s *TickerServiceImpl) TickerDetail(tokenAddress string, chainType model.Ch
 			Sort:        nil,
 		}
 
-		// 插入到mysql
-		var token model.TokenInfo
+		// 先分配内存，初始化 token 结构体
+		token := &model.TokenInfo{}
+
 		token.TokenAddress = tokenMetaData.Address
 		token.TokenName = tokenMetaData.Name
 		token.Symbol = tokenMetaData.Symbol
-		extInfoJSON, err := json.Marshal(tokenMetaData.Extensions)
-		if err != nil {
-			util.Log().Error("Failed to marshal Extensions to JSON: %v", err)
-			return response.Err(http.StatusInternalServerError, "Failed to marshal Extensions to JSON", err)
+		token.TotalSupply = uint64(tokenMarketDataRes.Data.TotalSupply)
+		token.CirculatingSupply = uint64(tokenMarketDataRes.Data.CirculatingSupply)
+		token.Decimals = tokenMetaData.Decimals
+		token.Creator = tokenCreationInfo.Data.Owner
+		token.ChainType = uint8(chainType)
+		token.CreatedPlatformType = uint8(model.CreatedPlatformTypeGamPump)
+		token.TransactionHash = tokenCreationInfo.Data.TxHash
+		token.TransactionTime = time.Unix(tokenCreationInfo.Data.BlockUnixTime, 0)
+		token.MarketCap = decimal.NewFromFloat(tokenMarketDataRes.Data.MarketCap)
+		token.Price = decimal.NewFromFloat(tokenMarketDataRes.Data.Price)
+		token.CreateTime = time.Now()
+		token.UpdateTime = time.Now()
+
+		// 处理 ExtInfo 结构体
+		var extInfo model.ExtInfo
+		extInfo.Image = tokenMetaData.LogoURI
+		extInfo.Name = tokenMetaData.Name
+		extInfo.Symbol = tokenMetaData.Symbol
+
+		// 确保 Extensions 字段不是 nil，避免解引用空指针
+		if tokenMetaData.Extensions != nil {
+			if tokenMetaData.Extensions.Description != nil {
+				extInfo.Description = *tokenMetaData.Extensions.Description
+			}
+			if tokenMetaData.Extensions.Twitter != nil {
+				extInfo.Twitter = *tokenMetaData.Extensions.Twitter
+			}
+			if tokenMetaData.Extensions.Website != nil {
+				extInfo.Website = *tokenMetaData.Extensions.Website
+			}
+			if tokenMetaData.Extensions.Telegram != nil {
+				extInfo.Telegram = *tokenMetaData.Extensions.Telegram
+			}
 		}
+
+		// 序列化 JSON
+		extInfoJSON, err := json.Marshal(extInfo)
+		if err != nil {
+			util.Log().Error("Failed to marshal ExtInfo to JSON: %v", err)
+			return response.Err(http.StatusInternalServerError, "Failed to marshal ExtInfo to JSON", err)
+		}
+
+		// 赋值 JSON 字符串
 		token.ExtInfo = string(extInfoJSON)
+
+		s.tokenInfoRepo.CreateTokenInfo(token)
+		redis.Set(redisKey, token, 1*time.Minute)
 	}
 
 	// 3. 获取市场信息
@@ -166,9 +219,8 @@ func (s *TickerServiceImpl) TickerDetail(tokenAddress string, chainType model.Ch
 }
 
 // getTokenInfo 获取代币信息（优先从 Redis 和 MySQL 获取）
-func (s *TickerServiceImpl) getTokenInfo(tokenAddress string, chainType model.ChainType) (*model.TokenInfo, error) {
+func (s *TickerServiceImpl) getTokenInfo(tokenAddress string, chainType model.ChainType, redisKey string) (*model.TokenInfo, error) {
 	// 1. 从 Redis 获取
-	redisKey := GetRedisKey(constants.TokenMetaData, tokenAddress)
 	value, err := redis.Get(redisKey)
 	if err == nil && value != "" {
 		var tokenInfo model.TokenInfo
@@ -196,8 +248,8 @@ func (s *TickerServiceImpl) getTokenInfo(tokenAddress string, chainType model.Ch
 }
 
 // getTokenMetaDataFromAPI 从 API 获取代币元数据
-func (s *TickerServiceImpl) getTokenMetaDataFromAPI(tokenAddress string, chainType model.ChainType) (httpRespone.TokenMetaData, error) {
-	tokenMetaDatas, err := httpUtil.GetTokenMetaData([]string{tokenAddress}, chainType.ToString())
+func (s *TickerServiceImpl) getTokenMetaDataFromAPI(tokenAddress string, chainType string) (httpRespone.TokenMetaData, error) {
+	tokenMetaDatas, err := httpUtil.GetTokenMetaData([]string{tokenAddress}, chainType)
 	if err != nil {
 		return httpRespone.TokenMetaData{}, fmt.Errorf("failed to get token meta data from API: %v", err)
 	}
@@ -207,25 +259,60 @@ func (s *TickerServiceImpl) getTokenMetaDataFromAPI(tokenAddress string, chainTy
 		return httpRespone.TokenMetaData{}, fmt.Errorf("token address %s not found in API response", tokenAddress)
 	}
 
-	// 将数据缓存到 Redis
-	redisKey := GetRedisKey(constants.TokenMetaData, tokenAddress)
-	if err := redis.Set(redisKey, tokenMetaData); err != nil {
-		util.Log().Error("Failed to set token meta data in Redis: %v", err)
-	}
-
 	return tokenMetaData, nil
 }
 
 func (s *TickerServiceImpl) MarketTicker(tokenAddress string, chainType model.ChainType) response.Response {
-	// // 从clickhoues 获取
-	// tokenMarketAnalytics, err := s.tokenMarketAnalyticsRepo.GetTokenMarketAnalytics(tokenAddress, chainType.Uint8())
-	// if err != nil {
-	// 	return response.Err(http.StatusInternalServerError, "Failed to unmarshal ExtInfo", err)
-	// }
+	var marketTicker response.MarketTicker
+	// 从clickhoues 获取
+	tokenMarketAnalytics, err := s.tokenMarketAnalyticsRepo.GetTokenMarketAnalytics(tokenAddress, chainType.Uint8())
+	if err != nil {
+		return response.Err(http.StatusInternalServerError, "Failed to unmarshal ExtInfo", err)
+	}
+
+	if tokenMarketAnalytics != nil {
+		marketTicker = response.MarketTicker{
+			// High24H:            fmt.Sprintf("%f", tokenMarketAnalytics.Price24H),
+			// Low24H:             fmt.Sprintf("%f", tokenMarketAnalytics.Price24H),
+			TokenVolume24H:     fmt.Sprintf("%f", tokenMarketAnalytics.TokenVolume24H),
+			BuyTokenVolume24H:  fmt.Sprintf("%f", tokenMarketAnalytics.BuyTokenVolume24H),
+			SellTokenVolume24H: fmt.Sprintf("%f", tokenMarketAnalytics.TokenVolume24H-tokenMarketAnalytics.BuyTokenVolume24H), PriceChange24H: fmt.Sprintf("%f", tokenMarketAnalytics.PriceChange24H),
+			TxCount24H:     int(tokenMarketAnalytics.TxCount24H),
+			BuyTxCount24H:  int(tokenMarketAnalytics.BuyTxCount24H),
+			SellTxCount24H: int(tokenMarketAnalytics.TxCount24H) - int(tokenMarketAnalytics.BuyTxCount24H),
+			// NativeVolume24H:    "0",
+			// BuyNativeVolume24H: "0",
+			// High1H:             fmt.Sprintf("%f", tokenMarketAnalytics.Price1H),
+			// Low1H:              fmt.Sprintf("%f", tokenMarketAnalytics.Price1H),
+			TokenVolume1H:     fmt.Sprintf("%f", tokenMarketAnalytics.TokenVolume1H),
+			BuyTokenVolume1H:  fmt.Sprintf("%f", tokenMarketAnalytics.BuyTokenVolume1H),
+			SellTokenVolume1H: fmt.Sprintf("%f", tokenMarketAnalytics.TokenVolume1H-tokenMarketAnalytics.BuyTokenVolume1H),
+			PriceChange1H:     fmt.Sprintf("%f", tokenMarketAnalytics.PriceChange1H),
+			TxCount1H:         int(tokenMarketAnalytics.TxCount1H),
+			BuyTxCount1H:      int(tokenMarketAnalytics.BuyTxCount1H),
+			SellTxCount1H:     int(tokenMarketAnalytics.TxCount1H) - int(tokenMarketAnalytics.BuyTxCount1H),
+			// NativeVolume1H:     "0",
+			// BuyNativeVolume1H:  "0",
+			// High5M:             fmt.Sprintf("%f", tokenMarketAnalytics.Price5M),
+			// Low5M:              fmt.Sprintf("%f", tokenMarketAnalytics.Price5M),
+			TokenVolume5M:     fmt.Sprintf("%f", tokenMarketAnalytics.TokenVolume5M),
+			BuyTokenVolume5M:  fmt.Sprintf("%f", tokenMarketAnalytics.BuyTokenVolume5M),
+			SellTokenVolume5M: fmt.Sprintf("%f", tokenMarketAnalytics.TokenVolume5M-tokenMarketAnalytics.BuyTokenVolume5M),
+			PriceChange5M:     fmt.Sprintf("%f", tokenMarketAnalytics.PriceChange5M),
+			TxCount5M:         int(tokenMarketAnalytics.TxCount5M),
+			BuyTxCount5M:      int(tokenMarketAnalytics.BuyTxCount5M),
+			SellTxCount5M:     int(tokenMarketAnalytics.TxCount5M) - int(tokenMarketAnalytics.BuyTxCount5M),
+			// NativeVolume5M:     "0",
+			// BuyNativeVolume5M:  "0",
+			// 查询es
+			// LastSwapAt:    tokenInfo.TransactionTime.Unix(),
+			// MarketCap:     tokenInfo.MarketCap.String(),
+		}
+		return response.Success(marketTicker)
+	}
 
 	redisKey := GetRedisKey(constants.TokenTradeData, tokenAddress)
 
-	var marketTicker response.MarketTicker
 	var tradeData httpRespone.TradeData
 
 	// 1. 优先从 Redis 获取数据
@@ -267,7 +354,6 @@ func (s *TickerServiceImpl) MarketTicker(tokenAddress string, chainType model.Ch
 // populateMarketTicker 将 TradeData 转换为 MarketTicker
 func populateMarketTicker(tradeData httpRespone.TradeData) response.MarketTicker {
 	return response.MarketTicker{
-		Holders:              tradeData.Holder,
 		TxCount24H:           int(tradeData.Trade24h),
 		BuyTxCount24H:        int(tradeData.Buy24h),
 		SellTxCount24H:       int(tradeData.Sell24h),
@@ -364,7 +450,7 @@ func (s *TickerServiceImpl) TokenDistribution(tokenAddress string, chainType mod
 		}
 	}
 
-	tokenMarketDataRes, err := GetOrFetchTokenMarketData(tokenAddress, chainType)
+	tokenMarketDataRes, err := GetOrFetchTokenMarketData(tokenAddress, chainType.ToString())
 	if err != nil {
 		return response.Err(http.StatusInternalServerError, "Failed to get token market data", err)
 	}
@@ -416,7 +502,7 @@ func (s *TickerServiceImpl) SearchTickers(param, limit, cursor string, chainType
 	return response.Success(sarchTickerResponse)
 }
 
-func GetOrFetchTokenMarketData(tokenAddress string, chainType model.ChainType) (*httpRespone.TokenMarketDataResponse, error) {
+func GetOrFetchTokenMarketData(tokenAddress string, chainType string) (*httpRespone.TokenMarketDataResponse, error) {
 	redisKey := GetRedisKey(constants.TokenMarketData, tokenAddress)
 	var tokenMarketDataRes *httpRespone.TokenMarketDataResponse
 
@@ -432,14 +518,14 @@ func GetOrFetchTokenMarketData(tokenAddress string, chainType model.ChainType) (
 
 	// 2. 如果 Redis 中没有数据，调用 API 获取数据
 	if tokenMarketDataRes == nil {
-		tokenMarketDataRes, err = httpUtil.GetTokenMarketData(tokenAddress, chainType.ToString())
+		tokenMarketDataRes, err = httpUtil.GetTokenMarketData(tokenAddress, chainType)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get token market data: %w", err)
 		}
 
 		// 3. 如果 API 返回的数据有效，缓存到 Redis
 		if tokenMarketDataRes != nil {
-			if err := redis.Set(redisKey, tokenMarketDataRes, 10*time.Minute); err != nil {
+			if err := redis.Set(redisKey, tokenMarketDataRes, 24*time.Hour); err != nil {
 				util.Log().Error("Failed to set token market data in Redis: %v", err)
 			}
 		}

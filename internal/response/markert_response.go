@@ -20,6 +20,7 @@ type Market struct {
 	Price           decimal.Decimal `json:"price" example:"0.000050417320729"`                                   // 当前价格
 	Rank            int             `json:"rank" example:"1"`
 	CreateTimestamp int64           `json:"create_timestamp" example:"1740033455"`
+	Holders         int             `json:"holders" example:"4204"`
 }
 
 // MarketMetadata 市场元数据
@@ -83,9 +84,8 @@ type MarketTicker struct {
 	SellTokenVolume5M   string `json:"sell_token_volume_5m" example:"62269.324250"`
 	SellTokenVolume5Usd string `json:"sell_token_volume_5m_usd" example:"62269.324250"`
 
-	LastSwapAt int64  `json:"last_swap_at" example:"1740887399"`
 	MarketCap  string `json:"market_cap" example:"50417.320729000000000"`
-	Holders    int    `json:"holders" example:"4204"`
+	LastSwapAt int64  `json:"last_swap_at" example:"1740887399"`
 
 	// High1H             string `json:"high_1h" example:"0.000050417320729"`            // 1小时最高价
 	// Low1H              string `json:"low_1h" example:"0.000050161350930"`             // 1小时最低价
