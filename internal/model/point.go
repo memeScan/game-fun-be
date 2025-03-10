@@ -6,7 +6,9 @@ import (
 	"gorm.io/gorm"
 )
 
-type PointRecordsRepo struct{}
+type PointRecordsRepo struct {
+	db *gorm.DB
+}
 
 func NewPointRecordsRepo() *PointRecordsRepo {
 	return &PointRecordsRepo{}
@@ -19,7 +21,7 @@ type PointRecords struct {
 	PointsChange    uint64    `gorm:"column:points_change;type:bigint unsigned;default:0" json:"points_change"`
 	PointsBalance   uint64    `gorm:"column:points_balance;type:bigint unsigned;default:0" json:"points_balance"`
 	RecordType      int8      `gorm:"column:record_type;type:tinyint;not null" json:"record_type"`
-	InviteeID       *uint     `gorm:"column:invitee_id" json:"invitee_id,omitempty"`
+	InviteeID       uint      `gorm:"column:invitee_id;default null" json:"invitee_id,omitempty"`
 	TransactionHash string    `gorm:"column:transaction_hash;type:varchar(88)" json:"transaction_hash,omitempty"`
 	Description     string    `gorm:"column:description;type:varchar(255)" json:"description,omitempty"`
 	CreateTime      time.Time `gorm:"column:create_time;type:datetime" json:"create_time"`
@@ -78,6 +80,10 @@ func (t *PointRecordsRepo) InvitedPointsDetail(userIDs []uint) ([]*InvitedPoints
 	}
 
 	return records, nil
+}
+
+func (r *PointRecordsRepo) WithTx(tx *gorm.DB) *PointRecordsRepo {
+	return &PointRecordsRepo{db: tx}
 }
 
 // BeforeCreate GORM 的钩子,在创建记录前自动设置时间

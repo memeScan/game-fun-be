@@ -4,9 +4,13 @@ import (
 	"fmt"
 	"game-fun-be/internal/model"
 	"game-fun-be/internal/response"
+	"time"
+
+	"gorm.io/gorm"
 )
 
 type PointsServiceImpl struct {
+	db                 *gorm.DB
 	userInfoRepo       *model.UserInfoRepo
 	pointRecordsRecord *model.PointRecordsRepo
 }
@@ -20,7 +24,7 @@ func NewPointsServiceImpl(userInfoRepo *model.UserInfoRepo, pointRecordsRecord *
 * @param userID uint64`json:"user_id"`
 * @param chainType model.ChainType`json:"chain_type"`
  */
-func (s *PointsServiceImpl) Points(userID uint64, chainType model.ChainType) response.Response {
+func (s *PointsServiceImpl) Points(userID uint, chainType model.ChainType) response.Response {
 	userInfo, err := s.userInfoRepo.GetUserByUserID(userID)
 
 	if err != nil {
@@ -120,25 +124,110 @@ func (s *PointsServiceImpl) InvitedPointsDetail(userID uint64, cursor *uint, lim
 	return response.Success(pointsTotalResponse)
 }
 
-func (s *PointsServiceImpl) PointsSave(address string, point uint64) response.Response {
+func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string) response.Response {
 
-	// user, err := s.userInfoRepo.GetUserByAddress(address, 1)
-	// if _ != nil {
-	// 	return response.DBErr("查询用户失败", err)
-	// }
-	// point_before := user.AvailablePoints
-	// inviter_id := user.InviterID
-	// parent_inviter_id := user.ParentInviteId
+	transaction_err := s.db.Transaction(func(tx *gorm.DB) error {
 
-	// 更新用户积分
-	// err = s.userInfoRepo.UpdatePoints(address, point)
+		user, err := s.userInfoRepo.WithTx(tx).GetUserByAddress(address, 1)
+		if user == nil || err != nil { // 用户不存在
+			return err // 400 Bad Request
+		}
 
-	// s.userInfoRepo.UpdatePoints(address, point)
+		// 创建积分记录
+		insertErr := s.pointRecordsRecord.WithTx(tx).CreatePointRecord(&model.PointRecords{
+			UserID:          user.ID,
+			PointsChange:    point, // 积分变动
+			PointsBalance:   user.AvailablePoints + point,
+			RecordType:      1, // 积分类型
+			TransactionHash: hash,
+		})
+		if insertErr != nil {
+			return insertErr
+		}
 
-	pointsEstimatedResponse := response.PointsEstimatedResponse{
-		EstimatedPoints: "12862.90277",
+		userPoints := make(map[model.PointType]uint64)
+		userPoints[model.AvailablePoints] = point
+		userPoints[model.TradingPoints] = point
+
+		// 更新用户积分
+		if err := s.userInfoRepo.WithTx(tx).IncrementMultiplePointsAndUpdateTime(address, userPoints); err != nil {
+			return err
+		}
+
+		if user.InviterID != 0 {
+
+			inviter, err := s.userInfoRepo.WithTx(tx).GetUserByUserID(user.InviterID)
+			if inviter == nil || err != nil { // 用户不存在
+				return err // 400 Bad Request
+			}
+
+			invitePoints := uint64(float64(point) * 0.15)
+
+			// 创建积分记录
+			insertErr := s.pointRecordsRecord.WithTx(tx).CreatePointRecord(&model.PointRecords{
+				UserID:        user.ID,
+				PointsChange:  invitePoints, // 积分变动
+				PointsBalance: user.AvailablePoints + invitePoints,
+				RecordType:    2, // 积分类型
+				InviteeID:     user.ID,
+				UpdateTime:    time.Now(),
+			})
+			if insertErr != nil {
+				return insertErr
+			}
+
+			userPoints := make(map[model.PointType]uint64)
+			userPoints[model.AvailablePoints] = invitePoints
+			userPoints[model.TradingPoints] = invitePoints
+
+			// 更新用户积分
+			if err := s.userInfoRepo.WithTx(tx).IncrementMultiplePointsAndUpdateTime(inviter.Address, userPoints); err != nil {
+				return err
+			}
+
+		}
+
+		if user.ParentInviteId != 0 {
+
+			parentInviter, err := s.userInfoRepo.WithTx(tx).GetUserByUserID(user.ParentInviteId)
+			if parentInviter == nil || err != nil { // 用户不存在
+				return err // 400 Bad Request
+			}
+
+			parentInviterPoints := uint64(float64(point) * 0.05)
+
+			// 创建积分记录
+			insertErr := s.pointRecordsRecord.WithTx(tx).CreatePointRecord(&model.PointRecords{
+				UserID:        user.ID,
+				PointsChange:  parentInviterPoints, // 积分变动
+				PointsBalance: user.AvailablePoints + parentInviterPoints,
+				RecordType:    2, // 积分类型
+				InviteeID:     user.InviterID,
+				UpdateTime:    time.Now(),
+			})
+			if insertErr != nil {
+				return insertErr
+			}
+
+			userPoints := make(map[model.PointType]uint64)
+			userPoints[model.AvailablePoints] = parentInviterPoints
+			userPoints[model.InvitePoints] = parentInviterPoints
+
+			// 更新用户积分
+			if err := s.userInfoRepo.WithTx(tx).IncrementMultiplePointsAndUpdateTime(parentInviter.Address, userPoints); err != nil {
+				return err
+			}
+
+		}
+
+		return nil
+	})
+
+	if transaction_err != nil {
+		return response.DBErr("积分保存失败", transaction_err)
+
 	}
-	return response.Success(pointsEstimatedResponse)
+	return response.Success("积分保存成功")
 }
 
 func (s *PointsServiceImpl) PointsEstimated(userID string, chainType model.ChainType) response.Response {

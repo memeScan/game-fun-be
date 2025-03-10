@@ -9,7 +9,9 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserInfoRepo struct{}
+type UserInfoRepo struct {
+	db *gorm.DB
+}
 
 func NewUserInfoRepo() *UserInfoRepo {
 	return &UserInfoRepo{}
@@ -168,7 +170,19 @@ func (r *UserInfoRepo) UpdatePointByAddress(address string, point uint64) error 
 
 	// 	return result.Error
 	// }
+	// PointRecords
 	return nil
+}
+
+func (r *UserInfoRepo) IncrementMultiplePointsAndUpdateTime(address string, points map[PointType]uint64) error {
+	updates := make(map[string]any)
+	for pt, val := range points {
+		updates[string(pt)] = gorm.Expr(string(pt)+" + ?", val)
+	}
+	updates["update_time"] = time.Now()
+	return r.db.Model(&UserInfo{}).
+		Where("address = ?", address).
+		Updates(updates).Error
 }
 
 func (r *UserInfoRepo) GetUserByAddress(address string, chainType uint8) (*UserInfo, error) {
@@ -185,7 +199,7 @@ func (r *UserInfoRepo) GetUserByAddress(address string, chainType uint8) (*UserI
 	return &user, nil
 }
 
-func (r *UserInfoRepo) GetUserByUserID(userID uint64) (*UserInfo, error) {
+func (r *UserInfoRepo) GetUserByUserID(userID uint) (*UserInfo, error) {
 	var user UserInfo
 
 	// 查询用户信息
@@ -198,4 +212,8 @@ func (r *UserInfoRepo) GetUserByUserID(userID uint64) (*UserInfo, error) {
 	}
 
 	return &user, nil
+}
+
+func (r *UserInfoRepo) WithTx(tx *gorm.DB) *UserInfoRepo {
+	return &UserInfoRepo{db: tx}
 }
