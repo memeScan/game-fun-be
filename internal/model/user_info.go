@@ -163,11 +163,11 @@ func (r *UserInfoRepo) GetUsersByInviterId(userID uint64, cursor *uint, limit in
 
 func (r *UserInfoRepo) UpdatePointByAddress(address string, point uint64) error {
 
-	result := DB.Update("available_points", gorm.Expr("available_points + ?", point), "update_time", time.Now()).Where("address = ?", address)
-	if result.Error != nil {
+	// result := DB.Update("available_points", gorm.Expr("available_points + ?", point), "update_time", time.Now()).Where("address = ?", address)
+	// if result.Error != nil {
 
-		return result.Error
-	}
+	// 	return result.Error
+	// }
 	return nil
 }
 

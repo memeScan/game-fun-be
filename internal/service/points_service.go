@@ -122,18 +122,18 @@ func (s *PointsServiceImpl) InvitedPointsDetail(userID uint64, cursor *uint, lim
 
 func (s *PointsServiceImpl) PointsSave(address string, point uint64) response.Response {
 
-	user, err := s.userInfoRepo.GetUserByAddress(address, 1)
-	if _ != nil {
-		return response.DBErr("查询用户失败", err)
-	}
-	point_before := user.AvailablePoints
-	inviter_id := user.InviterID
-	parent_inviter_id := user.ParentInviteId
+	// user, err := s.userInfoRepo.GetUserByAddress(address, 1)
+	// if _ != nil {
+	// 	return response.DBErr("查询用户失败", err)
+	// }
+	// point_before := user.AvailablePoints
+	// inviter_id := user.InviterID
+	// parent_inviter_id := user.ParentInviteId
 
 	// 更新用户积分
-	err = s.userInfoRepo.UpdatePoints(address, point)
+	// err = s.userInfoRepo.UpdatePoints(address, point)
 
-	s.userInfoRepo.UpdatePoints(address, point)
+	// s.userInfoRepo.UpdatePoints(address, point)
 
 	pointsEstimatedResponse := response.PointsEstimatedResponse{
 		EstimatedPoints: "12862.90277",

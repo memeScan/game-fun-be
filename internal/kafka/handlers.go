@@ -1267,7 +1267,7 @@ func gameOutTradeHandler(message []byte, topic string) error {
 
 	discount_value := (100 - discount) / 100
 	point := coefficient * FeeBaseAmount / (PoolQuoteReserve * discount_value / PoolBaseReserve)
-
+	util.Log().Info("point: %d", point)
 	// pointService := service.PointServiceImpl{}
 	// pointService.CalculateVolumeStatistics()
 
