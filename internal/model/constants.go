@@ -19,6 +19,11 @@ const (
 	LoginMessageTemplate = "Sign in to the game.exchange\r\n\r\nTimestamp: %s"
 )
 
+const (
+	G_TOKEN_ADDRESS  = "8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump"
+	G_TOKEN_DECIMALS = 6
+)
+
 // PlatformType 定义交易平台类型
 type PlatformType uint8
 

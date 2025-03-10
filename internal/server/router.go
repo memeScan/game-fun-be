@@ -115,7 +115,8 @@ func NewRouter() *gin.Engine {
 		auth.GET("points/:chain_type", pointsHandler.Points)
 		auth.GET("points/:chain_type/detail", pointsHandler.PointsDetail)
 		auth.GET("points/:chain_type/estimated", pointsHandler.PointsEstimated)
-		auth.GET("global/:chain_type/balance", globalHandler.Balance)
+		auth.GET("global/:chain_type/sol_balance", globalHandler.SolBalance)
+		auth.GET("global/:chain_type/ticker_balance/:ticker", globalHandler.TickerBalance)
 
 		// WebSocket 路由
 		v1.GET("ws/kline/:tokenAddress", ws.HandleKlineWS)

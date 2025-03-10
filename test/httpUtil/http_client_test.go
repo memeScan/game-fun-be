@@ -188,7 +188,7 @@ func TestSendSwapTransaction(t *testing.T) {
 	setupTest(t)
 	swapTransaction := "dummy_swap_transaction"
 
-	resp, err := httpUtil.SendSwapTransaction(swapTransaction, false)
+	resp, err := httpUtil.SendTransaction(swapTransaction, false)
 	if err != nil {
 		t.Fatalf("Failed to send swap transaction: %v", err)
 	}
@@ -204,7 +204,7 @@ func TestGetSwapRequestStatusBySignature(t *testing.T) {
 	setupTest(t)
 	signature := "dummy_signature"
 
-	resp, err := httpUtil.GetSwapRequestStatusBySignature(signature)
+	resp, err := httpUtil.GetSwapStatusBySignature(signature)
 	if err != nil {
 		t.Fatalf("Failed to get swap request status: %v", err)
 	}

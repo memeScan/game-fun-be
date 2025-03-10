@@ -24,14 +24,28 @@ func (s *GlobalServiceImpl) NativeTokePrice(chainType model.ChainType) response.
 	return response.Success(responseData)
 }
 
-func (s *GlobalServiceImpl) Balance(address string, chainType model.ChainType) response.Response {
-	tokenBalances, err := httpUtil.GetTokenBalance([]string{address}, model.SolanaWrappedSOLAddress)
+func (s *GlobalServiceImpl) SolBalance(userAddress string, chainType model.ChainType) response.Response {
+	tokenBalances, err := httpUtil.GetTokenBalance([]string{userAddress}, model.SolanaWrappedSOLAddress)
 	if err != nil {
 		return response.Err(http.StatusInternalServerError, "Failed to get balance", err)
 	}
 	balances := response.TokenBalance{
-		Token:    address,
-		Owner:    model.SolanaWrappedSOLAddress,
+		Token:    model.SolanaWrappedSOLAddress,
+		Owner:    userAddress,
+		Balance:  (*tokenBalances)[0].Balance,
+		Decimals: (*tokenBalances)[0].Decimals,
+	}
+	return response.Success(balances)
+}
+
+func (s *GlobalServiceImpl) TickerBalance(userAddress string, tokenAddress string, chainType model.ChainType) response.Response {
+	tokenBalances, err := httpUtil.GetTokenBalance([]string{userAddress}, tokenAddress)
+	if err != nil {
+		return response.Err(http.StatusInternalServerError, "Failed to get balance", err)
+	}
+	balances := response.TokenBalance{
+		Token:    tokenAddress,
+		Owner:    userAddress,
 		Balance:  (*tokenBalances)[0].Balance,
 		Decimals: (*tokenBalances)[0].Decimals,
 	}

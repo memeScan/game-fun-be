@@ -7,6 +7,7 @@ import (
 	"game-fun-be/internal/pkg/httpRequest"
 	"game-fun-be/internal/pkg/httpRespone"
 
+	"errors"
 	"game-fun-be/internal/pkg/httpUtil"
 	"game-fun-be/internal/request"
 	"game-fun-be/internal/response"
@@ -26,33 +27,37 @@ func NewSwapService() *SwapServiceImpl {
 	return &SwapServiceImpl{}
 }
 
-func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType uint8) *response.Response {
+func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType uint8) response.Response {
 
 	startTime := time.Now()
 
 	tokenDetail, poolDetail, errResp := s.getTokenAndPoolInfo(req.TokenAddress, chainType)
 	if errResp != nil {
-		return errResp
+		return response.Err(errResp.Code, errResp.Msg, errors.New(errResp.Error))
 	}
 
 	mev, jitotip, jitoOrderId, errResp := s.processAntiMev(req)
 	if errResp != nil {
-		return errResp
+		return response.Err(errResp.Code, errResp.Msg, errors.New(errResp.Error))
 	}
 
-	swapStruct := s.buildSwapPumpStruct(req, tokenDetail, poolDetail, mev, jitotip)
+	var swapTransaction *httpRespone.SwapTransactionResponse
 
-	swapResponse, err := s.sendSwapRequest(swapStruct)
-	if err != nil {
-		return swapResponse
-	}
-
-	swapTxResponse, ok := swapResponse.Data.(*httpRespone.SwapTransactionResponse)
-	if !ok {
-		return &response.Response{
-			Code: http.StatusInternalServerError,
-			Msg:  "invalid swap transaction response type",
+	if req.PlatformType == "pump" {
+		swapStruct := s.buildSwapPumpStruct(req, tokenDetail, poolDetail, mev, jitotip)
+		swapTransactionResponse, err := s.sendSwapRequest(swapStruct)
+		if err != nil {
+			return response.Err(http.StatusInternalServerError, "Failed to send swap request", err)
 		}
+		swapTransaction = swapTransactionResponse
+	}
+	if req.PlatformType == "raydium" {
+		swapStruct := s.buildSwapPumpStruct(req, tokenDetail, poolDetail, mev, jitotip)
+		swapTransactionResponse, err := s.sendSwapRequest(swapStruct)
+		if err != nil {
+			return response.Err(http.StatusInternalServerError, "Failed to send swap request", err)
+		}
+		swapTransaction = swapTransactionResponse
 	}
 
 	platform := model.CreatedPlatformType(tokenDetail.CreatedPlatformType)
@@ -61,10 +66,10 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 
 	outAmount, inAmountUSD, outAmountUSD, errResp := s.calculateSwapAmounts(req, tokenDetail, inDecimals, outDecimals)
 	if errResp != nil {
-		return errResp
+		return response.Err(errResp.Code, errResp.Msg, errors.New(errResp.Error))
 	}
 
-	return ConstructSwapRouteResponse(req, swapTxResponse, inDecimals, outDecimals, outAmount, inAmountUSD, outAmountUSD, startTime, jitoOrderId)
+	return ConstructSwapRouteResponse(req, swapTransaction, inDecimals, outDecimals, outAmount, inAmountUSD, outAmountUSD, startTime, jitoOrderId)
 }
 
 func (s *SwapServiceImpl) getTokenAndPoolInfo(tokenAddress string, chainType uint8) (*model.TokenInfo, *model.TokenLiquidityPool, *response.Response) {
@@ -128,7 +133,7 @@ func (s *SwapServiceImpl) buildSwapPumpStruct(req request.SwapRouteRequest, toke
 		OutputMint:                  req.TokenOutAddress,
 		SlippageBps:                 req.Slippage,
 		PriorityFee:                 req.PriorityFee,
-		TokenTotalSupply:            strconv.FormatUint(tokenDetail.TotalSupply, 10),
+		TokenTotalSupply:            strconv.FormatUint(tokenDetail.CirculatingSupply, 10),
 		VirtualSolReserves:          strconv.FormatUint(poolDetail.PoolPcReserve, 10),
 		VirtualTokenReserves:        strconv.FormatUint(poolDetail.PoolCoinReserve, 10),
 		InitialRealTokenReserves:    model.PUMP_INITIAL_REAL_TOKEN_RESERVES,
@@ -139,38 +144,24 @@ func (s *SwapServiceImpl) buildSwapPumpStruct(req request.SwapRouteRequest, toke
 	}
 }
 
-func (s *SwapServiceImpl) sendSwapRequest(swapStruct httpRequest.SwapPumpStruct) (*response.Response, error) {
+func (s *SwapServiceImpl) sendSwapRequest(swapStruct httpRequest.SwapPumpStruct) (*httpRespone.SwapTransactionResponse, error) {
 
 	resp, err := httpUtil.GetPumpFunTradeTx(swapStruct)
 	if err != nil {
-		return &response.Response{
-			Code: http.StatusInternalServerError,
-			Msg:  "failed to send swap request",
-		}, err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return &response.Response{
-			Code: http.StatusInternalServerError,
-			Msg:  "failed to read response body",
-		}, err
+		return nil, err
 	}
 
-	var swapTxResponse httpRespone.SwapTransactionResponse
+	var swapTxResponse *httpRespone.SwapTransactionResponse
 	if err := json.Unmarshal(respBody, &swapTxResponse); err != nil {
-		return &response.Response{
-			Code: http.StatusInternalServerError,
-			Msg:  "failed to unmarshal response",
-		}, fmt.Errorf("failed to unmarshal JSON: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal JSON: %w", err)
 	}
-
-	return &response.Response{
-		Code: http.StatusOK,
-		Msg:  "success",
-		Data: swapTxResponse,
-	}, nil
+	return swapTxResponse, nil
 }
 
 func (s *SwapServiceImpl) calculateSwapAmounts(
@@ -207,9 +198,9 @@ func (s *SwapServiceImpl) calculateSwapAmounts(
 	return outAmount, inAmountUSD, outAmountUSD, nil
 }
 
-func ConstructSwapRouteResponse(req request.SwapRouteRequest, swapResponse *httpRespone.SwapTransactionResponse, inDecimals, outDecimals uint8, amountOut, amountInUSD, amountOutUSD decimal.Decimal, startTime time.Time, jitoOrderId string) *response.Response {
+func ConstructSwapRouteResponse(req request.SwapRouteRequest, swapResponse *httpRespone.SwapTransactionResponse, inDecimals, outDecimals uint8, amountOut, amountInUSD, amountOutUSD decimal.Decimal, startTime time.Time, jitoOrderId string) response.Response {
 
-	swapRouteResponse := &response.Response{
+	swapRouteResponse := response.Response{
 		Code: http.StatusOK,
 		Msg:  swapResponse.Message,
 		Data: response.SwapRouteData{
