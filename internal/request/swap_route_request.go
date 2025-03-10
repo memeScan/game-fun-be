@@ -11,7 +11,7 @@ type SwapRouteRequest struct {
 	TokenOutChain   string          `form:"token_out_chain" binding:"required" example:"sol"`
 	InAmount        decimal.Decimal `form:"in_amount" binding:"required" example:"100000000"`
 	PriorityFee     uint64          `form:"priorityFee" binding:"required" example:"200000000"`
-	Slippage        string          `form:"slippage" binding:"required" example:"100 * 100"`
+	Slippage        int             `form:"slippage" binding:"required" example:"100 * 100"`
 	IsAntiMev       bool            `form:"is_anti_mev"`
 	Legacy          bool            `form:"legacy"`
 	SwapType        string          `form:"swap_type" binding:"omitempty,oneof=buy sell"`

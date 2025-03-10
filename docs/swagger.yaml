@@ -1083,7 +1083,7 @@ paths:
         type: string
       - description: 交易类型（buy 或 sell）
         in: path
-        name: tradeType
+        name: trade_type
         required: true
         type: string
       - description: 代币地址
@@ -1129,7 +1129,7 @@ paths:
         in: query
         name: slippage
         required: true
-        type: string
+        type: integer
       - description: 是否启用 Anti-MEV（默认 false）
         in: query
         name: is_anti_mev

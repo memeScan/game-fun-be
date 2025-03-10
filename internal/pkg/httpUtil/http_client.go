@@ -27,22 +27,24 @@ import (
 
 var (
 	// API 端点
-	ApiTokenBalanceBatch string
-	ApiDexCheckBatch     string
-	ApiSafetyCheckBatch  string
-	ApiPriorityFee       string
-	ApiPumpfunTrade      string
-	ApiRaydiumTrade      string
-	ApiTransactionSend   string
-	ApiTransactionStatus string
-	ApiTokensBatch       string
-	ApiSafetyCheckPool   string
-	httpClient           *http.Client
-	ApiTipFloor          string
-	ApiPoolInfo          string
-	ApiTokenFullInfo     string
-	ApiBondingCurves     string
-	metricsClient        *metrics.MetricsHTTPClient
+	ApiTokenBalanceBatch      string
+	ApiDexCheckBatch          string
+	ApiSafetyCheckBatch       string
+	ApiPriorityFee            string
+	ApiPumpfunTrade           string
+	ApiRaydiumTrade           string
+	ApiTransactionSend        string
+	ApiTransactionStatus      string
+	ApiTokensBatch            string
+	ApiSafetyCheckPool        string
+	ApiTipFloor               string
+	ApiPoolInfo               string
+	ApiTokenFullInfo          string
+	ApiBondingCurves          string
+	ApiGetGameFunGInstruction string
+	ApiBuyGWithPoints         string
+	httpClient                *http.Client
+	metricsClient             *metrics.MetricsHTTPClient
 )
 
 func init() {
@@ -83,6 +85,8 @@ func InitAPI(endpoint *string) {
 	ApiPoolInfo = *endpoint + "/api/v1/pool-info/mints"
 	ApiTokenFullInfo = *endpoint + "/api/v1/tokens/full-info"
 	ApiBondingCurves = *endpoint + "/api/v1/bonding-curves"
+	ApiGetGameFunGInstruction = *endpoint + "/block/api/v1/gamefun/swap-g-instruction"
+	ApiBuyGWithPoints = *endpoint + "/block/api/v1/gamefun/buy-g-with-points"
 }
 
 // FetchURIWithRetry adds retry mechanism for fetching URI
@@ -167,9 +171,36 @@ func getBackoffDuration(attempt int) time.Duration {
 	return backoff
 }
 
+func GetRaydiumTradeTx(tradeStruct httpRequest.SwapRaydiumStruct) (*http.Response, error) {
+	url := ApiRaydiumTrade
+	resp, err := postRequest(url, tradeStruct, false)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send raydium trade request: %w", err)
+	}
+	return resp, nil
+}
+
 func GetPumpFunTradeTx(swapStruct httpRequest.SwapPumpStruct) (*http.Response, error) {
 	url := ApiPumpfunTrade
 	resp, err := postRequest(url, swapStruct, false)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send swap request: %w", err)
+	}
+	return resp, nil
+}
+
+func GetGameFunGInstruction(swapGInstructionStruct httpRequest.SwapGInstructionStruct) (*http.Response, error) {
+	url := ApiGetGameFunGInstruction
+	resp, err := postRequest(url, swapGInstructionStruct, false)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send swap request: %w", err)
+	}
+	return resp, nil
+}
+
+func GetBuyGWithPointsInstruction(buyGWithPointsStruct httpRequest.BuyGWithPointsStruct) (*http.Response, error) {
+	url := ApiBuyGWithPoints
+	resp, err := postRequest(url, buyGWithPointsStruct, false)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send swap request: %w", err)
 	}
@@ -294,15 +325,6 @@ func SendSwapRequest(swapStruct httpRequest.SwapPumpStruct) (*http.Response, err
 	resp, err := postRequest(url, swapStruct, false)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send swap request: %w", err)
-	}
-	return resp, nil
-}
-
-func SendRaydiumTradeRequest(tradeStruct httpRequest.SwapRaydiumStruct) (*http.Response, error) {
-	url := ApiRaydiumTrade
-	resp, err := postRequest(url, tradeStruct, false)
-	if err != nil {
-		return nil, fmt.Errorf("failed to send raydium trade request: %w", err)
 	}
 	return resp, nil
 }

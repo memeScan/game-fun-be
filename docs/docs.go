@@ -579,7 +579,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "交易类型（buy 或 sell）",
-                        "name": "tradeType",
+                        "name": "trade_type",
                         "in": "path",
                         "required": true
                     },
@@ -639,7 +639,7 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "type": "string",
+                        "type": "integer",
                         "description": "滑点（100 * 100 代表 1%）",
                         "name": "slippage",
                         "in": "query",

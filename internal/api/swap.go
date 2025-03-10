@@ -23,21 +23,21 @@ func NewSwapHandler(swapService *service.SwapServiceImpl) *SwapHandler {
 // @Accept json
 // @Produce json
 // @Param chain_type path string true "链类型（sol、eth、bsc）"
-// @Param tradeType path string true "交易类型（buy 或 sell）"
-// @Param token_address query string true "代币地址"
-// @Param from_address query string true "发送地址（用户地址）"
-// @Param token_in_address query string true "输入代币地址"
-// @Param token_out_address query string true "输出代币地址"
-// @Param token_in_chain query string true "输入代币所在链（sol、eth、bsc）"
-// @Param token_out_chain query string true "输出代币所在链（sol、eth、bsc）"
-// @Param in_amount query string true "输入金额（单位：最小代币单位，如 lamports、wei）"
-// @Param priorityFee query int false "交易优先费（单位：最小代币单位，如 lamports）"
-// @Param slippage query string true "滑点（100 * 100 代表 1%）"
-// @Param is_anti_mev query bool false "是否启用 Anti-MEV（默认 false）"
-// @Param legacy query bool false "是否使用 Legacy 交易模式（默认 false）"
-// @Param swap_type query string false "交易方向（buy 或 sell，可选）"
-// @Param points query int false "积分数（用于 g_points 交易类型）"
-// @Param platform_type query string true "交易平台类型（pump、raydium、game、g_external、g_points）"
+// @Param trade_type path string true "交易类型（buy 或 sell）"
+// @Param token_address query string true "代币地址" example:"So11111111111111111111111111111111111111112"
+// @Param from_address query string true "发送地址（用户地址）" example:"CN8R1aHNWLAZm99ymTCd3asErjc2fhe5471cRXs7nJ3m"
+// @Param token_in_address query string true "输入代币地址" example:"So11111111111111111111111111111111111111112"
+// @Param token_out_address query string true "输出代币地址" example:"FfYhzJ7j3rrs4m4i1wKy5Bz5aYW8mKEGq2rxChU3pump"
+// @Param token_in_chain query string true "输入代币所在链（sol、eth、bsc）" example:"sol"
+// @Param token_out_chain query string true "输出代币所在链（sol、eth、bsc）" example:"sol"
+// @Param in_amount query string true "输入金额（单位：最小代币单位，如 lamports、wei）" example:"100000000"
+// @Param priorityFee query int false "交易优先费（单位：最小代币单位，如 lamports）" example:200000000
+// @Param slippage query int true "滑点（100 * 100 代表 1%）" example:10000
+// @Param is_anti_mev query bool false "是否启用 Anti-MEV（默认 false）" example:false
+// @Param legacy query bool false "是否使用 Legacy 交易模式（默认 false）" example:false
+// @Param swap_type query string false "交易方向（buy 或 sell，可选）" example:"buy"
+// @Param points query int false "积分数（用于 g_points 交易类型）" example:200000000
+// @Param platform_type query string true "交易平台类型（pump、raydium、game、g_external、g_points）" example:"pump"
 // @Success 200 {object} response.Response "成功返回 Swap 路由信息"
 // @Failure 500 {object} response.Response "服务器内部错误"
 // @Router /swap/{chain_type}/get_transaction [get]
