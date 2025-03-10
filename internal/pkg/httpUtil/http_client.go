@@ -34,6 +34,7 @@ var (
 	ApiPumpfunTrade           string
 	ApiRaydiumTrade           string
 	ApiTransactionSend        string
+	ApiGameFunTransactionSend string
 	ApiTransactionStatus      string
 	ApiTokensBatch            string
 	ApiSafetyCheckPool        string
@@ -87,6 +88,7 @@ func InitAPI(endpoint *string) {
 	ApiBondingCurves = *endpoint + "/block/api/v1/bonding-curves"
 	ApiGetGameFunGInstruction = *endpoint + "/block/api/v1/gamefun/swap-g-instruction"
 	ApiBuyGWithPoints = *endpoint + "/block/api/v1/gamefun/buy-g-with-points"
+	ApiGameFunTransactionSend = *endpoint + "/block/api/v1/gamefun/send-transaction"
 }
 
 // FetchURIWithRetry adds retry mechanism for fetching URI
@@ -352,6 +354,21 @@ func SendTransaction(swapTransaction string, isJito bool) (*http.Response, error
 	body := map[string]interface{}{
 		"signedTransaction": swapTransaction,
 		"mev":               isJito,
+	}
+
+	resp, err := postRequest(url, body, false)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send swap transaction: %w", err)
+	}
+	return resp, nil
+}
+
+func SendGameFunTransaction(swapTransaction string, isJito bool, isUsePoint bool) (*http.Response, error) {
+	url := ApiTransactionSend
+	body := map[string]interface{}{
+		"signedTransaction": swapTransaction,
+		"mev":               isJito,
+		"usePoint":          isUsePoint,
 	}
 
 	resp, err := postRequest(url, body, false)

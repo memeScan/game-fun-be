@@ -1,10 +1,13 @@
 package service
 
 import (
+	"game-fun-be/internal/constants"
 	"game-fun-be/internal/model"
 	"game-fun-be/internal/pkg/httpRequest"
 	"game-fun-be/internal/pkg/httpRespone"
 	"game-fun-be/internal/pkg/httpUtil"
+	"game-fun-be/internal/pkg/util"
+	"game-fun-be/internal/redis"
 	"game-fun-be/internal/request"
 	"game-fun-be/internal/response"
 
@@ -21,6 +24,7 @@ import (
 )
 
 type SwapServiceImpl struct {
+	userInfoRepo *model.UserInfoRepo
 }
 
 func NewSwapService() *SwapServiceImpl {
@@ -58,7 +62,7 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 		},
 		"g_points": func() (*httpRespone.SwapTransactionResponse, error) {
 			swapStruct := s.buildBuyGWithPointsStruct(req)
-			return s.getGetBuyGWithPointsInstruction(swapStruct)
+			return s.getGetBuyGWithPointsInstruction(req.Points, swapStruct)
 		},
 	}
 
@@ -260,7 +264,7 @@ func (s *SwapServiceImpl) getGameFunGInstruction(swapStruct httpRequest.SwapGIns
 	return swapTxResponse, nil
 }
 
-func (s *SwapServiceImpl) getGetBuyGWithPointsInstruction(swapStruct httpRequest.BuyGWithPointsStruct) (*httpRespone.SwapTransactionResponse, error) {
+func (s *SwapServiceImpl) getGetBuyGWithPointsInstruction(points uint64, swapStruct httpRequest.BuyGWithPointsStruct) (*httpRespone.SwapTransactionResponse, error) {
 
 	resp, err := httpUtil.GetBuyGWithPointsInstruction(swapStruct)
 	if err != nil {
@@ -276,6 +280,13 @@ func (s *SwapServiceImpl) getGetBuyGWithPointsInstruction(swapStruct httpRequest
 	var swapTxResponse *httpRespone.SwapTransactionResponse
 	if err := json.Unmarshal(respBody, &swapTxResponse); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal JSON: %w", err)
+	}
+
+	SwapGPointsKey := GetRedisKey(constants.SwapGPoints, swapTxResponse.Data.Base64SwapTransaction)
+
+	err = redis.Set(SwapGPointsKey, points, 5*time.Minute)
+	if err != nil {
+		util.Log().Error("Failed to set key in Redis: %v", err)
 	}
 	return swapTxResponse, nil
 }
@@ -360,8 +371,50 @@ func ConstructSwapRouteResponse(req request.SwapRouteRequest, swapResponse *http
 	return swapRouteResponse
 }
 
-func (s *SwapServiceImpl) SendTransaction(swapTransaction string, isJito bool) response.Response {
-	resp, err := httpUtil.SendTransaction(swapTransaction, isJito)
+func (s *SwapServiceImpl) SendTransaction(userID string, swapTransaction string, isJito bool, platformType string) response.Response {
+	isUsePoint := false
+	if platformType == "g_points" {
+		SwapGPointsKey := GetRedisKey(constants.SwapGPoints, swapTransaction)
+		redisValue, err := redis.Get(SwapGPointsKey)
+		if err != nil {
+			util.Log().Error("Failed to get key from Redis: %v", err)
+			return response.Err(http.StatusInternalServerError, "Failed to retrieve points from Redis", err)
+		}
+		if redisValue == "" {
+			util.Log().Error("Key not found in Redis: %s", SwapGPointsKey)
+			return response.Err(http.StatusNotFound, "Transaction expired, please initiate the transaction again!", nil)
+		}
+		points, err := strconv.ParseUint(redisValue, 10, 64)
+		if err != nil {
+			util.Log().Error("Failed to convert Redis value to uint64: %v", err)
+			return response.Err(http.StatusInternalServerError, "Failed to convert Redis points value to uint64", err)
+		}
+		userIDUint64, err := strconv.ParseUint(userID, 10, 64)
+		if err != nil {
+			util.Log().Error("Failed to convert userID to uint64: %v", err)
+			return response.Err(http.StatusInternalServerError, "Invalid user ID", err)
+		}
+		userInfo, err := s.userInfoRepo.GetUserByUserID(userIDUint64)
+		if err != nil {
+			return response.Err(http.StatusInternalServerError, "Unable to retrieve user information, transaction failed!", err)
+		}
+		if points > userInfo.AvailablePoints {
+			return response.Err(http.StatusInternalServerError, "Your available points are insufficient, transaction failed!", err)
+		}
+		isTrue, err := s.userInfoRepo.DeductPointsWithOptimisticLock(userIDUint64, points)
+		if err != nil {
+			util.Log().Error("Failed to deduct points with optimistic lock: %v", err)
+			return response.Err(http.StatusInternalServerError, "Failed to deduct points, please try again later", err)
+		}
+
+		if !isTrue {
+			util.Log().Error("Optimistic lock failed, points deduction unsuccessful for user: %d", userIDUint64)
+			return response.Err(http.StatusConflict, "Points deduction failed due to concurrent update, please try again", nil)
+		}
+		isUsePoint = true
+	}
+
+	resp, err := httpUtil.SendGameFunTransaction(swapTransaction, isJito, isUsePoint)
 	if err != nil {
 		return response.Err(http.StatusInternalServerError, "Failed to send swap transaction", err)
 	}
