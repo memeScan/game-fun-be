@@ -579,7 +579,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "交易类型（buy 或 sell）",
-                        "name": "trade_type",
+                        "name": "tradeType",
                         "in": "path",
                         "required": true
                     },
@@ -635,11 +635,11 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "交易优先费（单位：最小代币单位，如 lamports）",
-                        "name": "priorityFee",
+                        "name": "priority_fee",
                         "in": "query"
                     },
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "滑点（100 * 100 代表 1%）",
                         "name": "slippage",
                         "in": "query",
@@ -2465,6 +2465,10 @@ const docTemplate = `{
                 },
                 "token_amount": {
                     "description": "Index        int    ` + "`" + `json:\"index\"` + "`" + `         // 交易索引",
+                    "type": "string"
+                },
+                "token_price": {
+                    "description": "代币价格",
                     "type": "string"
                 },
                 "trade_type": {
