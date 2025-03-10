@@ -391,7 +391,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "用户"
+                    "积分"
                 ],
                 "summary": "获取用户积分数据",
                 "parameters": [
@@ -446,7 +446,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "用户"
+                    "积分"
                 ],
                 "summary": "获取用户积分明细",
                 "parameters": [
@@ -459,8 +459,8 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "分页页码",
-                        "name": "page",
+                        "description": "游标",
+                        "name": "cursor",
                         "in": "query",
                         "required": true
                     },
@@ -583,8 +583,8 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "分页页码",
-                        "name": "page",
+                        "description": "游标",
+                        "name": "cursor",
                         "in": "query",
                         "required": true
                     },

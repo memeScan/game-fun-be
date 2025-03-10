@@ -1015,7 +1015,7 @@ paths:
       - ApiKeyAuth: []
       summary: 获取用户积分数据
       tags:
-      - 用户
+      - 积分
   /points/{chain_type}/detail:
     get:
       consumes:
@@ -1028,9 +1028,9 @@ paths:
         name: chain_type
         required: true
         type: string
-      - description: 分页页码
+      - description: 游标
         in: query
-        name: page
+        name: cursor
         required: true
         type: string
       - description: 每页数量
@@ -1058,7 +1058,7 @@ paths:
       - ApiKeyAuth: []
       summary: 获取用户积分明细
       tags:
-      - 用户
+      - 积分
   /points/{chain_type}/estimated:
     get:
       consumes:
@@ -1104,9 +1104,9 @@ paths:
         name: chain_type
         required: true
         type: string
-      - description: 分页页码
+      - description: 游标
         in: query
-        name: page
+        name: cursor
         required: true
         type: string
       - description: 每页数量
