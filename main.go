@@ -67,6 +67,12 @@ func (e Environment) IsValid() bool {
 // @description This is a sample API for demonstration purposes.
 // @host v4-api.frogswap.org
 // @BasePath /api/v1
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
 func main() {
 	currentEnv := ParseEnvironment(os.Getenv("APP_ENV"))
 
