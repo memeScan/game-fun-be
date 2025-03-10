@@ -1036,7 +1036,7 @@ paths:
             $ref: '#/definitions/response.Response'
       security:
       - ApiKeyAuth: []
-      summary: 获取用户积分明细
+      summary: 获取用户邀请明细
       tags:
       - 用户
   /points/{chain_type}/estimated:
