@@ -199,3 +199,29 @@ func (r *UserInfoRepo) GetUserByUserID(userID uint64) (*UserInfo, error) {
 
 	return &user, nil
 }
+
+func (r *UserInfoRepo) DeductPointsWithOptimisticLock(userID uint64, amount uint64) (bool, error) {
+	if amount <= 0 {
+		return false, fmt.Errorf("扣减积分必须为正数")
+	}
+
+	// 使用原子UPDATE操作，确保只有当积分足够时才扣减
+	result := DB.Exec(`
+        UPDATE user_info 
+        SET available_points = available_points - ?, 
+            update_time = ? 
+        WHERE id = ? 
+          AND available_points >= ?
+    `, amount, time.Now(), userID, amount)
+
+	if result.Error != nil {
+		return false, result.Error
+	}
+
+	// 检查是否有行被更新，如果没有行被更新，说明积分不足
+	if result.RowsAffected == 0 {
+		return false, nil
+	}
+
+	return true, nil
+}
