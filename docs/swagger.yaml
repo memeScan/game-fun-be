@@ -1752,4 +1752,13 @@ paths:
       summary: 获取当前用户信息
       tags:
       - 用户
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"
