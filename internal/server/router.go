@@ -109,6 +109,7 @@ func NewRouter() *gin.Engine {
 		auth.GET("users/:chain_type/invite/code", userHandler.InviteCode)
 		auth.GET("points/:chain_type", pointsHandler.Points)
 		auth.GET("points/:chain_type/detail", pointsHandler.PointsDetail)
+		auth.GET("points/:chain_type/invite/detail", pointsHandler.InvitedPointsDetail)
 		auth.GET("points/:chain_type/estimated", pointsHandler.PointsEstimated)
 		auth.GET("global/:chain_type/sol_balance", globalHandler.SolBalance)
 		auth.GET("global/:chain_type/ticker_balance/:ticker_address", globalHandler.TickerBalance)
