@@ -20,7 +20,7 @@ func NewPointsHandler(pointsService *service.PointsServiceImpl) *PointsHandler {
 // Points 获取用户积分数据
 // @Summary 获取用户积分数据
 // @Description 根据链类型和用户 ID 获取用户的交易积分、邀请积分和可用积分。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。
-// @Tags 用户
+// @Tags 积分
 // @Accept json
 // @Produce json
 // @Security ApiKeyAuth
@@ -51,12 +51,12 @@ func (p *PointsHandler) Points(c *gin.Context) {
 // PointsDetail 获取用户积分明细
 // @Summary 获取用户积分明细
 // @Description 根据链类型和用户 ID 获取用户的积分明细数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。
-// @Tags 用户
+// @Tags 积分
 // @Accept json
 // @Produce json
 // @Security ApiKeyAuth
 // @Param chain_type path string true "链类型（sol、eth、bsc）"
-// @Param page query string true "分页页码"
+// @Param cursor query string true "游标"
 // @Param limit query string true "每页数量"
 // @Success 200 {object} response.Response{data=response.PointsDetailsResponse} "成功返回用户积分明细"
 // @Failure 500 {object} response.Response "服务器内部错误"
@@ -99,7 +99,7 @@ func (p *PointsHandler) PointsDetail(c *gin.Context) {
 // @Produce json
 // @Security ApiKeyAuth
 // @Param chain_type path string true "链类型（sol、eth、bsc）"
-// @Param page query string true "分页页码"
+// @Param cursor query string true "游标"
 // @Param limit query string true "每页数量"
 // @Success 200 {object} response.Response{data=response.InvitedPointsTotalResponse} "成功返回用户积分明细"
 // @Failure 500 {object} response.Response "服务器内部错误"
