@@ -364,6 +364,7 @@ func ConstructSwapRouteResponse(req request.SwapRouteRequest, swapResponse *http
 				LastValidBlockHeight: swapResponse.Data.LastValidBlockHeight,
 				RecentBlockhash:      swapResponse.Data.SwapTransaction.Message.RecentBlockhash,
 			},
+			PlatformType: req.PlatformType,
 			AmountInUSD:  amountInUSD,
 			AmountOutUSD: amountOutUSD,
 			JitoOrderID:  jitoOrderId,
