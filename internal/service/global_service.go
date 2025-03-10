@@ -24,7 +24,7 @@ func (s *GlobalServiceImpl) NativeTokePrice(chainType model.ChainType) response.
 	return response.Success(responseData)
 }
 
-func (s *GlobalServiceImpl) SolBalance(userAddress string, chainType model.ChainType) response.Response {
+func (s *GlobalServiceImpl) NativeBalance(userAddress string, chainType model.ChainType) response.Response {
 	tokenBalances, err := httpUtil.GetTokenBalance([]string{userAddress}, model.SolanaWrappedSOLAddress)
 	if err != nil {
 		return response.Err(http.StatusInternalServerError, "Failed to get balance", err)

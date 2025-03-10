@@ -780,7 +780,7 @@ paths:
       summary: K线数据 WebSocket 接口
       tags:
       - kline-data
-  /global/{chain_type}/balance:
+  /global/{chain_type}/native_balance:
     get:
       consumes:
       - application/json
@@ -843,6 +843,44 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       summary: 获取链的原生代币价格
+      tags:
+      - 全局数据
+  /global/{chain_type}/ticker_balance/{ticker_address}:
+    get:
+      consumes:
+      - application/json
+      description: 根据链类型和用户地址获取用户的钱包原生代币余额。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance
+        Smart Chain）。
+      parameters:
+      - description: 链类型（sol、eth、bsc）
+        in: path
+        name: chain_type
+        required: true
+        type: string
+      - description: 代币地址
+        in: path
+        name: ticker_address
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回原生代币余额
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.TokenBalance'
+              type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取链的原生代币钱包余额
       tags:
       - 全局数据
   /klines/{klineType}/{chainType}/{tokenAddress}:
@@ -1043,45 +1081,76 @@ paths:
         name: chain_type
         required: true
         type: string
-      - description: 交易类型（如 buy、sell）
+      - description: 交易类型（buy 或 sell）
         in: path
         name: tradeType
         required: true
         type: string
-      - description: 输入金额
+      - description: 代币地址
         in: query
-        name: inAmount
+        name: token_address
+        required: true
+        type: string
+      - description: 发送地址（用户地址）
+        in: query
+        name: from_address
         required: true
         type: string
       - description: 输入代币地址
         in: query
-        name: tokenInAddress
+        name: token_in_address
         required: true
         type: string
       - description: 输出代币地址
         in: query
-        name: tokenOutAddress
+        name: token_out_address
         required: true
         type: string
-      - description: 发送地址
+      - description: 输入代币所在链（sol、eth、bsc）
         in: query
-        name: fromAddress
+        name: token_in_chain
         required: true
         type: string
-      - description: 滑点（百分比）
+      - description: 输出代币所在链（sol、eth、bsc）
+        in: query
+        name: token_out_chain
+        required: true
+        type: string
+      - description: 输入金额（单位：最小代币单位，如 lamports、wei）
+        in: query
+        name: in_amount
+        required: true
+        type: string
+      - description: 交易优先费（单位：最小代币单位，如 lamports）
+        in: query
+        name: priorityFee
+        type: integer
+      - description: 滑点（100 * 100 代表 1%）
         in: query
         name: slippage
         required: true
-        type: number
-      - description: 手续费（SOL）
+        type: string
+      - description: 是否启用 Anti-MEV（默认 false）
         in: query
-        name: fee
-        required: true
-        type: number
-      - description: 是否启用 Anti-MEV（默认为 false）
-        in: query
-        name: isAntiMev
+        name: is_anti_mev
         type: boolean
+      - description: 是否使用 Legacy 交易模式（默认 false）
+        in: query
+        name: legacy
+        type: boolean
+      - description: 交易方向（buy 或 sell，可选）
+        in: query
+        name: swap_type
+        type: string
+      - description: 积分数（用于 g_points 交易类型）
+        in: query
+        name: points
+        type: integer
+      - description: 交易平台类型（pump、raydium、game、g_external、g_points）
+        in: query
+        name: platform_type
+        required: true
+        type: string
       produces:
       - application/json
       responses:

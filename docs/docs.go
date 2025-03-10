@@ -93,7 +93,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/global/{chain_type}/balance": {
+        "/global/{chain_type}/native_balance": {
             "get": {
                 "security": [
                     {
@@ -186,6 +186,68 @@ const docTemplate = `{
                                             "additionalProperties": {
                                                 "type": "string"
                                             }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/global/{chain_type}/ticker_balance/{ticker_address}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据链类型和用户地址获取用户的钱包原生代币余额。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "全局数据"
+                ],
+                "summary": "获取链的原生代币钱包余额",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "链类型（sol、eth、bsc）",
+                        "name": "chain_type",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "代币地址",
+                        "name": "ticker_address",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回原生代币余额",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.TokenBalance"
                                         }
                                     }
                                 }
@@ -516,58 +578,103 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "交易类型（如 buy、sell）",
+                        "description": "交易类型（buy 或 sell）",
                         "name": "tradeType",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "输入金额",
-                        "name": "inAmount",
+                        "description": "代币地址",
+                        "name": "token_address",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "发送地址（用户地址）",
+                        "name": "from_address",
                         "in": "query",
                         "required": true
                     },
                     {
                         "type": "string",
                         "description": "输入代币地址",
-                        "name": "tokenInAddress",
+                        "name": "token_in_address",
                         "in": "query",
                         "required": true
                     },
                     {
                         "type": "string",
                         "description": "输出代币地址",
-                        "name": "tokenOutAddress",
+                        "name": "token_out_address",
                         "in": "query",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "发送地址",
-                        "name": "fromAddress",
+                        "description": "输入代币所在链（sol、eth、bsc）",
+                        "name": "token_in_chain",
                         "in": "query",
                         "required": true
                     },
                     {
-                        "type": "number",
-                        "description": "滑点（百分比）",
+                        "type": "string",
+                        "description": "输出代币所在链（sol、eth、bsc）",
+                        "name": "token_out_chain",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "输入金额（单位：最小代币单位，如 lamports、wei）",
+                        "name": "in_amount",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "交易优先费（单位：最小代币单位，如 lamports）",
+                        "name": "priorityFee",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "滑点（100 * 100 代表 1%）",
                         "name": "slippage",
                         "in": "query",
                         "required": true
                     },
                     {
-                        "type": "number",
-                        "description": "手续费（SOL）",
-                        "name": "fee",
-                        "in": "query",
-                        "required": true
+                        "type": "boolean",
+                        "description": "是否启用 Anti-MEV（默认 false）",
+                        "name": "is_anti_mev",
+                        "in": "query"
                     },
                     {
                         "type": "boolean",
-                        "description": "是否启用 Anti-MEV（默认为 false）",
-                        "name": "isAntiMev",
+                        "description": "是否使用 Legacy 交易模式（默认 false）",
+                        "name": "legacy",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "交易方向（buy 或 sell，可选）",
+                        "name": "swap_type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "积分数（用于 g_points 交易类型）",
+                        "name": "points",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "交易平台类型（pump、raydium、game、g_external、g_points）",
+                        "name": "platform_type",
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {

@@ -48,7 +48,7 @@ func (g *GlobalHandler) NativeTokePrice(c *gin.Context) {
 // @Param chain_type path string true "链类型（sol、eth、bsc）"
 // @Success 200 {object} response.Response{data=response.TokenBalance} "成功返回原生代币余额"
 // @Failure 500 {object} response.Response "服务器内部错误"
-// @Router /global/{chain_type}/sol_balance [get]
+// @Router /global/{chain_type}/native_balance [get]
 func (g *GlobalHandler) SolBalance(c *gin.Context) {
 	userAddress, errResp := GetAddressFromContext(c)
 	if errResp != nil {
@@ -60,7 +60,7 @@ func (g *GlobalHandler) SolBalance(c *gin.Context) {
 		c.JSON(errResp.Code, errResp)
 		return
 	}
-	res := g.globalService.SolBalance(userAddress, chainType)
+	res := g.globalService.NativeBalance(userAddress, chainType)
 	c.JSON(res.Code, res)
 }
 
