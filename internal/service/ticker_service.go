@@ -424,6 +424,7 @@ func (s *TickerServiceImpl) SwapHistories(tickersId string, chainType model.Chai
 			BlockTime:    item.TransactionTime,
 			TokenAmount:  item.QuoteTokenAmount.String(),
 			NativeAmount: item.BaseTokenAmount.String(),
+			TokenPrice:   item.QuoteTokenPrice.String(),
 		}
 
 		transactionHistories = append(transactionHistories, history)
