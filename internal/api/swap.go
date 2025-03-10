@@ -17,6 +17,9 @@ func NewSwapHandler(swapService *service.SwapServiceImpl) *SwapHandler {
 }
 
 // GetSwapRoute 获取 Swap 路由
+// security:
+//   - Bearer: []
+//
 // @Summary 获取 Swap 路由
 // @Description 根据链类型、交易类型和请求参数获取 Swap 路由。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。
 // @Tags Swap
@@ -57,6 +60,9 @@ func (s *SwapHandler) GetTransaction(c *gin.Context) {
 }
 
 // SendSwapRequest 发送 Swap 请求
+// security:
+//   - Bearer: []
+//
 // @Summary 发送 Swap 请求
 // @Description 根据链类型和 Swap 交易数据发送 Swap 请求。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。
 // @Tags Swap
@@ -92,6 +98,9 @@ func (s *SwapHandler) SendTransaction(c *gin.Context) {
 }
 
 // GetSwapRequestStatus 获取 Swap 请求状态
+// security:
+//   - Bearer: []
+//
 // @Summary 获取 Swap 请求状态
 // @Description 根据链类型和交易签名获取 Swap 请求状态。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。
 // @Tags Swap

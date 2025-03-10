@@ -45,6 +45,9 @@ func (u *UserHandler) Login(c *gin.Context) {
 }
 
 // MyInfo 获取用户信息
+// security:
+//   - Bearer: []
+//
 // @Summary 获取当前用户信息
 // @Description 根据链类型和 JWT Token 获取当前用户的详细信息。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。
 // @Tags 用户
@@ -71,6 +74,9 @@ func (u *UserHandler) MyInfo(c *gin.Context) {
 }
 
 // InviteCode 获取用户邀请码信息
+// security:
+//   - Bearer: []
+//
 // @Summary 获取用户邀请码信息
 // @Description 根据链类型和用户 ID 获取用户的邀请码和邀请数量。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。
 // @Tags 用户

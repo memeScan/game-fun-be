@@ -37,13 +37,13 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 	// Get token and pool details
 	tokenDetail, poolDetail, errResp := s.getTokenAndPoolInfo(req.TokenAddress, chainType)
 	if errResp != nil {
-		return s.handleErrorResponse(errResp)
+		// return s.handleErrorResponse(errResp)
 	}
 
 	// Process Anti-MEV logic
 	mev, jitotip, jitoOrderId, errResp := s.processAntiMev(req)
 	if errResp != nil {
-		return s.handleErrorResponse(errResp)
+		// return s.handleErrorResponse(errResp)
 	}
 
 	// Create map for platform-specific functions

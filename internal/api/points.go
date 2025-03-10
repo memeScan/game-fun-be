@@ -18,6 +18,9 @@ func NewPointsHandler(pointsService *service.PointsServiceImpl) *PointsHandler {
 }
 
 // Points 获取用户积分数据
+// security:
+//   - Bearer: []
+//
 // @Summary 获取用户积分数据
 // @Description 根据链类型和用户 ID 获取用户的交易积分、邀请积分和可用积分。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。
 // @Tags 用户
@@ -49,6 +52,9 @@ func (p *PointsHandler) Points(c *gin.Context) {
 }
 
 // PointsDetail 获取用户积分明细
+// security:
+//   - Bearer: []
+//
 // @Summary 获取用户积分明细
 // @Description 根据链类型和用户 ID 获取用户的积分明细数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。
 // @Tags 用户
@@ -135,6 +141,9 @@ func (p *PointsHandler) InvitedPointsDetail(c *gin.Context) {
 }
 
 // PointsEstimated 获取用户预估积分数据
+// security:
+//   - Bearer: []
+//
 // @Summary 获取用户预估积分数据
 // @Description 根据链类型和用户 ID 获取用户的预估积分数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。
 // @Tags 积分

@@ -18,6 +18,9 @@ func NewTokenHoldingsHandler(tokenHoldingsService *service.TokenHoldingsServiceI
 }
 
 // TokenHoldings 获取代币持仓数据
+// security:
+//   - Bearer: []
+//
 // @Summary 获取代币持仓数据
 // @Description 根据链类型、用户账户和目标账户获取代币持仓数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。
 // @Tags 代币持仓
@@ -52,6 +55,9 @@ func (h *TokenHoldingsHandler) TokenHoldings(c *gin.Context) {
 }
 
 // TokenHoldingsHistories 获取代币持仓历史数据
+// security:
+//   - Bearer: []
+//
 // @Summary 获取代币持仓历史数据
 // @Description 根据链类型和用户账户获取代币持仓历史数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。
 // @Tags 代币持仓
