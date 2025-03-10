@@ -9,6 +9,7 @@ type SwapRouteData struct {
 	RawTx        RawTx           `json:"raw_tx"`
 	AmountInUSD  decimal.Decimal `json:"amountInUSD"`
 	AmountOutUSD decimal.Decimal `json:"amountOutUSD"`
+	PlatformType string          `form:"platform_type" binding:"required,oneof=pump raydium game g_external g_points" example:"pump"`
 	JitoOrderID  interface{}     `json:"jito_order_id"`
 }
 
