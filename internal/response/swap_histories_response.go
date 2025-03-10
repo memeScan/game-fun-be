@@ -15,4 +15,5 @@ type TransactionHistory struct {
 	// Index        int    `json:"index"`         // 交易索引
 	TokenAmount  string `json:"token_amount"`  // 代币数量
 	NativeAmount string `json:"native_amount"` // 原生代币数量
+	TokenPrice   string `json:"token_price"`   // 代币价格
 }

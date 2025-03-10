@@ -31,7 +31,7 @@ func NewSwapHandler(swapService *service.SwapServiceImpl) *SwapHandler {
 // @Param token_in_chain query string true "输入代币所在链（sol、eth、bsc）"
 // @Param token_out_chain query string true "输出代币所在链（sol、eth、bsc）"
 // @Param in_amount query string true "输入金额（单位：最小代币单位，如 lamports、wei）"
-// @Param priorityFee query int false "交易优先费（单位：最小代币单位，如 lamports）"
+// @Param priority_fee query int false "交易优先费（单位：最小代币单位，如 lamports）"
 // @Param slippage query string true "滑点（100 * 100 代表 1%）"
 // @Param is_anti_mev query bool false "是否启用 Anti-MEV（默认 false）"
 // @Param legacy query bool false "是否使用 Legacy 交易模式（默认 false）"
@@ -69,13 +69,25 @@ func (s *SwapHandler) GetTransaction(c *gin.Context) {
 // @Failure 500 {object} response.Response "服务器内部错误"
 // @Router /swap/{chain_type}/send_transaction [post]
 func (s *SwapHandler) SendTransaction(c *gin.Context) {
-	swapTransaction := c.Query("swap_transaction")
+	userID, errResp := GetUserIDFromContext(c)
+	if errResp != nil {
+		c.JSON(errResp.Code, errResp)
+		return
+	}
+	swapTransaction := c.DefaultQuery("swap_transaction", "")
+	platformType := c.DefaultQuery("platform_type", "")
+	if swapTransaction == "" || platformType == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Both 'swap_transaction' and 'platform_type' are required",
+		})
+		return
+	}
 	isJito := c.Query("is_anti_mev")
 	isJitoBool := false
 	if isJito == "true" {
 		isJitoBool = true
 	}
-	res := s.swapService.SendTransaction(swapTransaction, isJitoBool)
+	res := s.swapService.SendTransaction(userID, swapTransaction, isJitoBool, platformType)
 	c.JSON(res.Code, res)
 }
 

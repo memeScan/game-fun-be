@@ -27,22 +27,25 @@ import (
 
 var (
 	// API 端点
-	ApiTokenBalanceBatch string
-	ApiDexCheckBatch     string
-	ApiSafetyCheckBatch  string
-	ApiPriorityFee       string
-	ApiPumpfunTrade      string
-	ApiRaydiumTrade      string
-	ApiTransactionSend   string
-	ApiTransactionStatus string
-	ApiTokensBatch       string
-	ApiSafetyCheckPool   string
-	httpClient           *http.Client
-	ApiTipFloor          string
-	ApiPoolInfo          string
-	ApiTokenFullInfo     string
-	ApiBondingCurves     string
-	metricsClient        *metrics.MetricsHTTPClient
+	ApiTokenBalanceBatch      string
+	ApiDexCheckBatch          string
+	ApiSafetyCheckBatch       string
+	ApiPriorityFee            string
+	ApiPumpfunTrade           string
+	ApiRaydiumTrade           string
+	ApiTransactionSend        string
+	ApiGameFunTransactionSend string
+	ApiTransactionStatus      string
+	ApiTokensBatch            string
+	ApiSafetyCheckPool        string
+	ApiTipFloor               string
+	ApiPoolInfo               string
+	ApiTokenFullInfo          string
+	ApiBondingCurves          string
+	ApiGetGameFunGInstruction string
+	ApiBuyGWithPoints         string
+	httpClient                *http.Client
+	metricsClient             *metrics.MetricsHTTPClient
 )
 
 func init() {
@@ -69,20 +72,23 @@ func GetHTTPClient() *metrics.MetricsHTTPClient {
 }
 
 func InitAPI(endpoint *string) {
-	ApiTokenBalanceBatch = *endpoint + "/api/v1/token-balance/batch"
-	ApiDexCheckBatch = *endpoint + "/api/v1/dex-check-batch"
-	ApiSafetyCheckBatch = *endpoint + "/api/v1/safety-check/authority"
-	ApiSafetyCheckPool = *endpoint + "/api/v1/safety-check/pool"
-	ApiPriorityFee = *endpoint + "/api/v1/get-priority-fee"
-	ApiPumpfunTrade = *endpoint + "/api/v1/pumpfun/trade"
-	ApiRaydiumTrade = *endpoint + "/api/v1/raydium/trade"
-	ApiTransactionSend = *endpoint + "/api/v1/transaction/send"
-	ApiTransactionStatus = *endpoint + "/api/v1/transaction/status"
-	ApiTokensBatch = *endpoint + "/api/v1/tokens/batch"
-	ApiTipFloor = *endpoint + "/api/v1/tip-floor"
-	ApiPoolInfo = *endpoint + "/api/v1/pool-info/mints"
-	ApiTokenFullInfo = *endpoint + "/api/v1/tokens/full-info"
-	ApiBondingCurves = *endpoint + "/api/v1/bonding-curves"
+	ApiTokenBalanceBatch = *endpoint + "/block/api/v1/token-balance/batch"
+	ApiDexCheckBatch = *endpoint + "/block/api/v1/dex-check-batch"
+	ApiSafetyCheckBatch = *endpoint + "/block/api/v1/safety-check/authority"
+	ApiSafetyCheckPool = *endpoint + "/block/api/v1/safety-check/pool"
+	ApiPriorityFee = *endpoint + "/block/api/v1/get-priority-fee"
+	ApiPumpfunTrade = *endpoint + "/block/api/v1/pumpfun/trade"
+	ApiRaydiumTrade = *endpoint + "/block/api/v1/raydium/trade"
+	ApiTransactionSend = *endpoint + "/block/api/v1/transaction/send"
+	ApiTransactionStatus = *endpoint + "/block/api/v1/transaction/status"
+	ApiTokensBatch = *endpoint + "/block/api/v1/tokens/batch"
+	ApiTipFloor = *endpoint + "/block/api/v1/tip-floor"
+	ApiPoolInfo = *endpoint + "/block/api/v1/pool-info/mints"
+	ApiTokenFullInfo = *endpoint + "/block/api/v1/tokens/full-info"
+	ApiBondingCurves = *endpoint + "/block/api/v1/bonding-curves"
+	ApiGetGameFunGInstruction = *endpoint + "/block/api/v1/gamefun/swap-g-instruction"
+	ApiBuyGWithPoints = *endpoint + "/block/api/v1/gamefun/buy-g-with-points"
+	ApiGameFunTransactionSend = *endpoint + "/block/api/v1/gamefun/send-transaction"
 }
 
 // FetchURIWithRetry adds retry mechanism for fetching URI
@@ -167,9 +173,36 @@ func getBackoffDuration(attempt int) time.Duration {
 	return backoff
 }
 
+func GetRaydiumTradeTx(tradeStruct httpRequest.SwapRaydiumStruct) (*http.Response, error) {
+	url := ApiRaydiumTrade
+	resp, err := postRequest(url, tradeStruct, false)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send raydium trade request: %w", err)
+	}
+	return resp, nil
+}
+
 func GetPumpFunTradeTx(swapStruct httpRequest.SwapPumpStruct) (*http.Response, error) {
 	url := ApiPumpfunTrade
 	resp, err := postRequest(url, swapStruct, false)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send swap request: %w", err)
+	}
+	return resp, nil
+}
+
+func GetGameFunGInstruction(swapGInstructionStruct httpRequest.SwapGInstructionStruct) (*http.Response, error) {
+	url := ApiGetGameFunGInstruction
+	resp, err := postRequest(url, swapGInstructionStruct, false)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send swap request: %w", err)
+	}
+	return resp, nil
+}
+
+func GetBuyGWithPointsInstruction(buyGWithPointsStruct httpRequest.BuyGWithPointsStruct) (*http.Response, error) {
+	url := ApiBuyGWithPoints
+	resp, err := postRequest(url, buyGWithPointsStruct, false)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send swap request: %w", err)
 	}
@@ -298,15 +331,6 @@ func SendSwapRequest(swapStruct httpRequest.SwapPumpStruct) (*http.Response, err
 	return resp, nil
 }
 
-func SendRaydiumTradeRequest(tradeStruct httpRequest.SwapRaydiumStruct) (*http.Response, error) {
-	url := ApiRaydiumTrade
-	resp, err := postRequest(url, tradeStruct, false)
-	if err != nil {
-		return nil, fmt.Errorf("failed to send raydium trade request: %w", err)
-	}
-	return resp, nil
-}
-
 func GetPythResponse() (*[]httpRespone.PythResponse, error) {
 	now := time.Now().Unix()
 	url := fmt.Sprintf("https://benchmarks.pyth.network/v1/shims/tradingview/history?symbol=Crypto.SOL/USD&resolution=1&from=%d&to=%d", now-60, now)
@@ -330,6 +354,21 @@ func SendTransaction(swapTransaction string, isJito bool) (*http.Response, error
 	body := map[string]interface{}{
 		"signedTransaction": swapTransaction,
 		"mev":               isJito,
+	}
+
+	resp, err := postRequest(url, body, false)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send swap transaction: %w", err)
+	}
+	return resp, nil
+}
+
+func SendGameFunTransaction(swapTransaction string, isJito bool, isUsePoint bool) (*http.Response, error) {
+	url := ApiTransactionSend
+	body := map[string]interface{}{
+		"signedTransaction": swapTransaction,
+		"mev":               isJito,
+		"usePoint":          isUsePoint,
 	}
 
 	resp, err := postRequest(url, body, false)

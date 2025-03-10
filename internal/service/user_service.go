@@ -182,3 +182,7 @@ func (s *UserServiceImpl) GetCode(userAddress string, chainType model.ChainType)
 
 	return response.Success(inviteCodeResponse)
 }
+
+func (s *UserServiceImpl) DeductPoints(userID uint64, amount uint64) (bool, error) {
+	return s.userInfoRepo.DeductPointsWithOptimisticLock(userID, amount)
+}

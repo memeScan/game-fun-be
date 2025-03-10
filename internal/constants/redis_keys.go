@@ -6,6 +6,7 @@ const (
 	TokenInfo          = "token:info"
 	TokenDistribution  = "token:trade:distribution:data"
 	TokenTradeData     = "token:trade:data"
+	SwapGPoints        = "swap:g:points:tx"
 	// RedisKeySolLatestPrice 存储最新 SOL 价格的 Redis 键
 	RedisKeySolLatestPrice = "sol_latest_price"
 	// SolPriceMultiplier SOL 价格的乘数
