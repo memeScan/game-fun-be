@@ -200,3 +200,11 @@ const TreasuryAddress = "B5HfNu7jbvXKU3vKxdsGfbJKMs1ksRnv2GMHrjtR1XQv"
 
 // GameProxyAddress game代理合约地址
 const GameProxyAddress = "GDN3u3pQmV7aW4QKtRJz7q5Qh5F3XKkY7V3B7hRqT5vF4"
+
+type PointType string
+
+const (
+	AvailablePoints PointType = "available_points"
+	TradingPoints   PointType = "trading_points"
+	InvitePoints    PointType = "invite_points"
+)
