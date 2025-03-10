@@ -23,9 +23,9 @@ type UserInfo struct {
 	InviterID        uint       `gorm:"column:inviter_id;type:bigint unsigned;omitempty" json:"inviter_id"`
 	ParentInviteId   uint       `gorm:"column:parent_inviter_id;type:bigint unsigned;omitempty" json:"parent_inviter_id"`
 	InvitationCode   string     `gorm:"column:invitation_code;type:varchar(32);uniqueIndex;not null" json:"invitation_code"`
-	TradingPoints    float64    `gorm:"column:trading_points;type:decimal(20,8);not null;default:0" json:"trading_points"`
-	InvitePoints     float64    `gorm:"column:invite_points;type:decimal(20,8);not null;default:0" json:"invite_points"`
-	AvailablePoints  float64    `gorm:"column:available_points;type:decimal(20,8);not null;default:0" json:"avaliable_points"`
+	TradingPoints    uint64     `gorm:"column:trading_points;type:bigint unsigned;default:0" json:"trading_points"`
+	InvitePoints     uint64     `gorm:"column:invite_points;type:bigint unsigned;default:0" json:"invite_points"`
+	AvailablePoints  uint64     `gorm:"column:available_points;type:bigint unsigned;default:0" json:"avaliable_points"`
 	Status           uint8      `gorm:"column:status;type:tinyint(4);not null" json:"status"`
 	FirstTradingTime *time.Time `gorm:"column:first_trading_time;type:datetime;omitempty" json:"first_trading_time"`
 	ChainType        uint8      `gorm:"column:chain_type;type:tinyint;omitempty" json:"chain_type"`
@@ -64,6 +64,7 @@ func (r *UserInfoRepo) GetOrCreateUserByAddress(address string, chainType uint8,
 	if result.Error == nil {
 		if user.Status == 0 {
 			user.Status = 1
+
 			if user.InviterID == 0 && inviteCode != "" {
 				inviteUser, err := r.getInviteUser(inviteCode, chainType)
 				if err != nil {
@@ -130,6 +131,44 @@ func (r *UserInfoRepo) GetUserByInvitationCode(inviteCode string, chainType uint
 		return nil, result.Error
 	}
 	return &user, nil
+}
+
+func (r *UserInfoRepo) GetUsersByInviterId(userID uint64, cursor *uint, limit int) ([]*UserInfo, *uint, bool, error) {
+
+	var users []*UserInfo
+
+	query := DB.Where("inviter_id = ? ", userID).Order("id desc").Limit(limit + 1)
+
+	if cursor != nil {
+		query = query.Where("id > ?", *cursor) // Changed from > to < for desc order
+	}
+
+	if err := query.Find(&users).Error; err != nil {
+		return nil, nil, false, err
+	}
+
+	hasMore := false
+	if len(users) == limit {
+		hasMore = true
+		users = users[:limit] // Remove the extra record
+	}
+
+	var nextCursor *uint
+	if len(users) > 0 {
+		nextCursor = &users[len(users)-1].ID
+	}
+
+	return users, nextCursor, hasMore, nil
+}
+
+func (r *UserInfoRepo) UpdatePointByAddress(address string, point uint64) error {
+
+	result := DB.Update("available_points", gorm.Expr("available_points + ?", point), "update_time", time.Now()).Where("address = ?", address)
+	if result.Error != nil {
+
+		return result.Error
+	}
+	return nil
 }
 
 func (r *UserInfoRepo) GetUserByAddress(address string, chainType uint8) (*UserInfo, error) {

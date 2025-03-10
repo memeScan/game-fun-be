@@ -16,14 +16,19 @@ func NewPointRecordsRepo() *PointRecordsRepo {
 type PointRecords struct {
 	ID              uint      `gorm:"column:id;primaryKey;autoIncrement" json:"id"`
 	UserID          uint      `gorm:"column:user_id;not null" json:"user_id"`
-	PointsChange    float64   `gorm:"column:points_change;type:decimal(20,8);not null" json:"points_change"`
-	PointsBalance   float64   `gorm:"column:points_balance;type:decimal(20,8);not null" json:"points_balance"`
+	PointsChange    uint64    `gorm:"column:points_change;type:bigint unsigned;default:0" json:"points_change"`
+	PointsBalance   uint64    `gorm:"column:points_balance;type:bigint unsigned;default:0" json:"points_balance"`
 	RecordType      int8      `gorm:"column:record_type;type:tinyint;not null" json:"record_type"`
 	InviteeID       *uint     `gorm:"column:invitee_id" json:"invitee_id,omitempty"`
 	TransactionHash string    `gorm:"column:transaction_hash;type:varchar(88)" json:"transaction_hash,omitempty"`
 	Description     string    `gorm:"column:description;type:varchar(255)" json:"description,omitempty"`
 	CreateTime      time.Time `gorm:"column:create_time;type:datetime" json:"create_time"`
 	UpdateTime      time.Time `gorm:"column:update_time;type:datetime" json:"update_time"`
+}
+
+type InvitedPointsDetail struct {
+	UserID uint   `json:"user_id"`
+	Points uint64 `json:"points"`
 }
 
 // TableName 返回表名
@@ -39,11 +44,12 @@ func (r *PointRecordsRepo) CreatePointRecord(record *PointRecords) error {
 // GetPointRecordsByUserIDWithCursor retrieves point records for a user with cursor-based pagination.
 // Returns records, next cursor (if any), hasMore flag, and error
 func (r *PointRecordsRepo) GetPointRecordsByUserIDWithCursor(userID uint64, cursor *uint, limit int) ([]*PointRecords, *uint, bool, error) {
+
 	var records []*PointRecords
 	query := DB.Where("user_id = ?", userID).Order("id desc").Limit(limit + 1) // Request one extra record
 
 	if cursor != nil {
-		query = query.Where("id < ?", *cursor) // Changed from > to < for desc order
+		query = query.Where("id > ?", *cursor) // Changed from > to < for desc order
 	}
 
 	if err := query.Find(&records).Error; err != nil {
@@ -62,6 +68,16 @@ func (r *PointRecordsRepo) GetPointRecordsByUserIDWithCursor(userID uint64, curs
 	}
 
 	return records, nextCursor, hasMore, nil
+}
+
+func (t *PointRecordsRepo) InvitedPointsDetail(userIDs []uint) ([]*InvitedPointsDetail, error) {
+	query := DB.Table("point_records").Where("user_id in ? and record_type = 1", userIDs).Group("user_id").Select("user_id, sum(points_change) as points")
+	var records []*InvitedPointsDetail
+	if err := query.Find(&records).Error; err != nil {
+		return nil, err
+	}
+
+	return records, nil
 }
 
 // BeforeCreate GORM 的钩子,在创建记录前自动设置时间

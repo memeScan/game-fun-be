@@ -1259,8 +1259,17 @@ func gameOutTradeHandler(message []byte, topic string) error {
 	}
 
 	//TODO: 触发积分计算和结算逻辑（更新用户积分、积分记录表）
-	pointService := service.PointServiceImpl{}
-	pointService.CalculateVolumeStatistics()
+	discount, _ := strconv.ParseUint(os.Getenv("DISCOUNT"), 10, 64)
+	coefficient, _ := strconv.ParseUint(os.Getenv("COEFFICIENT"), 10, 64)
+	PoolQuoteReserve, _ := strconv.ParseUint(tradeMsg.PoolQuoteReserve, 10, 64)
+	PoolBaseReserve, _ := strconv.ParseUint(tradeMsg.PoolBaseReserve, 10, 64)
+	FeeBaseAmount, _ := strconv.ParseUint(tradeMsg.FeeBaseAmount, 10, 64)
+
+	discount_value := (100 - discount) / 100
+	point := coefficient * FeeBaseAmount / (PoolQuoteReserve * discount_value / PoolBaseReserve)
+
+	// pointService := service.PointServiceImpl{}
+	// pointService.CalculateVolumeStatistics()
 
 	return nil
 }
