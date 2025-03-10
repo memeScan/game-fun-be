@@ -1258,7 +1258,6 @@ func gameOutTradeHandler(message []byte, topic string) error {
 		return fmt.Errorf("failed to unmarshal game-out-trade message: %v", err)
 	}
 
-	//TODO: 触发积分计算和结算逻辑（更新用户积分、积分记录表）
 	discount, _ := strconv.ParseUint(os.Getenv("DISCOUNT"), 10, 64)
 	coefficient, _ := strconv.ParseUint(os.Getenv("COEFFICIENT"), 10, 64)
 	PoolQuoteReserve, _ := strconv.ParseUint(tradeMsg.PoolQuoteReserve, 10, 64)
@@ -1269,9 +1268,14 @@ func gameOutTradeHandler(message []byte, topic string) error {
 	point := coefficient * FeeBaseAmount / (PoolQuoteReserve * discount_value / PoolBaseReserve)
 	util.Log().Info("point: %d", point)
 
-	// service.PointsServiceImpl{}.UpdateUserPoints(tradeMsg.User, point)
-
-	// pointService.CalculateVolumeStatistics()
+	pointRecordsRepo := model.NewPointRecordsRepo()
+	userInfoRepo := model.NewUserInfoRepo()
+	pointsService := service.NewPointsServiceImpl(userInfoRepo, pointRecordsRepo)
+	err := pointsService.PointsSave(tradeMsg.User, point, tradeMsg.Signature, string(message))
+	if err != nil {
+		util.Log().Error("Failed to save points: %v", err)
+		return fmt.Errorf("failed to save points: %v", err)
+	}
 
 	return nil
 }
@@ -1286,6 +1290,14 @@ func gameInTradeHandler(message []byte, topic string) error {
 		return fmt.Errorf("failed to unmarshal game-in-trade message: %v", err)
 	}
 	//TODO: 更新积分记录表（类型兑换并购买）
+
+	pointRecordsRepo := model.NewPointRecordsRepo()
+	userInfoRepo := model.NewUserInfoRepo()
+	pointsService := service.NewPointsServiceImpl(userInfoRepo, pointRecordsRepo)
+	err := pointsService.CreatePointRecord(tradeMsg.User, uint64(tradeMsg.PointsAmount*model.PointsDecimal), tradeMsg.Signature, string(message), 4, true)
+	if err != nil {
+		return fmt.Errorf("failed to save points: %v", err)
+	}
 
 	return nil
 }

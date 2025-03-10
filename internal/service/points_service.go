@@ -77,6 +77,30 @@ func (s *PointsServiceImpl) PointsDetail(userID uint64, cursor *uint, limit int,
 	return response.Success(pointsDetailsResponse)
 }
 
+func (s *PointsServiceImpl) CreatePointRecord(wallet_address string, point uint64, hash string, transactionDetail string, record_type int8, isAddPoints bool) error {
+	user, err := s.userInfoRepo.GetUserByAddress(wallet_address, model.ChainTypeSolana.Uint8())
+	if user == nil || err != nil { // 用户不存在
+		return err // 400 Bad Request
+	}
+	points := user.AvailablePoints
+	if isAddPoints {
+		points += point
+	} else {
+		points -= point
+	}
+
+	return s.pointRecordsRecord.CreatePointRecord(&model.PointRecords{
+		UserID:            user.ID,
+		PointsChange:      point, // 积分变动
+		PointsBalance:     points,
+		RecordType:        record_type, // 积分类型
+		TransactionHash:   hash,
+		TransactionDetail: transactionDetail,
+		CreateTime:        time.Now(),
+		UpdateTime:        time.Now(),
+	})
+}
+
 func (s *PointsServiceImpl) InvitedPointsDetail(userID uint64, cursor *uint, limit int, chainType model.ChainType) response.Response {
 
 	// 获取用户信息
@@ -124,9 +148,9 @@ func (s *PointsServiceImpl) InvitedPointsDetail(userID uint64, cursor *uint, lim
 	return response.Success(pointsTotalResponse)
 }
 
-func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string) response.Response {
+func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string, transactionDetail string) error {
 
-	transaction_err := s.db.Transaction(func(tx *gorm.DB) error {
+	return s.db.Transaction(func(tx *gorm.DB) error {
 
 		user, err := s.userInfoRepo.WithTx(tx).GetUserByAddress(address, 1)
 		if user == nil || err != nil { // 用户不存在
@@ -135,11 +159,13 @@ func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string
 
 		// 创建积分记录
 		insertErr := s.pointRecordsRecord.WithTx(tx).CreatePointRecord(&model.PointRecords{
-			UserID:          user.ID,
-			PointsChange:    point, // 积分变动
-			PointsBalance:   user.AvailablePoints + point,
-			RecordType:      1, // 积分类型
-			TransactionHash: hash,
+			UserID:            user.ID,
+			PointsChange:      point, // 积分变动
+			PointsBalance:     user.AvailablePoints + point,
+			RecordType:        1, // 积分类型
+			TransactionHash:   hash,
+			TransactionDetail: transactionDetail,
+			UpdateTime:        time.Now(),
 		})
 		if insertErr != nil {
 			return insertErr
@@ -223,11 +249,6 @@ func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string
 		return nil
 	})
 
-	if transaction_err != nil {
-		return response.DBErr("积分保存失败", transaction_err)
-
-	}
-	return response.Success("积分保存成功")
 }
 
 func (s *PointsServiceImpl) PointsEstimated(userID string, chainType model.ChainType) response.Response {

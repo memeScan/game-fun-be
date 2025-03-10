@@ -16,16 +16,16 @@ func NewPointRecordsRepo() *PointRecordsRepo {
 
 // PointRecords 积分记录表
 type PointRecords struct {
-	ID              uint      `gorm:"column:id;primaryKey;autoIncrement" json:"id"`
-	UserID          uint      `gorm:"column:user_id;not null" json:"user_id"`
-	PointsChange    uint64    `gorm:"column:points_change;type:bigint unsigned;default:0" json:"points_change"`
-	PointsBalance   uint64    `gorm:"column:points_balance;type:bigint unsigned;default:0" json:"points_balance"`
-	RecordType      int8      `gorm:"column:record_type;type:tinyint;not null" json:"record_type"`
-	InviteeID       uint      `gorm:"column:invitee_id;default null" json:"invitee_id,omitempty"`
-	TransactionHash string    `gorm:"column:transaction_hash;type:varchar(88)" json:"transaction_hash,omitempty"`
-	Description     string    `gorm:"column:description;type:varchar(255)" json:"description,omitempty"`
-	CreateTime      time.Time `gorm:"column:create_time;type:datetime" json:"create_time"`
-	UpdateTime      time.Time `gorm:"column:update_time;type:datetime" json:"update_time"`
+	ID                uint      `gorm:"column:id;primaryKey;autoIncrement" json:"id"`
+	UserID            uint      `gorm:"column:user_id;not null" json:"user_id"`
+	PointsChange      uint64    `gorm:"column:points_change;type:bigint unsigned;default:0" json:"points_change"`
+	PointsBalance     uint64    `gorm:"column:points_balance;type:bigint unsigned;default:0" json:"points_balance"`
+	RecordType        int8      `gorm:"column:record_type;type:tinyint;not null" json:"record_type"`
+	InviteeID         uint      `gorm:"column:invitee_id;default null" json:"invitee_id,omitempty"`
+	TransactionHash   string    `gorm:"column:transaction_hash;type:varchar(88)" json:"transaction_hash,omitempty"`
+	TransactionDetail string    `gorm:"column:description;type:text" json:"transaction_detail,omitempty"`
+	CreateTime        time.Time `gorm:"column:create_time;type:datetime" json:"create_time"`
+	UpdateTime        time.Time `gorm:"column:update_time;type:datetime" json:"update_time"`
 }
 
 type InvitedPointsDetail struct {
