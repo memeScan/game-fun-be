@@ -51,14 +51,14 @@ func (s *PointsServiceImpl) PointsDetail(userID uint64, cursor *uint, limit int,
 	details := make([]response.PointsDetail, len(records))
 	for i, record := range records {
 		typeName := ""
-		switch record.RecordType {
-		case 1:
+		switch model.RecordType(record.RecordType) {
+		case model.Trading:
 			typeName = "trading"
-		case 2:
+		case model.Invite:
 			typeName = "invite"
-		case 3:
+		case model.Activity:
 			typeName = "activity"
-		case 4:
+		case model.BuyG:
 			typeName = "buy_g"
 		}
 
@@ -77,7 +77,7 @@ func (s *PointsServiceImpl) PointsDetail(userID uint64, cursor *uint, limit int,
 	return response.Success(pointsDetailsResponse)
 }
 
-func (s *PointsServiceImpl) CreatePointRecord(wallet_address string, point uint64, hash string, transactionDetail string, record_type int8, isAddPoints bool) error {
+func (s *PointsServiceImpl) CreatePointRecord(wallet_address string, point uint64, hash string, transactionDetail string, record_type model.RecordType, isAddPoints bool) error {
 	user, err := s.userInfoRepo.GetUserByAddress(wallet_address, model.ChainTypeSolana.Uint8())
 	if user == nil || err != nil { // 用户不存在
 		return err // 400 Bad Request
@@ -93,7 +93,7 @@ func (s *PointsServiceImpl) CreatePointRecord(wallet_address string, point uint6
 		UserID:            user.ID,
 		PointsChange:      point, // 积分变动
 		PointsBalance:     points,
-		RecordType:        record_type, // 积分类型
+		RecordType:        int8(record_type), // 积分类型
 		TransactionHash:   hash,
 		TransactionDetail: transactionDetail,
 		CreateTime:        time.Now(),
@@ -162,7 +162,7 @@ func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string
 			UserID:            user.ID,
 			PointsChange:      point, // 积分变动
 			PointsBalance:     user.AvailablePoints + point,
-			RecordType:        1, // 积分类型
+			RecordType:        int8(model.Trading), // 积分类型
 			TransactionHash:   hash,
 			TransactionDetail: transactionDetail,
 			UpdateTime:        time.Now(),
@@ -194,7 +194,7 @@ func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string
 				UserID:        user.ID,
 				PointsChange:  invitePoints, // 积分变动
 				PointsBalance: user.AvailablePoints + invitePoints,
-				RecordType:    2, // 积分类型
+				RecordType:    int8(model.Invite), // 积分类型
 				InviteeID:     user.ID,
 				UpdateTime:    time.Now(),
 			})
@@ -227,7 +227,7 @@ func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string
 				UserID:        user.ID,
 				PointsChange:  parentInviterPoints, // 积分变动
 				PointsBalance: user.AvailablePoints + parentInviterPoints,
-				RecordType:    2, // 积分类型
+				RecordType:    int8(model.Invite), // 积分类型
 				InviteeID:     user.InviterID,
 				UpdateTime:    time.Now(),
 			})

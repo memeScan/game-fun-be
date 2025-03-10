@@ -1260,18 +1260,25 @@ func gameOutTradeHandler(message []byte, topic string) error {
 
 	discount, _ := strconv.ParseUint(os.Getenv("DISCOUNT"), 10, 64)
 	coefficient, _ := strconv.ParseUint(os.Getenv("COEFFICIENT"), 10, 64)
-	PoolQuoteReserve, _ := strconv.ParseUint(tradeMsg.PoolQuoteReserve, 10, 64)
-	PoolBaseReserve, _ := strconv.ParseUint(tradeMsg.PoolBaseReserve, 10, 64)
-	FeeBaseAmount, _ := strconv.ParseUint(tradeMsg.FeeBaseAmount, 10, 64)
 
-	discount_value := (100 - discount) / 100
-	point := coefficient * FeeBaseAmount / (PoolQuoteReserve * discount_value / PoolBaseReserve)
+	PoolQuoteReserve, _ := strconv.ParseUint(tradeMsg.PoolQuoteReserve, 10, 64)
+	adjustedQuoteReserves := decimal.NewFromInt(int64(PoolQuoteReserve)).Shift(-int32(tradeMsg.Decimals))
+	PoolBaseReserve, _ := strconv.ParseUint(tradeMsg.PoolBaseReserve, 10, 64)
+	adjustedNativeReserves := decimal.NewFromInt(int64(PoolBaseReserve)).Shift(-9)
+	FeeBaseAmount, _ := strconv.ParseUint(tradeMsg.FeeBaseAmount, 10, 64)
+	// adjustedNativeReserves := decimal.NewFromInt(int64(PoolBaseReserve)).Shift(-9)
+
+	discount_decimal := decimal.NewFromInt(int64(100 - discount)).Div(decimal.NewFromInt(100))
+	coef_decimal := decimal.NewFromInt(int64(coefficient))
+	fee_decimal := decimal.NewFromInt(int64(FeeBaseAmount))
+
+	point := coef_decimal.Mul(fee_decimal).Div(adjustedQuoteReserves.Mul(discount_decimal).Div(adjustedNativeReserves)).IntPart()
 	util.Log().Info("point: %d", point)
 
 	pointRecordsRepo := model.NewPointRecordsRepo()
 	userInfoRepo := model.NewUserInfoRepo()
 	pointsService := service.NewPointsServiceImpl(userInfoRepo, pointRecordsRepo)
-	err := pointsService.PointsSave(tradeMsg.User, point, tradeMsg.Signature, string(message))
+	err := pointsService.PointsSave(tradeMsg.User, uint64(point), tradeMsg.Signature, string(message))
 	if err != nil {
 		util.Log().Error("Failed to save points: %v", err)
 		return fmt.Errorf("failed to save points: %v", err)
@@ -1294,7 +1301,7 @@ func gameInTradeHandler(message []byte, topic string) error {
 	pointRecordsRepo := model.NewPointRecordsRepo()
 	userInfoRepo := model.NewUserInfoRepo()
 	pointsService := service.NewPointsServiceImpl(userInfoRepo, pointRecordsRepo)
-	err := pointsService.CreatePointRecord(tradeMsg.User, uint64(tradeMsg.PointsAmount*model.PointsDecimal), tradeMsg.Signature, string(message), 4, true)
+	err := pointsService.CreatePointRecord(tradeMsg.User, uint64(tradeMsg.PointsAmount*model.PointsDecimal), tradeMsg.Signature, string(message), model.BuyG, true)
 	if err != nil {
 		return fmt.Errorf("failed to save points: %v", err)
 	}

@@ -208,3 +208,12 @@ const (
 	TradingPoints   PointType = "trading_points"
 	InvitePoints    PointType = "invite_points"
 )
+
+type RecordType int8
+
+const (
+	Trading  RecordType = 1
+	Invite   RecordType = 2
+	Activity RecordType = 3
+	BuyG     RecordType = 4
+)
