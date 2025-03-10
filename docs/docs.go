@@ -448,7 +448,7 @@ const docTemplate = `{
                 "tags": [
                     "用户"
                 ],
-                "summary": "获取用户积分明细",
+                "summary": "获取用户邀请明细",
                 "parameters": [
                     {
                         "type": "string",

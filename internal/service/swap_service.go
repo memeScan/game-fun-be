@@ -396,7 +396,7 @@ func (s *SwapServiceImpl) SendTransaction(userID string, swapTransaction string,
 			util.Log().Error("Failed to convert userID to uint64: %v", err)
 			return response.Err(http.StatusInternalServerError, "Invalid user ID", err)
 		}
-		userInfo, err := s.userInfoRepo.GetUserByUserID(userIDUint64)
+		userInfo, err := s.userInfoRepo.GetUserByUserID(uint(userIDUint64))
 		if err != nil {
 			return response.Err(http.StatusInternalServerError, "Unable to retrieve user information, transaction failed!", err)
 		}
