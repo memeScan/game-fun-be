@@ -448,7 +448,7 @@ const docTemplate = `{
                 "tags": [
                     "用户"
                 ],
-                "summary": "获取用户邀请明细",
+                "summary": "获取用户积分明细",
                 "parameters": [
                     {
                         "type": "string",
@@ -548,6 +548,75 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "未授权",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/points/{chain_type}/invite/detail": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据链类型和用户 ID 获取用户的积分统计数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户"
+                ],
+                "summary": "获取用户邀请明细",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "链类型（sol、eth、bsc）",
+                        "name": "chain_type",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "分页页码",
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "每页数量",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回用户积分明细",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.InvitedPointsTotalResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -1572,6 +1641,37 @@ const docTemplate = `{
                     "description": "邀请数量",
                     "type": "integer",
                     "example": 0
+                }
+            }
+        },
+        "response.InvitedPointsDetail": {
+            "type": "object",
+            "properties": {
+                "invite_time": {
+                    "type": "integer"
+                },
+                "invitee": {
+                    "type": "string"
+                },
+                "trading_points": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.InvitedPointsTotalResponse": {
+            "type": "object",
+            "properties": {
+                "cursor": {
+                    "type": "integer"
+                },
+                "details": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.InvitedPointsDetail"
+                    }
+                },
+                "has_more": {
+                    "type": "boolean"
                 }
             }
         },
