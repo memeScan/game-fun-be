@@ -264,7 +264,7 @@ func (s *SwapServiceImpl) getGameFunGInstruction(swapStruct httpRequest.SwapGIns
 	return swapTxResponse, nil
 }
 
-func (s *SwapServiceImpl) getGetBuyGWithPointsInstruction(points uint64, swapStruct httpRequest.BuyGWithPointsStruct) (*httpRespone.SwapTransactionResponse, error) {
+func (s *SwapServiceImpl) getGetBuyGWithPointsInstruction(points float64, swapStruct httpRequest.BuyGWithPointsStruct) (*httpRespone.SwapTransactionResponse, error) {
 
 	resp, err := httpUtil.GetBuyGWithPointsInstruction(swapStruct)
 	if err != nil {
@@ -283,8 +283,9 @@ func (s *SwapServiceImpl) getGetBuyGWithPointsInstruction(points uint64, swapStr
 	}
 
 	SwapGPointsKey := GetRedisKey(constants.SwapGPoints, swapTxResponse.Data.Base64SwapTransaction)
-
-	err = redis.Set(SwapGPointsKey, points, 5*time.Minute)
+	multiplier := math.Pow10(model.PointsDecimal)
+	scaledPoints := uint64(points * multiplier)
+	err = redis.Set(SwapGPointsKey, scaledPoints, 5*time.Minute)
 	if err != nil {
 		util.Log().Error("Failed to set key in Redis: %v", err)
 	}

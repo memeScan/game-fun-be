@@ -16,6 +16,10 @@ const (
 )
 
 const (
+	PointsDecimal = 6
+)
+
+const (
 	LoginMessageTemplate = "Sign in to the game.exchange\r\n\r\nTimestamp: %s"
 )
 
