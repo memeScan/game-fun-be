@@ -78,17 +78,28 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 	}
 
 	// Calculate amounts
-	platform := model.CreatedPlatformType(tokenDetail.CreatedPlatformType)
-	inDecimals := model.SOL_DECIMALS
-	outDecimals := platform.GetDecimals()
+	// platform := model.CreatedPlatformType(tokenDetail.CreatedPlatformType)
+	// inDecimals := model.SOL_DECIMALS
+	// outDecimals := platform.GetDecimals()
 
-	outAmount, inAmountUSD, outAmountUSD, errResp := s.calculateSwapAmounts(req, tokenDetail, inDecimals, outDecimals)
-	if errResp != nil {
-		return s.handleErrorResponse(errResp)
-	}
+	// outAmount, inAmountUSD, outAmountUSD, errResp := s.calculateSwapAmounts(req, tokenDetail, inDecimals, outDecimals)
+	// if errResp != nil {
+	// 	return s.handleErrorResponse(errResp)
+	// }
+
+	inDecimals := 6
+	outDecimals := 6
+	outAmount := 0
+	inAmountUSD := 0
+	outAmountUSD := 0
+
+	// Convert int to *decimal.Decimal
+	outAmountDecimal := decimal.NewFromInt(int64(outAmount))
+	inAmountUSDDecimal := decimal.NewFromInt(int64(inAmountUSD))
+	outAmountUSDDecimal := decimal.NewFromInt(int64(outAmountUSD))
 
 	// Return the constructed response
-	return ConstructSwapRouteResponse(req, swapTransaction, inDecimals, outDecimals, outAmount, inAmountUSD, outAmountUSD, startTime, jitoOrderId)
+	return ConstructSwapRouteResponse(req, swapTransaction, uint8(inDecimals), uint8(outDecimals), outAmountDecimal, inAmountUSDDecimal, outAmountUSDDecimal, startTime, jitoOrderId)
 }
 
 // Helper function to handle error responses
@@ -156,12 +167,12 @@ func (s *SwapServiceImpl) buildGameFunGInstructionStruct(req request.SwapRouteRe
 		InputMint:    req.TokenInAddress,
 		OutputMint:   req.TokenOutAddress,
 		SlippageBps:  req.Slippage,
-		GMint:        "GMintDefault",
-		Amm:          "AmmDefault",
-		Market:       "MarketDefault",
-		GAmm:         "GAmmDefault",
-		GMarket:      "GMarketDefault",
-		FeeRecipient: "FeeRecipientDefault",
+		GMint:        "8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump",
+		Amm:          "8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump",
+		Market:       "8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump",
+		GAmm:         "6nAhKDdipgLXtpR7evvTbRjK79jqeVSPMFKHZeooXohn",
+		GMarket:      "VzbqwVfdmSqBR5qCtnpHjhT7twkDhoUxJDFKMzVsv6H",
+		FeeRecipient: "91K5B783HsRWNmpgJ7miurv4iXmH5Du8mm8LrBdQtwqY",
 	}
 }
 
@@ -172,13 +183,14 @@ func (s *SwapServiceImpl) buildBuyGWithPointsStruct(req request.SwapRouteRequest
 		InputMint:    req.TokenInAddress,
 		OutputMint:   req.TokenOutAddress,
 		SlippageBps:  req.Slippage,
-		GMint:        "GMintDefault",
-		Amm:          "AmmDefault",
-		Market:       "MarketDefault",
-		GAmm:         "GAmmDefault",
-		GMarket:      "GMarketDefault",
-		FeeRecipient: "FeeRecipientDefault",
+		GMint:        "8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump",
+		Amm:          "8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump",
+		Market:       "8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump",
+		GAmm:         "6nAhKDdipgLXtpR7evvTbRjK79jqeVSPMFKHZeooXohn",
+		GMarket:      "VzbqwVfdmSqBR5qCtnpHjhT7twkDhoUxJDFKMzVsv6H",
+		FeeRecipient: "91K5B783HsRWNmpgJ7miurv4iXmH5Du8mm8LrBdQtwqY",
 	}
+
 }
 
 func (s *SwapServiceImpl) buildSwapPumpStruct(req request.SwapRouteRequest, tokenDetail *model.TokenInfo, poolDetail *model.TokenLiquidityPool, mev bool, jitotip string) httpRequest.SwapPumpStruct {
@@ -265,31 +277,37 @@ func (s *SwapServiceImpl) getGameFunGInstruction(swapStruct httpRequest.SwapGIns
 }
 
 func (s *SwapServiceImpl) getGetBuyGWithPointsInstruction(points float64, swapStruct httpRequest.BuyGWithPointsStruct) (*httpRespone.SwapTransactionResponse, error) {
-
+	// 使用 GetBuyGWithPointsInstruction 函数发起请求
 	resp, err := httpUtil.GetBuyGWithPointsInstruction(swapStruct)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
+	// 读取响应体
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	var swapTxResponse *httpRespone.SwapTransactionResponse
+	// 解析 JSON 响应体
+	var swapTxResponse httpRespone.SwapTransactionResponse
 	if err := json.Unmarshal(respBody, &swapTxResponse); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal JSON: %w", err)
 	}
 
-	SwapGPointsKey := GetRedisKey(constants.SwapGPoints, swapTxResponse.Data.Base64SwapTransaction)
+	// 获取 Redis 键并设置值
+	SwapGPointsKey := GetRedisKey(constants.SwapGPoints, swapTxResponse.Data)
 	multiplier := math.Pow10(model.PointsDecimal)
 	scaledPoints := uint64(points * multiplier)
+
+	// 将 scaledPoints 存入 Redis
 	err = redis.Set(SwapGPointsKey, scaledPoints, 5*time.Minute)
 	if err != nil {
 		util.Log().Error("Failed to set key in Redis: %v", err)
 	}
-	return swapTxResponse, nil
+
+	return &swapTxResponse, nil
 }
 
 func (s *SwapServiceImpl) calculateSwapAmounts(
@@ -333,12 +351,12 @@ func ConstructSwapRouteResponse(req request.SwapRouteRequest, swapResponse *http
 		Msg:  swapResponse.Message,
 		Data: response.SwapRouteData{
 			Quote: response.Quote{
-				InputMint:            req.TokenInAddress,
-				InAmount:             req.InAmount,
-				InDecimals:           inDecimals,
-				OutDecimals:          outDecimals,
-				OutputMint:           req.TokenOutAddress,
-				OutAmount:            amountOut,
+				InputMint:   req.TokenInAddress,
+				InAmount:    req.InAmount,
+				InDecimals:  inDecimals,
+				OutDecimals: outDecimals,
+				OutputMint:  req.TokenOutAddress,
+				// OutAmount:            amountOut,
 				OtherAmountThreshold: decimal.NewFromInt(0).String(),
 				SlippageBps:          strconv.Itoa(req.Slippage),
 				PlatformFee:          0,
@@ -350,9 +368,9 @@ func ConstructSwapRouteResponse(req request.SwapRouteRequest, swapResponse *http
 							InputMint:  req.TokenInAddress,
 							OutputMint: req.TokenOutAddress,
 							InAmount:   req.InAmount,
-							OutAmount:  amountOut,
-							FeeAmount:  req.PriorityFee,
-							FeeMint:    "So11111111111111111111111111111111111111112",
+							// OutAmount:  amountOut,
+							FeeAmount: req.PriorityFee,
+							FeeMint:   "So11111111111111111111111111111111111111112",
 						},
 						Percent: 0,
 					},
@@ -360,14 +378,14 @@ func ConstructSwapRouteResponse(req request.SwapRouteRequest, swapResponse *http
 				TimeTaken: time.Since(startTime).Seconds(),
 			},
 			RawTx: response.RawTx{
-				SwapTransaction:      swapResponse.Data.Base64SwapTransaction,
-				LastValidBlockHeight: swapResponse.Data.LastValidBlockHeight,
-				RecentBlockhash:      swapResponse.Data.SwapTransaction.Message.RecentBlockhash,
+				SwapTransaction: swapResponse.Data,
+				// LastValidBlockHeight: swapResponse.Data.,
+				// RecentBlockhash: swapResponse.Data.SwapTransaction.Message.RecentBlockhash,
 			},
 			PlatformType: req.PlatformType,
-			AmountInUSD:  amountInUSD,
-			AmountOutUSD: amountOutUSD,
-			JitoOrderID:  jitoOrderId,
+			// AmountInUSD:  amountInUSD,
+			// AmountOutUSD: amountOutUSD,
+			JitoOrderID: jitoOrderId,
 		},
 	}
 	return swapRouteResponse
