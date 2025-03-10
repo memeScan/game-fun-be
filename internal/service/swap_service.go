@@ -407,7 +407,6 @@ func (s *SwapServiceImpl) SendTransaction(userID string, swapTransaction string,
 			util.Log().Error("Failed to deduct points with optimistic lock: %v", err)
 			return response.Err(http.StatusInternalServerError, "Failed to deduct points, please try again later", err)
 		}
-
 		if !isTrue {
 			util.Log().Error("Optimistic lock failed, points deduction unsuccessful for user: %d", userIDUint64)
 			return response.Err(http.StatusConflict, "Points deduction failed due to concurrent update, please try again", nil)
