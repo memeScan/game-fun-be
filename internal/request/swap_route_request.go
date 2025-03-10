@@ -10,7 +10,7 @@ type SwapRouteRequest struct {
 	TokenInChain    string          `form:"token_in_chain" binding:"required" example:"sol"`
 	TokenOutChain   string          `form:"token_out_chain" binding:"required" example:"sol"`
 	InAmount        decimal.Decimal `form:"in_amount" binding:"required" example:"100000000"`
-	PriorityFee     uint64          `form:"priority_fee" binding:"required" example:"200000000"`
+	PriorityFee     float64         `form:"priority_fee" binding:"required" example:"200000000"`
 	Slippage        int             `form:"slippage" binding:"required" example:"100 * 100"`
 	IsAntiMev       bool            `form:"is_anti_mev"`
 	Legacy          bool            `form:"legacy"`

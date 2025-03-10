@@ -10,7 +10,7 @@ type SwapPumpStruct struct {
 	SlippageBps                 string          `json:"slippageBps"`
 	VirtualSolReserves          string          `json:"virtualSolReserves"`
 	VirtualTokenReserves        string          `json:"virtualTokenReserves"`
-	PriorityFee                 uint64          `json:"priorityFee"`
+	PriorityFee                 float64         `json:"priorityFee"`
 	TokenTotalSupply            string          `json:"tokenTotalSupply"`
 	InitialRealTokenReserves    string          `json:"initialRealTokenReserves"`
 	InitialVirtualSolReserves   string          `json:"initialVirtualSolReserves"`

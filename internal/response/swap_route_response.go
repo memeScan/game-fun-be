@@ -40,7 +40,7 @@ type SwapInfo struct {
 	OutputMint string          `json:"outputMint"`
 	InAmount   decimal.Decimal `json:"inAmount"`
 	OutAmount  decimal.Decimal `json:"outAmount"`
-	FeeAmount  uint64          `json:"feeAmount"`
+	FeeAmount  float64         `json:"feeAmount"`
 	FeeMint    string          `json:"feeMint"`
 }
 
