@@ -297,3 +297,7 @@ func (s *PointsServiceImpl) PointsEstimated(userID string, chainType model.Chain
 func formatPoints(points uint64) string {
 	return fmt.Sprintf("%.6f", float64(points)/1e6)
 }
+
+func formatSol(points uint64) string {
+	return fmt.Sprintf("%.9f", float64(points)/1e6)
+}

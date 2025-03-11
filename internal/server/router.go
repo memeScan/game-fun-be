@@ -25,17 +25,19 @@ func NewRouter() *gin.Engine {
 	userInfoRepo := model.NewUserInfoRepo()
 	userService := service.NewUserServiceImpl(userInfoRepo)
 	userHandler := api.NewUserHandler(userService)
+	platformTokenStatisticRepo := model.NewPlatformTokenStatisticRepo()
 
 	tickerInfoRepo := model.NewTokenInfoRepo()
 	TokenMarketAnalyticsRepo := clickhouse.NewTokenMarketAnalyticsRepo()
 	tickerService := service.NewTickerServiceImpl(tickerInfoRepo, TokenMarketAnalyticsRepo)
-	tickerHandler := api.NewTickersHandler(tickerService)
+	platformTokenStatisticService := service.NewPlatformTokenStatisticServiceImpl(platformTokenStatisticRepo)
+	tickerHandler := api.NewTickersHandler(tickerService, platformTokenStatisticService)
 
 	tokenHoldingsService := service.NewTokenHoldingsServiceImpl()
 	tokenHoldingsHandler := api.NewTokenHoldingsHandler(tokenHoldingsService)
 
 	pointRecordsRepo := model.NewPointRecordsRepo()
-	platformTokenStatisticRepo := model.NewPlatformTokenStatisticRepo()
+
 	pointsService := service.NewPointsServiceImpl(userInfoRepo, pointRecordsRepo, platformTokenStatisticRepo)
 	pointsHandler := api.NewPointsHandler(pointsService)
 

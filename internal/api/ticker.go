@@ -15,11 +15,12 @@ import (
 )
 
 type TickersHandler struct {
-	tickerService *service.TickerServiceImpl
+	tickerService                 *service.TickerServiceImpl
+	platformTokenStatisticService *service.PlatformTokenStatisticServiceImpl
 }
 
-func NewTickersHandler(tickerService *service.TickerServiceImpl) *TickersHandler {
-	return &TickersHandler{tickerService: tickerService}
+func NewTickersHandler(tickerService *service.TickerServiceImpl, platformTokenStatisticService *service.PlatformTokenStatisticServiceImpl) *TickersHandler {
+	return &TickersHandler{tickerService: tickerService, platformTokenStatisticService: platformTokenStatisticService}
 }
 
 // Tickers 获取市场行情
@@ -76,6 +77,32 @@ func (t *TickersHandler) TickerDetail(c *gin.Context) {
 		return
 	}
 	res := t.tickerService.TickerDetail(tickerAddress, chainType)
+	c.JSON(res.Code, res)
+}
+
+// TickerPointsStatistic 获取 Ticker 获取平台币统计信息
+// @Summary 获取 Ticker 获取平台币统计信息
+// @Description 根据链类型和代币地址获取 Ticker 的详细信息。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。
+// @Tags 市场行情
+// @Accept json
+// @Produce json
+// @Param chain_type path string true "链类型（sol、eth、bsc）"
+// @Param ticker_address path string true "代币地址"
+// @Success 200 {object} response.Response{data=response.GetTickerResponse} "成功返回 Ticker 详情"
+// @Failure 500 {object} response.Response "服务器内部错误"
+// @Router /tickers/{chain_type}/statistic/{ticker_address} [get]
+func (t *TickersHandler) TickerPointsStatistic(c *gin.Context) {
+	tickerAddress := c.Param("ticker_address")
+	if tickerAddress == "" {
+		c.JSON(http.StatusBadRequest, response.Err(http.StatusBadRequest, "ticker_address cannot be empty", errors.New("ticker_address is required")))
+		return
+	}
+	chainType, errResp := ParseChainTypeWithResponse(c)
+	if errResp != nil {
+		c.JSON(errResp.Code, errResp)
+		return
+	}
+	res := t.platformTokenStatisticService.GetTokenPointsStatistic(tickerAddress, uint8(chainType))
 	c.JSON(res.Code, res)
 }
 

@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"time"
 
 	"gorm.io/gorm"
@@ -49,6 +50,21 @@ func (r *PlatformTokenStatisticRepo) IncrementStatisticsAndUpdateTime(address st
 	return r.db.Model(&PlatformTokenStatistic{}).
 		Where("token_address = ?", address).
 		Updates(updates).Error
+}
+
+func (s *PlatformTokenStatisticRepo) GetTokenPointsStatistic(tokenAddress string, chainType uint8) (*PlatformTokenStatistic, error) {
+	if tokenAddress == "" {
+		return nil, fmt.Errorf("token address cannot be empty")
+	}
+
+	var statistics PlatformTokenStatistic
+	result := DB.Where("token_address = ?", tokenAddress).First(&statistics)
+	if result.Error != nil {
+		return nil, result.Error
+
+	}
+
+	return &statistics, nil
 }
 
 // BeforeCreate GORM 的钩子,在创建记录前自动设置时间

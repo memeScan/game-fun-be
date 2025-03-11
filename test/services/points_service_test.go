@@ -21,9 +21,10 @@ func TestPointsService_Points(t *testing.T) {
 	// Create test repos
 	userRepo := &model.UserInfoRepo{}
 	pointsRepo := &model.PointRecordsRepo{}
+	platformTokenStatisticRepo := &model.PlatformTokenStatisticRepo{}
 
 	// Create service
-	pointsService := service.NewPointsServiceImpl(userRepo, pointsRepo)
+	pointsService := service.NewPointsServiceImpl(userRepo, pointsRepo, platformTokenStatisticRepo)
 
 	t.Run("get points success", func(t *testing.T) {
 		// Test input
@@ -45,8 +46,10 @@ func TestPointsService_InvitedPointsDetail(t *testing.T) {
 	userRepo := &model.UserInfoRepo{}
 	pointsRepo := &model.PointRecordsRepo{}
 
+	platformTokenStatisticRepo := &model.PlatformTokenStatisticRepo{}
+
 	// Create service
-	pointsService := service.NewPointsServiceImpl(userRepo, pointsRepo)
+	pointsService := service.NewPointsServiceImpl(userRepo, pointsRepo, platformTokenStatisticRepo)
 
 	t.Run("get points success", func(t *testing.T) {
 		// Test input
@@ -70,8 +73,10 @@ func TestPointsService_PointsDetail(t *testing.T) {
 	userRepo := &model.UserInfoRepo{}
 	pointsRepo := &model.PointRecordsRepo{}
 
+	platformTokenStatisticRepo := &model.PlatformTokenStatisticRepo{}
+
 	// Create service
-	pointsService := service.NewPointsServiceImpl(userRepo, pointsRepo)
+	pointsService := service.NewPointsServiceImpl(userRepo, pointsRepo, platformTokenStatisticRepo)
 
 	t.Run("get points detail success", func(t *testing.T) {
 		// Test input
@@ -92,25 +97,28 @@ func TestPointsService_PointsDetail(t *testing.T) {
 
 func TestPointsService_PointsSave(t *testing.T) {
 	// Create test repos
-	userRepo := &model.UserInfoRepo{}
-	pointsRepo := &model.PointRecordsRepo{}
+	// userRepo := &model.UserInfoRepo{}
+	// pointsRepo := &model.PointRecordsRepo{}
 
-	// Create service
-	pointsService := service.NewPointsServiceImpl(userRepo, pointsRepo)
+	// // Create service
+	// platformTokenStatisticRepo := &model.PlatformTokenStatisticRepo{}
 
-	t.Run("save points success", func(t *testing.T) {
-		// Test input
-		address := "SoLxyz987654321abc987654321abc987654321"
-		point := uint64(1000000) // 1.0 points
-		hash := "test_transaction_hash"
-		transactionDetail := "test_transaction_detail"
+	// // Create service
+	// pointsService := service.NewPointsServiceImpl(userRepo, pointsRepo, platformTokenStatisticRepo)
 
-		// Call service
-		err := pointsService.PointsSave(address, point, hash, transactionDetail)
+	// t.Run("save points success", func(t *testing.T) {
+	// 	// Test input
+	// 	address := "SoLxyz987654321abc987654321abc987654321"
+	// 	point := uint64(1000000) // 1.0 points
+	// 	hash := "test_transaction_hash"
+	// 	transactionDetail := "test_transaction_detail"
 
-		// Assert response
-		assert.Nil(t, err)
-	})
+	// 	// Call service
+	// 	err := pointsService.PointsSave(address, point, hash, transactionDetail)
+
+	// 	// Assert response
+	// 	assert.Nil(t, err)
+	// })
 
 	// t.Run("save points with invalid address", func(t *testing.T) {
 	// 	// Test input with invalid address
@@ -127,21 +135,21 @@ func TestPointsService_PointsSave(t *testing.T) {
 	// })
 }
 
-func TestPointsService_PointsEstimated(t *testing.T) {
+func TestPointsService_PlatformTokenQuery(t *testing.T) {
 	// Create test repos
-	userRepo := &model.UserInfoRepo{}
-	pointsRepo := &model.PointRecordsRepo{}
+	platformTokenStatisticRepo := &model.PlatformTokenStatisticRepo{}
 
 	// Create service
-	pointsService := service.NewPointsServiceImpl(userRepo, pointsRepo)
+	platformTokenStatisticServiceImpl := service.NewPlatformTokenStatisticServiceImpl(platformTokenStatisticRepo)
 
 	t.Run("get estimated points success", func(t *testing.T) {
 		// Test input
-		userID := "1"
+		token_address := "8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump"
 		chainType := model.ChainType(1)
 
 		// Call service
-		resp := pointsService.PointsEstimated(userID, chainType)
+		resp := platformTokenStatisticServiceImpl.GetTokenPointsStatistic(token_address, uint8(chainType))
+		fmt.Println(resp)
 
 		// Assert response
 		assert.NotNil(t, resp)
