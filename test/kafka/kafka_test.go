@@ -104,7 +104,7 @@ func TestKafkaIntegration(t *testing.T) {
 				Topic: kafka.TopicGameOutTrade,
 				Value: sarama.ByteEncoder(fmt.Sprintf(`{
 					"timestamp": %d,
-					"block": 313097846,
+					"block": 313097849,
 					"signature": "2ZZf2p6RH4Zr4nKbGV9zmNkGjr3wEgpER9xxJD3WkfqVkCHzoW2HCZtg4JtKwqPmKBB5o6Um8cDjqxksVrBg8UUU",
 					"user": "SoLxyz987654321abc987654321abc987654321",
 					"poolAddress": "F3UWHvZWy41HpsbWfbBFbvAemYuCn8RJ2qvKfr2346Qf",
