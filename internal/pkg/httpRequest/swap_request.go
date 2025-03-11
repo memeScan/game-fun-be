@@ -37,16 +37,20 @@ type SwapRaydiumStruct struct {
 }
 
 type SwapGInstructionStruct struct {
-	User        string `json:"user"`
-	InputAmount string `json:"inputAmount"`
-	InputMint   string `json:"inputMint"`
-	OutputMint  string `json:"outputMint"`
-	SlippageBps int    `json:"slippageBps"`
-	GMint       string `json:"gMint"`
-	Amm         string `json:"amm"`
-	Market      string `json:"market"`
-	GAmm        string `json:"gAmm"`
-	GMarket     string `json:"gMarket"`
+	User            string `json:"user"`
+	InputAmount     string `json:"inputAmount"`
+	InputMint       string `json:"inputMint"`
+	OutputMint      string `json:"outputMint"`
+	PoolPcAddress   string `json:"poolPcAddress"`
+	PoolCoinAddress string `json:"poolCoinAddress"`
+	PoolPcReserve   string `json:"poolPcReserve"`
+	PoolCoinReserve string `json:"poolCoinReserve"`
+	SlippageBps     int    `json:"slippageBps"`
+	GMint           string `json:"gMint"`
+	Amm             string `json:"amm"`
+	Market          string `json:"market"`
+	GAmm            string `json:"gAmm"`
+	GMarket         string `json:"gMarket"`
 }
 
 type BuyGWithPointsStruct struct {
