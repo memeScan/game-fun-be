@@ -61,5 +61,5 @@ func FormatPercent(value float64) string {
 		sign = "-"
 		value = -value // 取绝对值
 	}
-	return fmt.Sprintf("%s%.2f%%", sign, value)
+	return fmt.Sprintf("%s%.2f", sign, value) // 去掉百分号
 }
