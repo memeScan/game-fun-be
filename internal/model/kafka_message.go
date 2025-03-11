@@ -100,18 +100,18 @@ type GameOutTradeMessage struct {
 
 // GameInTradeMessage 代理合约内盘买事件（积分兑换买）消息结构体
 type GameInTradeMessage struct {
-	Timestamp     int64   `json:"timestamp"`     // 时间戳
-	Block         uint64  `json:"block"`         // 区块高度
-	Signature     string  `json:"signature"`     // 签名
-	User          string  `json:"user"`          // 用户地址
-	IsBuy         bool    `json:"isBuy"`         // 是否买入
-	QuoteToken    string  `json:"quoteToken"`    // 询价代币，为 Meme 代币
-	BaseToken     string  `json:"baseToken"`     // 基础代币，为 SOL
-	QuoteAmount   uint64  `json:"quoteAmount"`   // 兑换的代币数量
-	BaseAmount    uint64  `json:"baseAmount"`    // 兑换花费的sol数量
-	Decimals      int     `json:"decimals"`      // 代币精度
-	PointsAmount  float64 `json:"pointsAmount"`  // 积分数量(带单位,6位精度)
-	FeeBaseAmount uint64  `json:"feeBaseAmount"` // 平台收到的手续费
+	Timestamp     int64  `json:"timestamp"`     // 时间戳
+	Block         uint64 `json:"block"`         // 区块高度
+	Signature     string `json:"signature"`     // 签名
+	User          string `json:"user"`          // 用户地址
+	IsBuy         bool   `json:"isBuy"`         // 是否买入
+	QuoteToken    string `json:"quoteToken"`    // 询价代币，为 Meme 代币
+	BaseToken     string `json:"baseToken"`     // 基础代币，为 SOL
+	QuoteAmount   uint64 `json:"quoteAmount"`   // 兑换的代币数量
+	BaseAmount    uint64 `json:"baseAmount"`    // 兑换花费的sol数量
+	Decimals      int    `json:"decimals"`      // 代币精度
+	PointsAmount  uint64 `json:"pointsAmount"`  // 积分数量(带单位,6位精度)
+	FeeBaseAmount uint64 `json:"feeBaseAmount"` // 平台收到的手续费
 }
 
 // PointTxStatusMessage 积分交易链上状态消息结构体

@@ -221,8 +221,9 @@ const (
 type StatisticType string
 
 const (
-	FeeAmount    StatisticType = "fee_amount"
-	BackAmount   StatisticType = "back_amount"
-	BurnAmount   StatisticType = "burn_amount"
-	PointsAmount StatisticType = "points_amount"
+	FeeAmount     StatisticType = "fee_amount"
+	BackAmount    StatisticType = "back_amount"
+	BackSolAmount StatisticType = "back_sol_amount"
+	BurnAmount    StatisticType = "burn_amount"
+	PointsAmount  StatisticType = "points_amount"
 )

@@ -78,30 +78,53 @@ func (s *PointsServiceImpl) PointsDetail(userID uint64, cursor *uint, limit int,
 	return response.Success(pointsDetailsResponse)
 }
 
-func (s *PointsServiceImpl) CreatePointRecord(wallet_address string, point uint64, hash string, transactionDetail string, record_type model.RecordType, tokenAmount uint64, nativeTokenAmount uint64, isAddPoints bool) error {
-	user, err := s.userInfoRepo.GetUserByAddress(wallet_address, model.ChainTypeSolana.Uint8())
-	if user == nil || err != nil { // 用户不存在
-		return err // 400 Bad Request
-	}
-	points := user.AvailablePoints
-	if isAddPoints {
-		points += point
-	} else {
-		points -= point
-	}
+/**
+*
+ */
+func (s *PointsServiceImpl) CreatePointRecord(wallet_address string, point uint64, hash string, transactionDetail string, record_type model.RecordType, tokenAmount uint64, nativeTokenAmount uint64, isAddPoints bool, tokenAddress string, amounts map[model.StatisticType]uint64) error {
 
-	return s.pointRecordsRecord.CreatePointRecord(&model.PointRecords{
-		UserID:            user.ID,
-		PointsChange:      point, // 积分变动
-		PointsBalance:     points,
-		RecordType:        int8(record_type), // 积分类型
-		TransactionHash:   hash,
-		TransactionDetail: transactionDetail,
-		TokenAmount:       tokenAmount,
-		NativeTokenAmount: nativeTokenAmount,
-		CreateTime:        time.Now(),
-		UpdateTime:        time.Now(),
+	return model.DB.Transaction(func(tx *gorm.DB) error {
+
+		user, err := s.userInfoRepo.GetUserByAddress(wallet_address, model.ChainTypeSolana.Uint8())
+		if user == nil || err != nil { // 用户不存在
+			return err // 400 Bad Request
+		}
+		points := user.AvailablePoints
+		if isAddPoints {
+			points += point
+		} else {
+			points -= point
+		}
+
+		// 创建积分记录
+		insertErr := s.pointRecordsRecord.CreatePointRecord(&model.PointRecords{
+			UserID:            user.ID,
+			PointsChange:      point, // 积分变动
+			PointsBalance:     points,
+			RecordType:        int8(record_type), // 积分类型
+			TransactionHash:   hash,
+			TransactionDetail: transactionDetail,
+			TokenAmount:       tokenAmount,
+			NativeTokenAmount: nativeTokenAmount,
+			CreateTime:        time.Now(),
+			UpdateTime:        time.Now(),
+		})
+		if insertErr != nil {
+			return insertErr
+		}
+
+		userPoints := make(map[model.PointType]uint64)
+		userPoints[model.AvailablePoints] = point
+		userPoints[model.TradingPoints] = point
+
+		// 更新统计数据
+		if err := s.platformTokenStatisticRepo.WithTx(tx).IncrementStatisticsAndUpdateTime(tokenAddress, amounts); err != nil {
+			return err
+		}
+
+		return nil
 	})
+
 }
 
 func (s *PointsServiceImpl) InvitedPointsDetail(userID uint64, cursor *uint, limit int, chainType model.ChainType) response.Response {
