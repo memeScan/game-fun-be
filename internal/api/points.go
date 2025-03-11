@@ -62,7 +62,7 @@ func (p *PointsHandler) Points(c *gin.Context) {
 // @Produce json
 // @Security ApiKeyAuth
 // @Param chain_type path string true "链类型（sol、eth、bsc）"
-// @Param cursor query string true "游标"
+// @Param cursor query string false "游标"
 // @Param limit query string true "每页数量"
 // @Success 200 {object} response.Response{data=response.PointsDetailsResponse} "成功返回用户积分明细"
 // @Failure 500 {object} response.Response "服务器内部错误"
@@ -105,7 +105,7 @@ func (p *PointsHandler) PointsDetail(c *gin.Context) {
 // @Produce json
 // @Security ApiKeyAuth
 // @Param chain_type path string true "链类型（sol、eth、bsc）"
-// @Param cursor query string true "游标"
+// @Param cursor query string false "游标"
 // @Param limit query string true "每页数量"
 // @Success 200 {object} response.Response{data=response.InvitedPointsTotalResponse} "成功返回用户积分明细"
 // @Failure 500 {object} response.Response "服务器内部错误"

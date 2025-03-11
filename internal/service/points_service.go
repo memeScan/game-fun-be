@@ -150,7 +150,7 @@ func (s *PointsServiceImpl) InvitedPointsDetail(userID uint64, cursor *uint, lim
 
 func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string, transactionDetail string) error {
 
-	return s.db.Transaction(func(tx *gorm.DB) error {
+	return model.DB.Transaction(func(tx *gorm.DB) error {
 
 		user, err := s.userInfoRepo.WithTx(tx).GetUserByAddress(address, 1)
 		if user == nil || err != nil { // 用户不存在

@@ -1312,16 +1312,13 @@ func gameOutTradeHandler(message []byte, topic string) error {
 	discount, _ := strconv.ParseUint(os.Getenv("DISCOUNT"), 10, 64)
 	coefficient, _ := strconv.ParseUint(os.Getenv("COEFFICIENT"), 10, 64)
 
-	PoolQuoteReserve, _ := strconv.ParseUint(tradeMsg.PoolQuoteReserve, 10, 64)
-	adjustedQuoteReserves := decimal.NewFromInt(int64(PoolQuoteReserve)).Shift(-int32(tradeMsg.Decimals))
-	PoolBaseReserve, _ := strconv.ParseUint(tradeMsg.PoolBaseReserve, 10, 64)
-	adjustedNativeReserves := decimal.NewFromInt(int64(PoolBaseReserve)).Shift(-9)
-	FeeBaseAmount, _ := strconv.ParseUint(tradeMsg.FeeBaseAmount, 10, 64)
+	adjustedQuoteReserves := decimal.NewFromInt(int64(tradeMsg.PoolQuoteReserve)).Shift(-int32(tradeMsg.Decimals))
+	adjustedNativeReserves := decimal.NewFromInt(int64(tradeMsg.PoolBaseReserve)).Shift(-9)
 	// adjustedNativeReserves := decimal.NewFromInt(int64(PoolBaseReserve)).Shift(-9)
 
 	discount_decimal := decimal.NewFromInt(int64(100 - discount)).Div(decimal.NewFromInt(100))
 	coef_decimal := decimal.NewFromInt(int64(coefficient))
-	fee_decimal := decimal.NewFromInt(int64(FeeBaseAmount))
+	fee_decimal := decimal.NewFromInt(int64(tradeMsg.FeeBaseAmount))
 
 	point := coef_decimal.Mul(fee_decimal).Div(adjustedQuoteReserves.Mul(discount_decimal).Div(adjustedNativeReserves)).IntPart()
 	util.Log().Info("point: %d", point)
