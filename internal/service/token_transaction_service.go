@@ -512,7 +512,7 @@ func (service *TokenTransactionService) ConvertRaydiumSwapMessagesToTransactions
 		tx.Progress = decimal.NewFromInt(100)
 		tx.IsComplete = true
 
-		// 判断是否是国库地址
+		// 判断是否是回购地址
 		if tx.UserAddress == model.TreasuryAddress {
 			tx.IsBuyback = true //是回购交易
 		} else {
