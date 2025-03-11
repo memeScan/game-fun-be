@@ -23,7 +23,7 @@ type PointRecords struct {
 	RecordType        int8      `gorm:"column:record_type;type:tinyint;not null" json:"record_type"`
 	InviteeID         uint      `gorm:"column:invitee_id;default null" json:"invitee_id,omitempty"`
 	TransactionHash   string    `gorm:"column:transaction_hash;type:varchar(88)" json:"transaction_hash,omitempty"`
-	TransactionDetail string    `gorm:"column:description;type:text" json:"transaction_detail,omitempty"`
+	TransactionDetail string    `gorm:"column:transaction_detail;type:text" json:"transaction_detail,omitempty"`
 	CreateTime        time.Time `gorm:"column:create_time;type:datetime" json:"create_time"`
 	UpdateTime        time.Time `gorm:"column:update_time;type:datetime" json:"update_time"`
 }
