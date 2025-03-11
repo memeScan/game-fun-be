@@ -87,30 +87,27 @@ type GameOutTradeMessage struct {
 	QuoteToken       string `json:"quoteToken"`       // 询价代币，为 Meme 代币
 	BaseToken        string `json:"baseToken"`        // 基础代币，为 SOL
 	MarketAddress    string `json:"marketAddress"`    // 市场地址
-	PoolQuoteReserve string `json:"poolQuoteReserve"` // 池子中询价代币的当前总量
-	PoolBaseReserve  string `json:"poolBaseReserve"`  // 池子中基础代币的当前总量
-	QuoteAmount      string `json:"quoteAmount"`      // 询价代币数量
-	BaseAmount       string `json:"baseAmount"`       // 基础代币数量
+	PoolQuoteReserve uint64 `json:"poolQuoteReserve"` // 池子中询价代币的当前总量
+	PoolBaseReserve  uint64 `json:"poolBaseReserve"`  // 池子中基础代币的当前总量
+	QuoteAmount      uint64 `json:"quoteAmount"`      // 询价代币数量
+	BaseAmount       uint64 `json:"baseAmount"`       // 基础代币数量
 	Decimals         int    `json:"decimals"`         // 代币精度
-	FeeQuoteAmount   string `json:"feeQuoteAmount"`   // 手续费回购的代币数量
-	FeeBaseAmount    string `json:"feeBaseAmount"`    // 手续费sol数量
+	FeeQuoteAmount   uint64 `json:"feeQuoteAmount"`   // 手续费回购的代币数量
+	FeeBaseAmount    uint64 `json:"feeBaseAmount"`    // 手续费sol数量
 }
 
 // GameInTradeMessage 代理合约内盘买事件（积分兑换买）消息结构体
 type GameInTradeMessage struct {
-	Timestamp        int64   `json:"timestamp"`        // 时间戳
-	Block            uint64  `json:"block"`            // 区块高度
-	Signature        string  `json:"signature"`        // 签名
-	User             string  `json:"user"`             // 用户地址
-	IsBuy            bool    `json:"isBuy"`            // 是否买入
-	QuoteToken       string  `json:"quoteToken"`       // 询价代币，为 Meme 代币
-	BaseToken        string  `json:"baseToken"`        // 基础代币，为 SOL
-	PoolQuoteReserve string  `json:"poolQuoteReserve"` // 国库余额
-	PoolBaseReserve  string  `json:"poolBaseReserve"`  // 池子中基础代币的当前总量
-	QuoteAmount      string  `json:"quoteAmount"`      // 询价代币数量
-	BaseAmount       string  `json:"baseAmount"`       // 基础代币数量
-	Decimals         int     `json:"decimals"`         // 代币精度
-	PointsAmount     float64 `json:"pointsAmount"`     // 积分数量(带单位,6位精度)
-	FeeQuoteAmount   string  `json:"feeQuoteAmount"`   // 手续费回购的代币数量
-	FeeBaseAmount    string  `json:"feeBaseAmount"`    // 手续费sol数量
+	Timestamp     int64   `json:"timestamp"`     // 时间戳
+	Block         uint64  `json:"block"`         // 区块高度
+	Signature     string  `json:"signature"`     // 签名
+	User          string  `json:"user"`          // 用户地址
+	IsBuy         bool    `json:"isBuy"`         // 是否买入
+	QuoteToken    string  `json:"quoteToken"`    // 询价代币，为 Meme 代币
+	BaseToken     string  `json:"baseToken"`     // 基础代币，为 SOL
+	QuoteAmount   uint64  `json:"quoteAmount"`   // 询价代币数量
+	BaseAmount    uint64  `json:"baseAmount"`    // 基础代币数量
+	Decimals      int     `json:"decimals"`      // 代币精度
+	PointsAmount  float64 `json:"pointsAmount"`  // 积分数量(带单位,6位精度)
+	FeeBaseAmount uint64  `json:"feeBaseAmount"` // 手续费sol数量
 }
