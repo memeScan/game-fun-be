@@ -10,6 +10,7 @@ import (
 	"game-fun-be/internal/redis"
 	"game-fun-be/internal/request"
 	"game-fun-be/internal/response"
+	"log"
 
 	"encoding/json"
 	"errors"
@@ -78,7 +79,6 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 			pointsDecimalsFactor := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(tokenDetail.Decimals)))
 			// 去掉小数点部分，取整
 			pointsWithoutDecimal := pointsDecimal.Mul(pointsDecimalsFactor).Floor()
-
 			// 将去掉小数点后的结果转换为字符串
 			pointsString := pointsWithoutDecimal.String()
 			// 计算代币的 USD 价值（代币数量 * 代币单价 * 10^精度）
@@ -279,7 +279,7 @@ func (s *SwapServiceImpl) getPumpFunTradeTx(swapStruct httpRequest.SwapPumpStruc
 }
 
 func (s *SwapServiceImpl) getGameFunGInstruction(swapStruct httpRequest.SwapGInstructionStruct) (*httpRespone.SwapTransactionResponse, error) {
-
+	log.Print(swapStruct)
 	resp, err := httpUtil.GetGameFunGInstruction(swapStruct)
 	if err != nil {
 		return nil, err
@@ -412,6 +412,7 @@ func ConstructSwapRouteResponse(req request.SwapRouteRequest, swapResponse *http
 
 func (s *SwapServiceImpl) SendTransaction(userID string, swapTransaction string, isJito bool, platformType string) response.Response {
 	isUsePoint := false
+	log.Print(swapTransaction)
 	if platformType == "g_points" {
 		SwapGPointsKey := GetRedisKey(constants.SwapGPoints, swapTransaction)
 		redisValue, err := redis.Get(SwapGPointsKey)

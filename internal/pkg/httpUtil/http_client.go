@@ -396,18 +396,18 @@ func GetSwapStatusBySignature(signature string) (*httpRespone.ApiResponse, error
 
 	resp, err := GetHTTPClient().Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get priority fee: %w", err)
+		return nil, fmt.Errorf("failed to get swap status by signature: %w", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read priority fee response body: %w", err)
+		return nil, fmt.Errorf("failed to read swap status by signature response body: %w", err)
 	}
 
 	var apiResp *httpRespone.ApiResponse
 	if err := json.Unmarshal(body, &apiResp); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal priority fee response: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal swap status by signature response: %w", err)
 	}
 
 	return apiResp, nil

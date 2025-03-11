@@ -1,6 +1,7 @@
 package kafka_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"game-fun-be/internal/kafka"
+	"game-fun-be/internal/model"
 
 	"github.com/IBM/sarama"
 	"github.com/IBM/sarama/mocks"
@@ -169,7 +171,6 @@ func TestRaydiumCreateMessage(t *testing.T) {
 	t.Run("Send Raydium Create Message", func(t *testing.T) {
 		// 设置测试环境变量
 		os.Setenv("KAFKA_BROKERS", "alikafka-post-public-intl-sg-jiy45rtfa0s-1-vpc.alikafka.aliyuncs.com:9092,alikafka-post-public-intl-sg-jiy45rtfa0s-2-vpc.alikafka.aliyuncs.com:9092,alikafka-post-public-intl-sg-jiy45rtfa0s-3-vpc.alikafka.aliyuncs.com:9092")
-		os.Setenv("KAFKA_BROKERS", "alikafka-pre-cn-t8j3z5kzl005-1-vpc.alikafka.aliyuncs.com:9092,alikafka-pre-cn-t8j3z5kzl005-2-vpc.alikafka.aliyuncs.com:9092,alikafka-pre-cn-t8j3z5kzl005-3-vpc.alikafka.aliyuncs.com:9092")
 
 		// 初始化 Kafka
 		kafka.Kafka()
@@ -215,4 +216,54 @@ func TestKafkaLoopIntegration(t *testing.T) {
 			TestKafkaIntegration(t)
 		})
 	}
+}
+
+func TestPointTxStatusHandler(t *testing.T) {
+	// 跳过集成测试，除非明确指定要运行
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	// 设置环境变量，配置Kafka连接
+	os.Setenv("KAFKA_BROKERS", "alikafka-post-public-intl-sg-jiy45rtfa0s-1-vpc.alikafka.aliyuncs.com:9092,alikafka-post-public-intl-sg-jiy45rtfa0s-2-vpc.alikafka.aliyuncs.com:9092,alikafka-post-public-intl-sg-jiy45rtfa0s-3-vpc.alikafka.aliyuncs.com:9092")
+
+	// 初始化 Kafka
+	kafka.Kafka()
+	defer kafka.Close()
+
+	// 创建测试用的消息
+	testSignature := "2NbG9aAP8DdTejHSjrDDNDAAdgJ5fcnwwGfAA12W7UMUmqgLqoBSRX2ukD62KA91L1xb4L7jgD9uxAF9X5ijtWpJ"
+	testUserId := uint(3)
+	testPoints := uint64(1000)
+
+	statusMsg := model.PointTxStatusMessage{
+		Signature: testSignature,
+		UserId:    testUserId,
+		Points:    testPoints,
+	}
+
+	// 序列化消息
+	msgBytes, err := json.Marshal(statusMsg)
+	if err != nil {
+		t.Fatalf("Failed to marshal test message: %v", err)
+	}
+
+	// 使用Kafka发送消息
+	topic := kafka.TopicPointTxStatus
+	t.Logf("Sending test message to topic %s: %s", topic, string(msgBytes))
+
+	err = kafka.SendMessage(topic, msgBytes)
+	if err != nil {
+		t.Errorf("Failed to send message: %v", err)
+		return
+	}
+
+	// 等待消息处理完成
+	t.Log("Message sent, waiting for processing...")
+	time.Sleep(5 * time.Second)
+
+	// 注意：在实际测试中，你应该验证用户积分是否按预期更新
+	// 例如，如果模拟交易失败的情况，应该检查用户积分是否被恢复
+	t.Log("Test completed - check logs for processing results")
+
 }
