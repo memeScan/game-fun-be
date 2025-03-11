@@ -87,6 +87,7 @@ func (s *PointsServiceImpl) CreatePointRecord(wallet_address string, point uint6
 
 		user, err := s.userInfoRepo.GetUserByAddress(wallet_address, model.ChainTypeSolana.Uint8())
 		if user == nil || err != nil { // 用户不存在
+			tx.Rollback()
 			return err // 400 Bad Request
 		}
 		points := user.AvailablePoints
@@ -110,6 +111,7 @@ func (s *PointsServiceImpl) CreatePointRecord(wallet_address string, point uint6
 			UpdateTime:        time.Now(),
 		})
 		if insertErr != nil {
+			tx.Rollback()
 			return insertErr
 		}
 
@@ -119,6 +121,7 @@ func (s *PointsServiceImpl) CreatePointRecord(wallet_address string, point uint6
 
 		// 更新统计数据
 		if err := s.platformTokenStatisticRepo.WithTx(tx).IncrementStatisticsAndUpdateTime(tokenAddress, amounts); err != nil {
+			tx.Rollback()
 			return err
 		}
 
@@ -206,11 +209,13 @@ func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string
 
 		// 更新用户积分
 		if err := s.userInfoRepo.WithTx(tx).IncrementMultiplePointsAndUpdateTime(address, userPoints); err != nil {
+			tx.Rollback()
 			return err
 		}
 
 		// 更新统计数据
 		if err := s.platformTokenStatisticRepo.WithTx(tx).IncrementStatisticsAndUpdateTime(tokenAddress, amounts); err != nil {
+			tx.Rollback()
 			return err
 		}
 
@@ -218,6 +223,7 @@ func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string
 
 			inviter, err := s.userInfoRepo.WithTx(tx).GetUserByUserID(user.InviterID)
 			if inviter == nil || err != nil { // 用户不存在
+				tx.Rollback()
 				return err // 400 Bad Request
 			}
 
@@ -234,6 +240,8 @@ func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string
 				UpdateTime:    time.Now(),
 			})
 			if insertErr != nil {
+				tx.Rollback()
+
 				return insertErr
 			}
 
@@ -243,6 +251,7 @@ func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string
 
 			// 更新用户积分
 			if err := s.userInfoRepo.WithTx(tx).IncrementMultiplePointsAndUpdateTime(inviter.Address, userPoints); err != nil {
+				tx.Rollback()
 				return err
 			}
 
