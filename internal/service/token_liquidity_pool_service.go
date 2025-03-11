@@ -282,7 +282,7 @@ func QueryAndCheckPool(tokenAddress string, chainType uint8, platformType uint8)
 				raydiumMsg.BaseToken = pool.Data.ReturnPoolData.BaseMint
 				raydiumMsg.QuoteToken = pool.Data.ReturnPoolData.QuoteMint
 				raydiumMsg.User = pool.Data.ReturnPoolData.OpenOrders
-				raydiumMsg.Timestamp = pool.Data.ReturnPoolData.PoolOpenTime
+				// raydiumMsg.Timestamp = pool.Data.ReturnPoolData.PoolOpenTime
 				raydiumMsg.Block = uint64(pool.Data.ReturnPoolData.OrderbookToInitTime)
 			}
 		}

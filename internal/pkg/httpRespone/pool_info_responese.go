@@ -17,9 +17,9 @@ type PoolData struct {
 }
 
 type PoolInfo struct {
-	BaseDecimal         int64  `json:"baseDecimal"`
-	QuoteDecimal        int64  `json:"quoteDecimal"`
-	PoolOpenTime        int64  `json:"poolOpenTime"`
+	BaseDecimal  int64 `json:"baseDecimal"`
+	QuoteDecimal int64 `json:"quoteDecimal"`
+	// PoolOpenTime        string `json:"poolOpenTime"`
 	OrderbookToInitTime int64  `json:"orderbookToInitTime"`
 	BaseVault           string `json:"baseVault"`
 	QuoteVault          string `json:"quoteVault"`

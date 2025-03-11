@@ -1037,7 +1037,7 @@ func UnknownTokenHandler(message []byte, topic string) error {
 	// 测试环境跳过处理
 	if conf.IsTest() {
 		// util.Log().Info("Skip processing unknown token in test environment: %s", tokenAddress)
-		return nil
+		// return nil
 	}
 
 	// 使用 SETNX 进行原子检查和设置
@@ -1147,7 +1147,7 @@ func UnknownTokenHandler(message []byte, topic string) error {
 	serviceResp := tokenInfoService.ProcessTokenInfoCreation(tokenInfo)
 	if serviceResp.Code != 0 {
 		util.Log().Error("保存代币信息失败: %v", serviceResp.Error)
-		return fmt.Errorf("保存代币信息失败: %v", serviceResp.Error)
+		// return fmt.Errorf("保存代币信息失败: %v", serviceResp.Error)
 	}
 
 	util.Log().Info("Successfully processed unknown token: %s", tokenAddress)
@@ -1194,7 +1194,8 @@ func UnknownTokenHandler(message []byte, topic string) error {
 			util.Log().Error("创建流动性池失败: %v", serviceResponse.Error)
 			return fmt.Errorf("failed to create liquidity pool: %v", serviceResponse.Error)
 		}
-		util.Log().Info("Successfully processed unknown pool: %s", liquidityPool.PoolAddress)
+		util.Log().Info("Successfully processed unknown pump pool: %s", liquidityPool.PoolAddress)
+		saveRaydiumPool(tokenAddress)
 		return nil
 	} else {
 		// 先检查数据库是否已存在
@@ -1231,7 +1232,7 @@ func UnknownTokenHandler(message []byte, topic string) error {
 		raydiumMsg.BaseToken = (*resp)[0].Data.ReturnPoolData.BaseMint
 		raydiumMsg.QuoteToken = (*resp)[0].Data.ReturnPoolData.QuoteMint
 		raydiumMsg.User = (*resp)[0].Data.ReturnPoolData.OpenOrders
-		raydiumMsg.Timestamp = (*resp)[0].Data.ReturnPoolData.PoolOpenTime
+		// raydiumMsg.Timestamp = (*resp)[0].Data.ReturnPoolData.PoolOpenTime
 
 		// 转换并保存到数据库
 		pool := liquidityPoolService.ConvertMessageToLiquidityPool(&raydiumMsg)
@@ -1242,10 +1243,60 @@ func UnknownTokenHandler(message []byte, topic string) error {
 			return fmt.Errorf("failed to save pool info: %v", serviceResponse.Error)
 		}
 
-		util.Log().Info("Successfully processed unknown pool: %s", pool.PoolAddress)
+		util.Log().Info("Successfully processed unknown raydium pool: %s", pool.PoolAddress)
 		return nil
 	}
 
+}
+
+func saveRaydiumPool(tokenAddress string) error {
+	// 先检查数据库是否已存在
+	liquidityPoolService := &service.TokenLiquidityPoolService{}
+	existingPool, err := liquidityPoolService.GetTokenLiquidityPoolsByTokenAddresses([]string{tokenAddress}, uint8(model.PlatformTypeRaydium))
+	if err != nil {
+		util.Log().Error("Failed to check existing pool: %v", err)
+		return nil
+	}
+	if len(existingPool) > 0 {
+		util.Log().Info("Pool already exists in database: %s", tokenAddress)
+		return nil
+	}
+
+	// 调用接口获取池子信息
+	resp, err := httpUtil.GetPoolInfo([]string{tokenAddress})
+	if err != nil {
+		util.Log().Error("Failed to get pool info: %v", err)
+		return fmt.Errorf("failed to get pool info: %v", err)
+	}
+	if resp == nil || len(*resp) == 0 {
+		util.Log().Warning("No pool info found for address: %s", tokenAddress)
+		return nil
+	}
+
+	// 构 RaydiumCreateMessage
+	var raydiumMsg model.RaydiumCreateMessage
+
+	raydiumMsg.PoolAddress = (*resp)[0].Data.PoolAddress
+	raydiumMsg.MarketAddress = (*resp)[0].Data.ReturnPoolData.MarketId
+	raydiumMsg.PoolState = 0
+	raydiumMsg.PoolBaseReserve = (*resp)[0].Data.ReturnPoolData.BaseReserve
+	raydiumMsg.PoolQuoteReserve = (*resp)[0].Data.ReturnPoolData.QuoteReserve
+	raydiumMsg.BaseToken = (*resp)[0].Data.ReturnPoolData.BaseMint
+	raydiumMsg.QuoteToken = (*resp)[0].Data.ReturnPoolData.QuoteMint
+	raydiumMsg.User = (*resp)[0].Data.ReturnPoolData.OpenOrders
+	// raydiumMsg.Timestamp = (*resp)[0].Data.ReturnPoolData.PoolOpenTime
+
+	// 转换并保存到数据库
+	pool := liquidityPoolService.ConvertMessageToLiquidityPool(&raydiumMsg)
+
+	serviceResponse := liquidityPoolService.ProcessTokenLiquidityPoolCreation(pool)
+	if serviceResponse.Code != 0 {
+		util.Log().Error("Failed to save pool info: %v", serviceResponse.Error)
+		return fmt.Errorf("failed to save pool info: %v", serviceResponse.Error)
+	}
+
+	util.Log().Info("Successfully processed unknown raydium pool: %s", pool.PoolAddress)
+	return nil
 }
 
 // gameOutTradeHandler 处理代理合约外盘买卖事件
