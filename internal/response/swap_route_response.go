@@ -26,7 +26,7 @@ type Quote struct {
 	PlatformFee          uint64          `json:"platformFee"`
 	PriceImpactPct       string          `json:"priceImpactPct"`
 	RoutePlan            []RoutePlan     `json:"routePlan"`
-	TimeTaken            int64           `json:"timeTaken"`
+	TimeTaken            string          `json:"timeTaken"`
 }
 
 type RoutePlan struct {

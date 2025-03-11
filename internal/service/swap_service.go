@@ -393,7 +393,7 @@ func ConstructSwapRouteResponse(req request.SwapRouteRequest, swapResponse *http
 						Percent: 0,
 					},
 				},
-				TimeTaken: startTime,
+				TimeTaken: strconv.FormatInt(startTime, 10),
 			},
 			RawTx: response.RawTx{
 				SwapTransaction: swapResponse.Data,
