@@ -1327,7 +1327,7 @@ func gameOutTradeHandler(message []byte, topic string) error {
 	pointRecordsRepo := model.NewPointRecordsRepo()
 	userInfoRepo := model.NewUserInfoRepo()
 	pointsService := service.NewPointsServiceImpl(userInfoRepo, pointRecordsRepo)
-	err := pointsService.PointsSave(tradeMsg.User, uint64(point), tradeMsg.Signature, string(message))
+	err := pointsService.PointsSave(tradeMsg.User, uint64(point), tradeMsg.Signature, string(message), tradeMsg.QuoteAmount, tradeMsg.BaseAmount)
 	if err != nil {
 		util.Log().Error("Failed to save points: %v", err)
 		return fmt.Errorf("failed to save points: %v", err)
@@ -1350,7 +1350,7 @@ func gameInTradeHandler(message []byte, topic string) error {
 	pointRecordsRepo := model.NewPointRecordsRepo()
 	userInfoRepo := model.NewUserInfoRepo()
 	pointsService := service.NewPointsServiceImpl(userInfoRepo, pointRecordsRepo)
-	err := pointsService.CreatePointRecord(tradeMsg.User, uint64(tradeMsg.PointsAmount*model.PointsDecimal), tradeMsg.Signature, string(message), model.BuyG, true)
+	err := pointsService.CreatePointRecord(tradeMsg.User, uint64(tradeMsg.PointsAmount), tradeMsg.Signature, string(message), model.BuyG, uint64(tradeMsg.QuoteAmount), uint64(tradeMsg.BaseAmount), true)
 	if err != nil {
 		return fmt.Errorf("failed to save points: %v", err)
 	}

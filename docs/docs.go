@@ -461,8 +461,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "游标",
                         "name": "cursor",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
                     },
                     {
                         "type": "string",
@@ -585,8 +584,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "游标",
                         "name": "cursor",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
                     },
                     {
                         "type": "string",
@@ -763,7 +761,7 @@ const docTemplate = `{
             }
         },
         "/swap/{chain_type}/send_transaction": {
-            "post": {
+            "get": {
                 "description": "根据链类型和 Swap 交易数据发送 Swap 请求。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
                 "consumes": [
                     "application/json"
@@ -1567,11 +1565,6 @@ const docTemplate = `{
                     "type": "string",
                     "example": "F59CSoJEmjDFQWZMjSjjvu6q7xV31p9rPzRynwrE71yk"
                 },
-                "comment_id": {
-                    "description": "评论ID（可选）",
-                    "type": "string",
-                    "example": ""
-                },
                 "invite_code": {
                     "description": "邀请码（可选）",
                     "type": "string",
@@ -1581,11 +1574,6 @@ const docTemplate = `{
                     "description": "登录消息",
                     "type": "string",
                     "example": "Sign in to the super.exchange\r\n\r\nTimestamp: 1740885327"
-                },
-                "post_id": {
-                    "description": "帖子ID（可选）",
-                    "type": "string",
-                    "example": ""
                 },
                 "signature": {
                     "description": "签名信息",
@@ -2119,6 +2107,11 @@ const docTemplate = `{
         "response.PointsDetail": {
             "type": "object",
             "properties": {
+                "amount": {
+                    "description": "token数量",
+                    "type": "string",
+                    "example": "0.000182"
+                },
                 "points": {
                     "description": "积分",
                     "type": "string",
@@ -2131,8 +2124,8 @@ const docTemplate = `{
                 },
                 "type": {
                     "description": "类型",
-                    "type": "string",
-                    "example": "trading"
+                    "type": "integer",
+                    "example": 1
                 }
             }
         },

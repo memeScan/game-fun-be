@@ -7,10 +7,6 @@ definitions:
         description: 用户钱包地址
         example: F59CSoJEmjDFQWZMjSjjvu6q7xV31p9rPzRynwrE71yk
         type: string
-      comment_id:
-        description: 评论ID（可选）
-        example: ""
-        type: string
       invite_code:
         description: 邀请码（可选）
         example: INVITE123
@@ -18,10 +14,6 @@ definitions:
       message:
         description: 登录消息
         example: "Sign in to the super.exchange\r\n\r\nTimestamp: 1740885327"
-        type: string
-      post_id:
-        description: 帖子ID（可选）
-        example: ""
         type: string
       signature:
         description: 签名信息
@@ -401,6 +393,10 @@ definitions:
     type: object
   response.PointsDetail:
     properties:
+      amount:
+        description: token数量
+        example: "0.000182"
+        type: string
       points:
         description: 积分
         example: "0.000182"
@@ -411,8 +407,8 @@ definitions:
         type: integer
       type:
         description: 类型
-        example: trading
-        type: string
+        example: 1
+        type: integer
     type: object
   response.PointsDetailsResponse:
     properties:
@@ -1031,7 +1027,6 @@ paths:
       - description: 游标
         in: query
         name: cursor
-        required: true
         type: string
       - description: 每页数量
         in: query
@@ -1107,7 +1102,6 @@ paths:
       - description: 游标
         in: query
         name: cursor
-        required: true
         type: string
       - description: 每页数量
         in: query
@@ -1232,7 +1226,7 @@ paths:
       tags:
       - Swap
   /swap/{chain_type}/send_transaction:
-    post:
+    get:
       consumes:
       - application/json
       description: 根据链类型和 Swap 交易数据发送 Swap 请求。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance
