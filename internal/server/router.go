@@ -35,7 +35,8 @@ func NewRouter() *gin.Engine {
 	tokenHoldingsHandler := api.NewTokenHoldingsHandler(tokenHoldingsService)
 
 	pointRecordsRepo := model.NewPointRecordsRepo()
-	pointsService := service.NewPointsServiceImpl(userInfoRepo, pointRecordsRepo)
+	platformTokenStatisticRepo := model.NewPlatformTokenStatisticRepo()
+	pointsService := service.NewPointsServiceImpl(userInfoRepo, pointRecordsRepo, platformTokenStatisticRepo)
 	pointsHandler := api.NewPointsHandler(pointsService)
 
 	swapService := service.NewSwapService()
