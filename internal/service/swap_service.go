@@ -36,16 +36,15 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 	startTime := time.Now()
 
 	solPriceUSD, priceErr := getSolPrice()
+	if priceErr != nil {
+		return response.Err(http.StatusBadRequest, "price query failed", priceErr)
+	}
 	if req.SwapType == "buy" && chainType == 1 {
 		solMultiplier := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(model.SOL_DECIMALS)))
 		req.InAmount = req.InAmount.Mul(solMultiplier)
 	}
 	inAmountUint64 := req.InAmount.BigInt().Uint64()
 	inAmountStr := strconv.FormatUint(inAmountUint64, 10)
-
-	if priceErr != nil {
-		return response.Err(http.StatusBadRequest, "price query failed", priceErr)
-	}
 
 	// Get token and pool details
 	tokenDetail, poolDetail, errResp := s.getTokenAndPoolInfo(req.TokenAddress, chainType)

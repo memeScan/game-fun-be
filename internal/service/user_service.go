@@ -4,6 +4,7 @@ import (
 	"game-fun-be/internal/auth"
 	"game-fun-be/internal/constants"
 	"game-fun-be/internal/model"
+	"game-fun-be/internal/pkg/util"
 	"game-fun-be/internal/redis"
 	"game-fun-be/internal/request"
 	"game-fun-be/internal/response"
@@ -26,6 +27,15 @@ func NewUserServiceImpl(userInfoRepo *model.UserInfoRepo) *UserServiceImpl {
 }
 
 func (s UserServiceImpl) Login(req request.LoginRequest, chainType model.ChainType) response.Response {
+
+	message := fmt.Sprintf(model.LoginMessageTemplate, req.Timestamp)
+
+	isValid, err := VerifySolanaSignature(req.Address, req.Signature, message)
+	if err != nil || !isValid {
+		s.insertAuthLog(req, 0, "signature verification failed", err)
+		return response.Err(response.CodeUnauthorized, "Signature verification failed", err)
+	}
+
 	timestampInt, err := strconv.ParseInt(req.Timestamp, 10, 64)
 	if err != nil {
 		s.insertAuthLog(req, 0, "invalid timestamp format", err)
@@ -72,14 +82,6 @@ func (s UserServiceImpl) Login(req request.LoginRequest, chainType model.ChainTy
 			return response.Success(loginResponse)
 		}
 
-		message := fmt.Sprintf(model.LoginMessageTemplate, req.Timestamp)
-
-		isValid, err := VerifySolanaSignature(req.Address, req.Signature, message)
-		if err != nil || !isValid {
-			s.insertAuthLog(req, 0, "signature verification failed", err)
-			return response.Err(response.CodeUnauthorized, "Signature verification failed", err)
-		}
-
 		token, expireTime, err := auth.GenerateJWT(userInfo.Address, userIDStr, model.TokenExpireDuration)
 		if err != nil {
 			s.insertAuthLog(req, 0, "failed to generate JWT", err)
@@ -107,7 +109,11 @@ func (s UserServiceImpl) Login(req request.LoginRequest, chainType model.ChainTy
 }
 
 func (s UserServiceImpl) insertAuthLog(req request.LoginRequest, status int8, message string, err error) error {
-	timestamp, _ := time.Parse(time.RFC3339, req.Timestamp)
+	parsedTimestamp, err := strconv.ParseInt(req.Timestamp, 10, 64)
+	if err != nil {
+		util.Log().Error("Error parsing timestamp: %v", err)
+	}
+	timestamp := time.Unix(parsedTimestamp, 0)
 	authLog := &model.UserAuthenticationLog{
 		Address:       req.Address,
 		Message:       req.Timestamp,
