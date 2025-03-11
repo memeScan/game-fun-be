@@ -363,19 +363,32 @@ func SendTransaction(swapTransaction string, isJito bool) (*http.Response, error
 	return resp, nil
 }
 
-func SendGameFunTransaction(swapTransaction string, isJito bool, isUsePoint bool) (*http.Response, error) {
-	url := ApiTransactionSend
+func SendGameFunTransaction(swapTransaction string, isJito bool, isUsePoint bool) (*httpRespone.SendResponse, error) {
+	url := ApiGameFunTransactionSend
 	body := map[string]interface{}{
 		"signedTransaction": swapTransaction,
-		"mev":               isJito,
-		"usePoint":          isUsePoint,
+		// "mev":               isJito,
+		"usePoint": isUsePoint,
 	}
 
 	resp, err := postRequest(url, body, false)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send swap transaction: %w", err)
 	}
-	return resp, nil
+
+	defer resp.Body.Close()
+
+	resBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read priority fee response body: %w", err)
+	}
+
+	var apiResp *httpRespone.SendResponse
+	if err := json.Unmarshal(resBody, &apiResp); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal priority fee response: %w", err)
+	}
+
+	return apiResp, nil
 }
 
 func GetSwapStatusBySignature(signature string) (*httpRespone.ApiResponse, error) {
