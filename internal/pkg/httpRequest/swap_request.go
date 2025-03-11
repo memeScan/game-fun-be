@@ -51,7 +51,7 @@ type SwapGInstructionStruct struct {
 
 type BuyGWithPointsStruct struct {
 	User        string `json:"user"`
-	InputAmount string `json:"inputAmount"`
+	Points      string `json:"points"`
 	InputMint   string `json:"inputMint"`
 	OutputMint  string `json:"outputMint"`
 	SlippageBps int    `json:"slippageBps"`

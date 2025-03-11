@@ -75,15 +75,21 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 		"g_points": func() (*httpRespone.SwapTransactionResponse, error) {
 			pointsDecimal := decimal.NewFromFloat(req.Points) // 用户输入的 Points（代币数量）
 			// 计算 10^decimals，确保计算精度
-			decimalsFactor := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(tokenDetail.Decimals)))
+			pointsDecimalsFactor := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(tokenDetail.Decimals)))
+			// 去掉小数点部分，取整
+			pointsWithoutDecimal := pointsDecimal.Mul(pointsDecimalsFactor).Floor()
+
+			// 将去掉小数点后的结果转换为字符串
+			pointsString := pointsWithoutDecimal.String()
 			// 计算代币的 USD 价值（代币数量 * 代币单价 * 10^精度）
-			tokenAmount := pointsDecimal.Mul(tokenDetail.Price).Mul(decimalsFactor)
+			tokenAmount := pointsDecimal.Mul(tokenDetail.Price).Mul(pointsDecimalsFactor)
 			// 计算 SOL 价格 * 10^SOL_DECIMALS
 			solMultiplier := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(model.SOL_DECIMALS)))
 			solAmount := solPriceUSD.Mul(solMultiplier)
 			// 计算需要多少 SOL（代币 USD 价值 / SOL 的 USD 价值）
 			req.InAmount = tokenAmount.Div(solAmount)
-			swapStruct := s.buildBuyGWithPointsStruct(req, inAmountStr)
+
+			swapStruct := s.buildBuyGWithPointsStruct(req, pointsString)
 			return s.getGetBuyGWithPointsInstruction(req.Points, swapStruct)
 		},
 	}
@@ -191,15 +197,15 @@ func (s *SwapServiceImpl) buildGameFunGInstructionStruct(req request.SwapRouteRe
 	}
 }
 
-func (s *SwapServiceImpl) buildBuyGWithPointsStruct(req request.SwapRouteRequest, inAmount string) httpRequest.BuyGWithPointsStruct {
+func (s *SwapServiceImpl) buildBuyGWithPointsStruct(req request.SwapRouteRequest, points string) httpRequest.BuyGWithPointsStruct {
 	return httpRequest.BuyGWithPointsStruct{
 		// User:        req.FromAddress,
-		User:        "GXL1pXLNKzFq7rzbFsGor6NaMsSMjoKhLqmxe8vsh7Gg",
-		InputAmount: inAmount,
-		InputMint:   req.TokenInAddress,
+		User:      "GXL1pXLNKzFq7rzbFsGor6NaMsSMjoKhLqmxe8vsh7Gg",
+		Points:    points,
+		InputMint: req.TokenInAddress,
 		// OutputMint:  req.TokenOutAddress,
 		OutputMint:  "ZziTphJ4pYsbWZtpR8TaHy2xDqbNyf8yEp5d5jvpump",
-		SlippageBps: req.Slippage,
+		SlippageBps: 0,
 		GMint:       "ZziTphJ4pYsbWZtpR8TaHy2xDqbNyf8yEp5d5jvpump",
 		Amm:         "4ZaJqcDxgCCMpBL6TiAz6A8H8zQ6imas4eMs3Hk4ra52",
 		Market:      "75dsjBhyyMsbEoqhgQGCdunYDrgmmPSmBDinnzqVL9Hv",
