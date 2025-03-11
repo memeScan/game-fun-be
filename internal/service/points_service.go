@@ -78,7 +78,7 @@ func (s *PointsServiceImpl) PointsDetail(userID uint64, cursor *uint, limit int,
 	return response.Success(pointsDetailsResponse)
 }
 
-func (s *PointsServiceImpl) CreatePointRecord(wallet_address string, point uint64, hash string, transactionDetail string, record_type model.RecordType, isAddPoints bool) error {
+func (s *PointsServiceImpl) CreatePointRecord(wallet_address string, point uint64, hash string, transactionDetail string, record_type model.RecordType, tokenAmount uint64, nativeTokenAmount uint64, isAddPoints bool) error {
 	user, err := s.userInfoRepo.GetUserByAddress(wallet_address, model.ChainTypeSolana.Uint8())
 	if user == nil || err != nil { // 用户不存在
 		return err // 400 Bad Request
@@ -97,6 +97,8 @@ func (s *PointsServiceImpl) CreatePointRecord(wallet_address string, point uint6
 		RecordType:        int8(record_type), // 积分类型
 		TransactionHash:   hash,
 		TransactionDetail: transactionDetail,
+		TokenAmount:       tokenAmount,
+		NativeTokenAmount: nativeTokenAmount,
 		CreateTime:        time.Now(),
 		UpdateTime:        time.Now(),
 	})
@@ -149,7 +151,7 @@ func (s *PointsServiceImpl) InvitedPointsDetail(userID uint64, cursor *uint, lim
 	return response.Success(pointsTotalResponse)
 }
 
-func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string, transactionDetail string) error {
+func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string, transactionDetail string, tokenAmount uint64, baseTokenAmount uint64) error {
 
 	return model.DB.Transaction(func(tx *gorm.DB) error {
 
@@ -166,6 +168,9 @@ func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string
 			RecordType:        int8(model.Trading), // 积分类型
 			TransactionHash:   hash,
 			TransactionDetail: transactionDetail,
+			TokenAmount:       tokenAmount,
+			NativeTokenAmount: baseTokenAmount,
+			CreateTime:        time.Now(),
 			UpdateTime:        time.Now(),
 		})
 		if insertErr != nil {
@@ -197,6 +202,7 @@ func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string
 				PointsBalance: user.AvailablePoints + invitePoints,
 				RecordType:    int8(model.Invite), // 积分类型
 				InviteeID:     user.ID,
+				CreateTime:    time.Now(),
 				UpdateTime:    time.Now(),
 			})
 			if insertErr != nil {
@@ -230,6 +236,7 @@ func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string
 				PointsBalance: user.AvailablePoints + parentInviterPoints,
 				RecordType:    int8(model.Invite), // 积分类型
 				InviteeID:     user.InviterID,
+				CreateTime:    time.Now(),
 				UpdateTime:    time.Now(),
 			})
 			if insertErr != nil {
