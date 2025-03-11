@@ -73,27 +73,28 @@ func (s *SwapHandler) GetTransaction(c *gin.Context) {
 // @Param is_anti_mev query bool false "是否启用 Anti-MEV（默认为 false）"
 // @Success 200 {object} response.Response "成功返回交易结果"
 // @Failure 500 {object} response.Response "服务器内部错误"
-// @Router /swap/{chain_type}/send_transaction [get]
+// @Router /swap/{chain_type}/send_transaction [post]
 func (s *SwapHandler) SendTransaction(c *gin.Context) {
 	userID, errResp := GetUserIDFromContext(c)
 	if errResp != nil {
 		c.JSON(errResp.Code, errResp)
 		return
 	}
-	swapTransaction := c.DefaultQuery("swap_transaction", "")
-	platformType := c.DefaultQuery("platform_type", "")
-	if swapTransaction == "" || platformType == "" {
+	userAddress, errResp := GetAddressFromContext(c)
+	if errResp != nil {
+		c.JSON(errResp.Code, errResp)
+		return
+	}
+	// 定义请求体结构
+	var req request.SwapRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Both 'swap_transaction' and 'platform_type' are required",
+			"error": "Invalid request body",
 		})
 		return
 	}
-	isJito := c.Query("is_anti_mev")
-	isJitoBool := false
-	if isJito == "true" {
-		isJitoBool = true
-	}
-	res := s.swapService.SendTransaction(userID, swapTransaction, isJitoBool, platformType)
+
+	res := s.swapService.SendTransaction(userID, userAddress, req)
 	c.JSON(res.Code, res)
 }
 

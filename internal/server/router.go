@@ -114,7 +114,7 @@ func NewRouter() *gin.Engine {
 		auth.GET("global/:chain_type/native_balance", globalHandler.NativeBalance)
 		auth.GET("global/:chain_type/ticker_balance/:ticker_address", globalHandler.TickerBalance)
 		auth.GET("swap/:chain_type/get_transaction", swapHandler.GetTransaction)
-		auth.GET("swap/:chain_type/send_transaction", swapHandler.SendTransaction)
+		auth.POST("swap/:chain_type/send_transaction", swapHandler.SendTransaction)
 		auth.GET("swap/:chain_type/transaction_status", swapHandler.TransactionStatus)
 		auth.GET("token_holdings/:chain_type/:account", tokenHoldingsHandler.TokenHoldings)
 		auth.GET("token_holdings/:chain_type/histories/:account", tokenHoldingsHandler.TokenHoldingsHistories)

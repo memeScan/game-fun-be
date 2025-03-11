@@ -388,6 +388,10 @@ func SendGameFunTransaction(swapTransaction string, isJito bool, isUsePoint bool
 		return nil, fmt.Errorf("failed to unmarshal priority fee response: %w", err)
 	}
 
+	if apiResp.Code != 2000 {
+		return nil, fmt.Errorf("failed to unmarshal priority fee response: %w", apiResp.Message)
+	}
+
 	return apiResp, nil
 }
 

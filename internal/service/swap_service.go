@@ -34,7 +34,7 @@ func NewSwapService() *SwapServiceImpl {
 
 func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType uint8) response.Response {
 
-	startTime := time.Now()
+	startTime := time.Now().UnixNano()
 
 	solPriceUSD, priceErr := getSolPrice()
 	if priceErr != nil {
@@ -90,7 +90,7 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 			req.InAmount = tokenAmount.Div(solAmount)
 
 			swapStruct := s.buildBuyGWithPointsStruct(req, pointsString)
-			return s.getGetBuyGWithPointsInstruction(req.Points, swapStruct)
+			return s.getGetBuyGWithPointsInstruction(req.Points, swapStruct, startTime)
 		},
 	}
 
@@ -298,7 +298,7 @@ func (s *SwapServiceImpl) getGameFunGInstruction(swapStruct httpRequest.SwapGIns
 	return swapTxResponse, nil
 }
 
-func (s *SwapServiceImpl) getGetBuyGWithPointsInstruction(points float64, swapStruct httpRequest.BuyGWithPointsStruct) (*httpRespone.SwapTransactionResponse, error) {
+func (s *SwapServiceImpl) getGetBuyGWithPointsInstruction(points float64, swapStruct httpRequest.BuyGWithPointsStruct, startTime int64) (*httpRespone.SwapTransactionResponse, error) {
 	// 使用 GetBuyGWithPointsInstruction 函数发起请求
 	resp, err := httpUtil.GetBuyGWithPointsInstruction(swapStruct)
 	if err != nil {
@@ -317,9 +317,8 @@ func (s *SwapServiceImpl) getGetBuyGWithPointsInstruction(points float64, swapSt
 	if err := json.Unmarshal(respBody, &swapTxResponse); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal JSON: %w", err)
 	}
-
-	// 获取 Redis 键并设置值
-	SwapGPointsKey := GetRedisKey(constants.SwapGPoints, swapTxResponse.Data)
+	startTimeStr := strconv.FormatInt(startTime, 10)
+	SwapGPointsKey := GetRedisKey(constants.SwapGPoints, swapStruct.User, startTimeStr)
 	multiplier := math.Pow10(model.PointsDecimal)
 	scaledPoints := uint64(points * multiplier)
 
@@ -363,7 +362,7 @@ func (s *SwapServiceImpl) calculateSwapAmounts(
 	return outAmount, inAmountUSD, outAmountUSD, nil
 }
 
-func ConstructSwapRouteResponse(req request.SwapRouteRequest, swapResponse *httpRespone.SwapTransactionResponse, inDecimals, outDecimals uint8, amountOut, amountInUSD, amountOutUSD decimal.Decimal, startTime time.Time, jitoOrderId string) response.Response {
+func ConstructSwapRouteResponse(req request.SwapRouteRequest, swapResponse *httpRespone.SwapTransactionResponse, inDecimals, outDecimals uint8, amountOut, amountInUSD, amountOutUSD decimal.Decimal, startTime int64, jitoOrderId string) response.Response {
 
 	swapRouteResponse := response.Response{
 		Code: http.StatusOK,
@@ -394,7 +393,7 @@ func ConstructSwapRouteResponse(req request.SwapRouteRequest, swapResponse *http
 						Percent: 0,
 					},
 				},
-				TimeTaken: time.Since(startTime).Seconds(),
+				TimeTaken: startTime,
 			},
 			RawTx: response.RawTx{
 				SwapTransaction: swapResponse.Data,
@@ -410,11 +409,10 @@ func ConstructSwapRouteResponse(req request.SwapRouteRequest, swapResponse *http
 	return swapRouteResponse
 }
 
-func (s *SwapServiceImpl) SendTransaction(userID string, swapTransaction string, isJito bool, platformType string) response.Response {
+func (s *SwapServiceImpl) SendTransaction(userID string, userAddress string, swapRequest request.SwapRequest) response.Response {
 	isUsePoint := false
-	log.Print(swapTransaction)
-	if platformType == "g_points" {
-		SwapGPointsKey := GetRedisKey(constants.SwapGPoints, swapTransaction)
+	if swapRequest.PlatformType == "g_points" {
+		SwapGPointsKey := GetRedisKey(constants.SwapGPoints, userAddress, swapRequest.StartTime)
 		redisValue, err := redis.Get(SwapGPointsKey)
 		if err != nil {
 			util.Log().Error("Failed to get key from Redis: %v", err)
@@ -453,7 +451,7 @@ func (s *SwapServiceImpl) SendTransaction(userID string, swapTransaction string,
 		isUsePoint = true
 	}
 
-	resp, err := httpUtil.SendGameFunTransaction(swapTransaction, isJito, isUsePoint)
+	resp, err := httpUtil.SendGameFunTransaction(swapRequest.SwapTransaction, swapRequest.IsAntiMEV, isUsePoint)
 	if err != nil || resp == nil || resp.Code != 2000 {
 		return response.Err(http.StatusInternalServerError, "Failed to get send transaction", err)
 	}
