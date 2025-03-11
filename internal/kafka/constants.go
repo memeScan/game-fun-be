@@ -21,8 +21,9 @@ const (
 
 	UnknownTokenPrefix = "market.unknown.token."
 
-	GameOutTradePrefix = "market.game.out.trade."
-	GameInTradePrefix  = "market.game.in.trade."
+	GameOutTradePrefix  = "market.game.out.trade."
+	GameInTradePrefix   = "market.game.in.trade."
+	PointTxStatusPrefix = "market.point.tx.status." // 积分交易链上状态检测
 )
 
 var (
@@ -52,18 +53,22 @@ var (
 	TopicGameOutTrade = GameOutTradePrefix + envSuffix // 代理合约外盘买卖事件
 	TopicGameInTrade  = GameInTradePrefix + envSuffix  // 代理合约内盘买事件（积分兑换买）
 
+	// 积分交易状态检测
+	TopicPointTxStatus = PointTxStatusPrefix + envSuffix // 积分交易链上状态检测
+
 	// 所有需要监听的 topics
 	AllTopics = []string{
 		TopicRayCreate,
 		TopicRaySwap,
 		TopicRayAddLiquidity,
 		TopicRayRemoveLiquidity,
-		TopicPumpCreate,
-		TopicPumpTrade,
-		TopicPumpComplete,
-		TopicPumpSetParams,
+		// TopicPumpCreate,
+		// TopicPumpTrade,
+		// TopicPumpComplete,
+		// TopicPumpSetParams,
 		TopicUnknownToken,
 		TopicGameOutTrade,
 		TopicGameInTrade,
+		TopicPointTxStatus,
 	}
 )

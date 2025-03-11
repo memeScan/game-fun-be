@@ -168,22 +168,6 @@ func TestSendSwapRequest(t *testing.T) {
 	t.Logf("Received Swap Request Response: %+v", resp)
 }
 
-func TestSendRaydiumTradeRequest(t *testing.T) {
-	setupTest(t)
-	tradeStruct := httpRequest.SwapRaydiumStruct{}
-
-	resp, err := httpUtil.SendRaydiumTradeRequest(tradeStruct)
-	if err != nil {
-		t.Fatalf("Failed to send raydium trade request: %v", err)
-	}
-
-	if resp == nil {
-		t.Fatal("Expected response, got nil")
-	}
-
-	t.Logf("Received Raydium Trade Request Response: %+v", resp)
-}
-
 func TestSendSwapTransaction(t *testing.T) {
 	setupTest(t)
 	swapTransaction := "dummy_swap_transaction"

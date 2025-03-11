@@ -259,3 +259,29 @@ func (r *UserInfoRepo) DeductPointsWithOptimisticLock(userID uint64, amount uint
 func (r *UserInfoRepo) WithTx(tx *gorm.DB) *UserInfoRepo {
 	return &UserInfoRepo{db: tx}
 }
+
+// IncrementAvailablePointsByUserID increases the available points for a user by their ID
+func (r *UserInfoRepo) IncrementAvailablePointsByUserID(userID uint, points uint64) error {
+	if points == 0 {
+		return nil
+	}
+
+	updates := map[string]interface{}{
+		"available_points": gorm.Expr("available_points + ?", points),
+		"update_time":      time.Now(),
+	}
+
+	result := DB.Model(&UserInfo{}).
+		Where("id = ?", userID).
+		Updates(updates)
+
+	if result.Error != nil {
+		return fmt.Errorf("failed to increment available points: %w", result.Error)
+	}
+
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("user with ID %d not found", userID)
+	}
+
+	return nil
+}

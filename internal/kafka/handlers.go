@@ -89,6 +89,9 @@ func ConsumePumpfunTopics() error {
 	topicConsumer.AddHandler(TopicGameOutTrade, gameOutTradeHandler)
 	topicConsumer.AddHandler(TopicGameInTrade, gameInTradeHandler)
 
+	// 添加积分交易状态检测处理器
+	topicConsumer.AddHandler(TopicPointTxStatus, pointTxStatusHandler)
+
 	// 开始消费主题
 	return topicConsumer.ConsumeTopics(AllTopics)
 }
@@ -1353,6 +1356,66 @@ func gameInTradeHandler(message []byte, topic string) error {
 	err := pointsService.CreatePointRecord(tradeMsg.User, uint64(tradeMsg.PointsAmount), tradeMsg.Signature, string(message), model.BuyG, uint64(tradeMsg.QuoteAmount), uint64(tradeMsg.BaseAmount), true)
 	if err != nil {
 		return fmt.Errorf("failed to save points: %v", err)
+	}
+
+	return nil
+}
+
+// pointTxStatusHandler 处理积分交易状态检测
+func pointTxStatusHandler(message []byte, topic string) error {
+	util.Log().Info("pointTxStatusHandler: Processing message from topic %s", topic)
+
+	var statusMsg model.PointTxStatusMessage
+	if err := json.Unmarshal(message, &statusMsg); err != nil {
+		util.Log().Error("Failed to unmarshal point-tx-status message: %v", err)
+		return fmt.Errorf("failed to unmarshal point-tx-status message: %v", err)
+	}
+
+	// 设置最大重试次数和重试间隔
+	maxRetries := 5
+	retryInterval := 3 * time.Second
+
+	for attempt := 0; attempt <= maxRetries; attempt++ {
+		resp, err := httpUtil.GetSwapStatusBySignature(statusMsg.Signature)
+		if err != nil || resp == nil || resp.Code != 2000 {
+			util.Log().Error("Failed to get swap request status: %v", err)
+			time.Sleep(retryInterval)
+			continue
+		}
+
+		// 根据状态进行不同处理
+		if resp.Data == "success" {
+			// 成功状态，处理完成
+			util.Log().Info("Transaction %s completed successfully", statusMsg.Signature)
+			return nil
+		} else if resp.Data == "failed" {
+			// 失败状态，恢复用户积分
+			userInfoRepo := model.NewUserInfoRepo()
+			if err := userInfoRepo.IncrementAvailablePointsByUserID(statusMsg.UserId, statusMsg.Points); err != nil {
+				util.Log().Error("Failed to restore points for user %d after transaction %s failed: %v",
+					statusMsg.UserId, statusMsg.Signature, err)
+				return fmt.Errorf("transaction failed but could not restore points: %w", err)
+			}
+			util.Log().Info("Transaction %s failed, restored %d points to user %d",
+				statusMsg.Signature, statusMsg.Points, statusMsg.UserId)
+			return nil
+		} else if resp.Data == "processing" {
+			// 处理中状态，如果已达到最大重试次数则退出
+			if attempt == maxRetries {
+				util.Log().Error("Transaction %s still in processing status after %d retries", statusMsg.Signature, maxRetries)
+				return fmt.Errorf("transaction still in processing after maximum retries")
+			}
+
+			// 等待指定时间后重试
+			util.Log().Info("Transaction %s is processing, retrying in %v (attempt %d/%d)",
+				statusMsg.Signature, retryInterval, attempt+1, maxRetries)
+			time.Sleep(retryInterval)
+			continue
+		} else {
+			// 未知状态，记录日志并返回
+			util.Log().Error("Unknown transaction status %s for signature %s", resp.Data, statusMsg.Signature)
+			return fmt.Errorf("unknown transaction status: %s", resp.Data)
+		}
 	}
 
 	return nil

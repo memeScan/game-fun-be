@@ -111,3 +111,10 @@ type GameInTradeMessage struct {
 	PointsAmount  float64 `json:"pointsAmount"`  // 积分数量(带单位,6位精度)
 	FeeBaseAmount uint64  `json:"feeBaseAmount"` // 手续费sol数量
 }
+
+// PointTxStatusMessage 积分交易链上状态消息结构体
+type PointTxStatusMessage struct {
+	Signature string `json:"signature"` // 交易签名
+	UserId    uint   `json:"userId"`    // 用户ID
+	Points    uint64 `json:"points"`    // 积分数量
+}
