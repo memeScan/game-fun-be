@@ -1318,9 +1318,9 @@ func gameOutTradeHandler(message []byte, topic string) error {
 
 	discount_decimal := decimal.NewFromInt(int64(100 - discount)).Div(decimal.NewFromInt(100))
 	coef_decimal := decimal.NewFromInt(int64(coefficient))
-	fee_decimal := decimal.NewFromInt(int64(tradeMsg.FeeBaseAmount))
-
-	point := coef_decimal.Mul(fee_decimal).Div(adjustedQuoteReserves.Mul(discount_decimal).Div(adjustedNativeReserves)).IntPart()
+	fee_decimal := decimal.NewFromInt(int64(tradeMsg.FeeBaseAmount)).Shift(6)
+	result := coef_decimal.Mul(fee_decimal).Div(adjustedQuoteReserves.Mul(discount_decimal).Div(adjustedNativeReserves))
+	point := result.IntPart()
 	// fmt.Println("point: %d", point)
 	util.Log().Info("point: %d", point)
 
