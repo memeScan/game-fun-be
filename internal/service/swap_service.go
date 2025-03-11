@@ -91,12 +91,9 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 			// 将去掉小数点后的结果转换为字符串
 			pointsString := pointsWithoutDecimal.String()
 			// 计算代币的 USD 价值（代币数量 * 代币单价 * 10^精度）
-			tokenAmount := pointsDecimal.Mul(tokenDetail.Price).Mul(pointsWithoutDecimal)
-			// 计算 SOL 价格 * 10^SOL_DECIMALS
-			solMultiplier := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(model.SOL_DECIMALS)))
-			solAmount := solPriceUSD.Mul(solMultiplier)
+			tokenUsd := pointsDecimal.Mul(tokenDetail.Price)
 			// 计算需要多少 SOL（代币 USD 价值 / SOL 的 USD 价值）
-			req.InAmount = tokenAmount.Div(solAmount)
+			req.InAmount = tokenUsd.Div(solPriceUSD)
 			req.InAmount = req.InAmount.Div(decimal.NewFromInt(2))
 
 			swapStruct := s.buildBuyGWithPointsStruct(req, pointsString)
