@@ -217,3 +217,12 @@ const (
 	Activity RecordType = 3
 	BuyG     RecordType = 4
 )
+
+type StatisticType string
+
+const (
+	FeeAmount    StatisticType = "fee_amount"
+	BackAmount   StatisticType = "back_amount"
+	BurnAmount   StatisticType = "burn_amount"
+	PointsAmount StatisticType = "points_amount"
+)

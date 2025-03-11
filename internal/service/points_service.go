@@ -10,13 +10,13 @@ import (
 )
 
 type PointsServiceImpl struct {
-	db                 *gorm.DB
-	userInfoRepo       *model.UserInfoRepo
-	pointRecordsRecord *model.PointRecordsRepo
+	userInfoRepo               *model.UserInfoRepo
+	pointRecordsRecord         *model.PointRecordsRepo
+	platformTokenStatisticRepo *model.PlatformTokenStatisticRepo
 }
 
-func NewPointsServiceImpl(userInfoRepo *model.UserInfoRepo, pointRecordsRecord *model.PointRecordsRepo) *PointsServiceImpl {
-	return &PointsServiceImpl{userInfoRepo: userInfoRepo, pointRecordsRecord: pointRecordsRecord}
+func NewPointsServiceImpl(userInfoRepo *model.UserInfoRepo, pointRecordsRecord *model.PointRecordsRepo, platformTokenStatisticRepo *model.PlatformTokenStatisticRepo) *PointsServiceImpl {
+	return &PointsServiceImpl{userInfoRepo: userInfoRepo, pointRecordsRecord: pointRecordsRecord, platformTokenStatisticRepo: platformTokenStatisticRepo}
 }
 
 /**
@@ -151,7 +151,7 @@ func (s *PointsServiceImpl) InvitedPointsDetail(userID uint64, cursor *uint, lim
 	return response.Success(pointsTotalResponse)
 }
 
-func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string, transactionDetail string, tokenAmount uint64, baseTokenAmount uint64) error {
+func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string, transactionDetail string, tokenAmount uint64, baseTokenAmount uint64, tokenAddress string, amounts map[model.StatisticType]uint64) error {
 
 	return model.DB.Transaction(func(tx *gorm.DB) error {
 
@@ -183,6 +183,11 @@ func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string
 
 		// 更新用户积分
 		if err := s.userInfoRepo.WithTx(tx).IncrementMultiplePointsAndUpdateTime(address, userPoints); err != nil {
+			return err
+		}
+
+		// 更新统计数据
+		if err := s.platformTokenStatisticRepo.WithTx(tx).IncrementStatisticsAndUpdateTime(tokenAddress, amounts); err != nil {
 			return err
 		}
 
