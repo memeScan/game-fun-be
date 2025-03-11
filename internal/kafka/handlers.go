@@ -1321,6 +1321,7 @@ func gameOutTradeHandler(message []byte, topic string) error {
 	fee_decimal := decimal.NewFromInt(int64(tradeMsg.FeeBaseAmount))
 
 	point := coef_decimal.Mul(fee_decimal).Div(adjustedQuoteReserves.Mul(discount_decimal).Div(adjustedNativeReserves)).IntPart()
+	// fmt.Println("point: %d", point)
 	util.Log().Info("point: %d", point)
 
 	pointRecordsRepo := model.NewPointRecordsRepo()
