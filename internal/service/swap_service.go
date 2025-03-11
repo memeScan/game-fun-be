@@ -41,6 +41,7 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 		req.InAmount = req.InAmount.Mul(solMultiplier)
 	}
 	inAmountUint64 := req.InAmount.BigInt().Uint64()
+	inAmountStr := strconv.FormatUint(inAmountUint64, 10)
 
 	if priceErr != nil {
 		return response.Err(http.StatusBadRequest, "price query failed", priceErr)
@@ -49,7 +50,7 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 	// Get token and pool details
 	tokenDetail, poolDetail, errResp := s.getTokenAndPoolInfo(req.TokenAddress, chainType)
 	if errResp != nil {
-		// return s.handleErrorResponse(errResp)
+		return s.handleErrorResponse(errResp)
 	}
 
 	// Process Anti-MEV logic
@@ -69,7 +70,7 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 			return s.getRaydiumTradeTx(swapStruct)
 		},
 		"g_external": func() (*httpRespone.SwapTransactionResponse, error) {
-			swapStruct := s.buildGameFunGInstructionStruct(req, inAmountUint64)
+			swapStruct := s.buildGameFunGInstructionStruct(req, inAmountStr)
 			return s.getGameFunGInstruction(swapStruct)
 		},
 		"g_points": func() (*httpRespone.SwapTransactionResponse, error) {
@@ -83,7 +84,7 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 			solAmount := solPriceUSD.Mul(solMultiplier)
 			// 计算需要多少 SOL（代币 USD 价值 / SOL 的 USD 价值）
 			req.InAmount = tokenAmount.Div(solAmount)
-			swapStruct := s.buildBuyGWithPointsStruct(req, inAmountUint64)
+			swapStruct := s.buildBuyGWithPointsStruct(req, inAmountStr)
 			return s.getGetBuyGWithPointsInstruction(req.Points, swapStruct)
 		},
 	}
@@ -97,6 +98,9 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 	swapTransaction, err := handler()
 	if err != nil {
 		return response.Err(http.StatusInternalServerError, "Failed to send swap request", err)
+	}
+	if swapTransaction.Code != 2000 {
+		return response.Err(http.StatusInternalServerError, "Failed to send swap request", errors.New(swapTransaction.Message))
 	}
 
 	// Calculate amounts
@@ -171,7 +175,7 @@ func (s *SwapServiceImpl) processAntiMev(req request.SwapRouteRequest) (bool, st
 	return true, jitotip, jitoOrderId, nil
 }
 
-func (s *SwapServiceImpl) buildGameFunGInstructionStruct(req request.SwapRouteRequest, inAmount uint64) httpRequest.SwapGInstructionStruct {
+func (s *SwapServiceImpl) buildGameFunGInstructionStruct(req request.SwapRouteRequest, inAmount string) httpRequest.SwapGInstructionStruct {
 	return httpRequest.SwapGInstructionStruct{
 		// User:        req.FromAddress,
 		User:        "GXL1pXLNKzFq7rzbFsGor6NaMsSMjoKhLqmxe8vsh7Gg",
@@ -187,7 +191,7 @@ func (s *SwapServiceImpl) buildGameFunGInstructionStruct(req request.SwapRouteRe
 	}
 }
 
-func (s *SwapServiceImpl) buildBuyGWithPointsStruct(req request.SwapRouteRequest, inAmount uint64) httpRequest.BuyGWithPointsStruct {
+func (s *SwapServiceImpl) buildBuyGWithPointsStruct(req request.SwapRouteRequest, inAmount string) httpRequest.BuyGWithPointsStruct {
 	return httpRequest.BuyGWithPointsStruct{
 		// User:        req.FromAddress,
 		User:        "GXL1pXLNKzFq7rzbFsGor6NaMsSMjoKhLqmxe8vsh7Gg",

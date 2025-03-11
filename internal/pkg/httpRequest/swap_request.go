@@ -25,7 +25,7 @@ type SwapRaydiumStruct struct {
 	Owner           string `json:"owner"`
 	InputMint       string `json:"inputMint"`
 	OutputMint      string `json:"outputMint"`
-	InAmount        uint64 `json:"inAmount"`
+	InAmount        string `json:"inAmount"`
 	SlippageBps     string `json:"slippageBps"`
 	PoolPcReserve   string `json:"poolPcReserve"`
 	PoolCoinReserve string `json:"poolCoinReserve"`
@@ -38,7 +38,7 @@ type SwapRaydiumStruct struct {
 
 type SwapGInstructionStruct struct {
 	User        string `json:"user"`
-	InputAmount uint64 `json:"inputAmount"`
+	InputAmount string `json:"inputAmount"`
 	InputMint   string `json:"inputMint"`
 	OutputMint  string `json:"outputMint"`
 	SlippageBps int    `json:"slippageBps"`
@@ -51,7 +51,7 @@ type SwapGInstructionStruct struct {
 
 type BuyGWithPointsStruct struct {
 	User        string `json:"user"`
-	InputAmount uint64 `json:"inputAmount"`
+	InputAmount string `json:"inputAmount"`
 	InputMint   string `json:"inputMint"`
 	OutputMint  string `json:"outputMint"`
 	SlippageBps int    `json:"slippageBps"`
