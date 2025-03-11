@@ -1333,13 +1333,14 @@ func gameOutTradeHandler(message []byte, topic string) error {
 	pointsService := service.NewPointsServiceImpl(userInfoRepo, pointRecordsRepo, PlatformTokenStatisticRepo)
 
 	amounts := map[model.StatisticType]uint64{
-		model.FeeAmount:  tradeMsg.FeeBaseAmount,
-		model.BackAmount: tradeMsg.BaseAmount,
+		model.FeeAmount:     tradeMsg.FeeBaseAmount,
+		model.BackAmount:    tradeMsg.FeeQuoteAmount,
+		model.BackSolAmount: tradeMsg.BuybackFeeBaseAmount,
 	}
 
-	// if tradeMsg {
-
-	// }
+	if tradeMsg.IsBurn {
+		amounts[model.BurnAmount] = tradeMsg.FeeQuoteAmount
+	}
 
 	err := pointsService.PointsSave(tradeMsg.User, uint64(point), tradeMsg.Signature, string(message), tradeMsg.QuoteAmount, tradeMsg.BaseAmount, tradeMsg.QuoteToken, amounts)
 	if err != nil {
@@ -1365,7 +1366,13 @@ func gameInTradeHandler(message []byte, topic string) error {
 	userInfoRepo := model.NewUserInfoRepo()
 	PlatformTokenStatisticRepo := model.NewPlatformTokenStatisticRepo()
 	pointsService := service.NewPointsServiceImpl(userInfoRepo, pointRecordsRepo, PlatformTokenStatisticRepo)
-	err := pointsService.CreatePointRecord(tradeMsg.User, uint64(tradeMsg.PointsAmount), tradeMsg.Signature, string(message), model.BuyG, uint64(tradeMsg.QuoteAmount), uint64(tradeMsg.BaseAmount), true)
+
+	amounts := map[model.StatisticType]uint64{
+		model.FeeAmount:  tradeMsg.FeeBaseAmount,
+		model.BackAmount: tradeMsg.PointsAmount,
+	}
+
+	err := pointsService.CreatePointRecord(tradeMsg.User, tradeMsg.PointsAmount, tradeMsg.Signature, string(message), model.BuyG, tradeMsg.QuoteAmount, tradeMsg.BaseAmount, true, tradeMsg.QuoteToken, amounts)
 	if err != nil {
 		return fmt.Errorf("failed to save points: %v", err)
 	}
