@@ -40,18 +40,22 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 	if priceErr != nil {
 		return response.Err(http.StatusBadRequest, "price query failed", priceErr)
 	}
-	if req.SwapType == "buy" && chainType == 1 {
-		solMultiplier := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(model.SOL_DECIMALS)))
-		req.InAmount = req.InAmount.Mul(solMultiplier)
-	}
-	inAmountUint64 := req.InAmount.BigInt().Uint64()
-	inAmountStr := strconv.FormatUint(inAmountUint64, 10)
 
 	// Get token and pool details
 	tokenDetail, poolDetail, errResp := s.getTokenAndPoolInfo(req.TokenAddress, chainType)
 	if errResp != nil {
 		return s.handleErrorResponse(errResp)
 	}
+
+	if req.SwapType == "buy" && chainType == 1 {
+		solMultiplier := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(model.SOL_DECIMALS)))
+		req.InAmount = req.InAmount.Mul(solMultiplier)
+	} else if req.SwapType == "sell" && chainType == 1 {
+		tokenMultiplier := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(tokenDetail.Decimals)))
+		req.InAmount = req.InAmount.Mul(tokenMultiplier)
+	}
+	inAmountUint64 := req.InAmount.BigInt().Uint64()
+	inAmountStr := strconv.FormatUint(inAmountUint64, 10)
 
 	// Process Anti-MEV logic
 	mev, jitotip, jitoOrderId, errResp := s.processAntiMev(req)
@@ -70,6 +74,11 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 			return s.getRaydiumTradeTx(swapStruct)
 		},
 		"g_external": func() (*httpRespone.SwapTransactionResponse, error) {
+			if req.SwapType == "sell" && chainType == 1 {
+				req.TokenInAddress = "ZziTphJ4pYsbWZtpR8TaHy2xDqbNyf8yEp5d5jvpump"
+			} else if req.SwapType == "buy" && chainType == 1 {
+				req.TokenOutAddress = "ZziTphJ4pYsbWZtpR8TaHy2xDqbNyf8yEp5d5jvpump"
+			}
 			swapStruct := s.buildGameFunGInstructionStruct(req, inAmountStr)
 			return s.getGameFunGInstruction(swapStruct)
 		},
@@ -187,7 +196,7 @@ func (s *SwapServiceImpl) buildGameFunGInstructionStruct(req request.SwapRouteRe
 		InputAmount: inAmount,
 		InputMint:   req.TokenInAddress,
 		// OutputMint:  req.TokenOutAddress,
-		OutputMint:  "ZziTphJ4pYsbWZtpR8TaHy2xDqbNyf8yEp5d5jvpump",
+		OutputMint:  req.TokenOutAddress,
 		SlippageBps: req.Slippage,
 		GMint:       "ZziTphJ4pYsbWZtpR8TaHy2xDqbNyf8yEp5d5jvpump",
 		Amm:         "4ZaJqcDxgCCMpBL6TiAz6A8H8zQ6imas4eMs3Hk4ra52",
@@ -204,7 +213,7 @@ func (s *SwapServiceImpl) buildBuyGWithPointsStruct(req request.SwapRouteRequest
 		Points:    points,
 		InputMint: req.TokenInAddress,
 		// OutputMint:  req.TokenOutAddress,
-		OutputMint:  "ZziTphJ4pYsbWZtpR8TaHy2xDqbNyf8yEp5d5jvpump",
+		OutputMint:  req.TokenOutAddress,
 		SlippageBps: 0,
 		GMint:       "ZziTphJ4pYsbWZtpR8TaHy2xDqbNyf8yEp5d5jvpump",
 		Amm:         "4ZaJqcDxgCCMpBL6TiAz6A8H8zQ6imas4eMs3Hk4ra52",
@@ -452,6 +461,7 @@ func (s *SwapServiceImpl) SendTransaction(userID string, userAddress string, swa
 	}
 
 	resp, err := httpUtil.SendGameFunTransaction(swapRequest.SwapTransaction, swapRequest.IsAntiMEV, isUsePoint)
+
 	if err != nil || resp == nil || resp.Code != 2000 {
 		return response.Err(http.StatusInternalServerError, "Failed to get send transaction", err)
 	}

@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/gagliardetto/solana-go"
@@ -52,4 +53,13 @@ func UnmarshalJSON(jsonStr string, target interface{}) error {
 	}
 
 	return nil
+}
+
+func FormatPercent(value float64) string {
+	sign := "+"
+	if value < 0 {
+		sign = "-"
+		value = -value // 取绝对值
+	}
+	return fmt.Sprintf("%s%.2f%%", sign, value)
 }

@@ -354,6 +354,11 @@ func (s *TickerServiceImpl) MarketTicker(tokenAddress string, chainType model.Ch
 
 // populateMarketTicker 将 TradeData 转换为 MarketTicker
 func populateMarketTicker(tradeData httpRespone.TradeData) response.MarketTicker {
+
+	priceChange24hPercentStr := FormatPercent(tradeData.PriceChange24hPercent)
+	priceChange1hPercentStr := FormatPercent(tradeData.PriceChange1hPercent)
+	priceChange30mPercentStr := FormatPercent(tradeData.PriceChange30mPercent)
+
 	return response.MarketTicker{
 		TxCount24H:           int(tradeData.Trade24h),
 		BuyTxCount24H:        int(tradeData.Buy24h),
@@ -364,7 +369,7 @@ func populateMarketTicker(tradeData httpRespone.TradeData) response.MarketTicker
 		BuyTokenVolume24Usd:  fmt.Sprintf("%f", tradeData.VolumeBuy24hUSD),
 		SellTokenVolume24H:   fmt.Sprintf("%f", tradeData.VolumeSell24h),
 		SellTokenVolume24Usd: fmt.Sprintf("%f", tradeData.VolumeSell24hUSD),
-		PriceChange24H:       fmt.Sprintf("%f", tradeData.PriceChange24hPercent),
+		PriceChange24H:       priceChange24hPercentStr,
 		TxCount1H:            int(tradeData.Trade1h),
 		BuyTxCount1H:         int(tradeData.Buy1h),
 		SellTxCount1H:        int(tradeData.Sell1h),
@@ -374,7 +379,7 @@ func populateMarketTicker(tradeData httpRespone.TradeData) response.MarketTicker
 		BuyTokenVolume1Usd:   fmt.Sprintf("%f", tradeData.VolumeBuy1hUSD),
 		SellTokenVolume1H:    fmt.Sprintf("%f", tradeData.VolumeSell1h),
 		SellTokenVolume1Usd:  fmt.Sprintf("%f", tradeData.VolumeSell1hUSD),
-		PriceChange1H:        fmt.Sprintf("%f", tradeData.PriceChange1hPercent),
+		PriceChange1H:        priceChange1hPercentStr,
 		TxCount30M:           int(tradeData.Trade30m),
 		BuyTxCount30M:        int(tradeData.Buy30m),
 		SellTxCount30M:       int(tradeData.Sell30m),
@@ -384,7 +389,7 @@ func populateMarketTicker(tradeData httpRespone.TradeData) response.MarketTicker
 		BuyTokenVolume30Usd:  fmt.Sprintf("%f", tradeData.VolumeBuy30mUsd),
 		SellTokenVolume30M:   fmt.Sprintf("%f", tradeData.VolumeSell30m),
 		SellTokenVolume30Usd: fmt.Sprintf("%f", tradeData.VolumeSell30mUsd),
-		PriceChange30M:       fmt.Sprintf("%f", tradeData.PriceChange30mPercent),
+		PriceChange30M:       priceChange30mPercentStr,
 		LastSwapAt:           tradeData.LastTradeUnixTime,
 	}
 }

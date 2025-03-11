@@ -364,6 +364,9 @@ func SendTransaction(swapTransaction string, isJito bool) (*http.Response, error
 }
 
 func SendGameFunTransaction(swapTransaction string, isJito bool, isUsePoint bool) (*httpRespone.SendResponse, error) {
+
+	log.Print(swapTransaction)
+
 	url := ApiGameFunTransactionSend
 	body := map[string]interface{}{
 		"signedTransaction": swapTransaction,
