@@ -102,26 +102,46 @@ func TestKafkaIntegration(t *testing.T) {
 		batchSize := 1 // 批次大小
 		messages := make([]*sarama.ProducerMessage, 0, batchSize)
 		for i := 0; i < batchSize; i++ {
+			// message := &sarama.ProducerMessage{
+			// 	Topic: kafka.TopicGameOutTrade,
+			// 	Value: sarama.ByteEncoder(fmt.Sprintf(`{
+			// 		"timestamp": %d,
+			// 		"block": 3130978492,
+			// 		"signature": "2ZZf2p6RH4Zr4nKbGV9zmNkGjr3wEgpER9xxJD3WkfqVkCHzoW2HCZtg4JtKwqPmKBB5o6Um8cDjqxksVrBg8UUU",
+			// 		"user": "SoLxyz987654321abc987654321abc987654321",
+			// 		"poolAddress": "F3UWHvZWy41HpsbWfbBFbvAemYuCn8RJ2qvKfr2346Qf",
+			// 		"isBuy": true,
+			// 		"quoteToken": "8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump",
+			// 		"baseToken": "So11111111111111111111111111111111111111112",
+			// 		"marketAddress": "",
+			// 		"poolQuoteReserve": 18640745631097,
+			// 		"poolBaseReserve": 539997130105,
+			// 		"quoteAmount": 54610438,
+			// 		"baseAmount": 1585960,
+			// 		"decimals": 6,
+			// 		"feeQuoteAmount": 546104,
+			// 		"feeBaseAmount": 15859,
+			// 		"buybackFeeBaseAmount": 7930,
+			// 		"isBurn": false
+			// 	}`, time.Now().Unix())),
+			// }
+
 			message := &sarama.ProducerMessage{
-				Topic: kafka.TopicGameOutTrade,
+				Topic: kafka.TopicGameInTrade,
 				Value: sarama.ByteEncoder(fmt.Sprintf(`{
-					"timestamp": %d,
-					"block": 313097849,
-					"signature": "2ZZf2p6RH4Zr4nKbGV9zmNkGjr3wEgpER9xxJD3WkfqVkCHzoW2HCZtg4JtKwqPmKBB5o6Um8cDjqxksVrBg8UUU",
-					"user": "SoLxyz987654321abc987654321abc987654321",
-					"poolAddress": "F3UWHvZWy41HpsbWfbBFbvAemYuCn8RJ2qvKfr2346Qf",
-					"isBuy": true,
-					"quoteToken": "8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump",
-					"baseToken": "So11111111111111111111111111111111111111112",
-					"marketAddress": "",
-					"poolQuoteReserve": 18640745631097,
-					"poolBaseReserve": 539997130105,
-					"quoteAmount": 54610438,
-					"baseAmount": 1585960,
-					"decimals": 6,
-					"feeQuoteAmount": 546104,
-					"feeBaseAmount": 15859
-				}`, time.Now().Unix())),
+            "timestamp": %d,
+            "block": 3130978492,
+            "signature": "2ZZf2p6RH4Zr4nKbGV9zmNkGjr3wEgpER9xxJD3WkfqVkCHzoW2HCZtg4JtKwqPmKBB5o6Um8cDjqxksVrBg8UUU",
+            "user": "SoLxyz987654321abc987654321abc987654321",
+            "isBuy": true,
+            "quoteToken": "8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump",
+            "baseToken": "So11111111111111111111111111111111111111112",
+            "quoteAmount": 54610438,
+            "baseAmount": 1585960,
+            "decimals": 6,
+            "pointsAmount": 1000000,
+            "feeBaseAmount": 15859
+        }`, time.Now().Unix())),
 			}
 			messages = append(messages, message)
 		}
