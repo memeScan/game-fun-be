@@ -82,6 +82,21 @@ func (r *UserInfoRepo) GetOrCreateUserByAddress(address string, chainType uint8,
 		return &user, nil
 	}
 
+	invitationCode := util.GenerateInviteCode(address)
+
+	var existingUser UserInfo
+	existingUserResult := DB.Where("invitation_code = ?", invitationCode).First(&existingUser)
+	if existingUserResult.Error == nil {
+		invitationCode = util.GenerateInviteCode(address)
+		for {
+			result = DB.Where("invitation_code = ?", invitationCode).First(&existingUser)
+			if result.Error != nil || existingUser.ID == 0 {
+				break
+			}
+			invitationCode = util.GenerateInviteCode(address)
+		}
+	}
+
 	now := time.Now()
 	user = UserInfo{
 		Address:        address,
@@ -89,7 +104,7 @@ func (r *UserInfoRepo) GetOrCreateUserByAddress(address string, chainType uint8,
 		ChainType:      chainType,
 		CreateTime:     now,
 		UpdateTime:     now,
-		InvitationCode: util.GenerateInviteCode(address),
+		InvitationCode: invitationCode,
 	}
 
 	inviteUser, err := r.getInviteUser(inviteCode, chainType)

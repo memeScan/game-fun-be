@@ -28,14 +28,18 @@ func NewUserServiceImpl(userInfoRepo *model.UserInfoRepo) *UserServiceImpl {
 
 func (s UserServiceImpl) Login(req request.LoginRequest, chainType model.ChainType) response.Response {
 
-	message := fmt.Sprintf(model.LoginMessageTemplate, req.Timestamp)
-
-	isValid, err := VerifySolanaSignature(req.Address, req.Signature, message)
-	if err != nil || !isValid {
-		s.insertAuthLog(req, 0, "signature verification failed", err)
-		return response.Err(response.CodeUnauthorized, "Signature verification failed", err)
+	// 判断签名是否已经使用过
+	isUsed, err := s.UserAuthenticationLogRepo.IsSignatureUsed(req.Address, req.Signature)
+	if err != nil {
+		s.insertAuthLog(req, 0, "failed to check signature", err)
+		return response.Err(http.StatusInternalServerError, "failed to check signature", err)
+	}
+	if isUsed {
+		s.insertAuthLog(req, 0, "signature already used", nil)
+		return response.Err(http.StatusBadRequest, "signature already used, please sign again", nil)
 	}
 
+	// 判断签名有效期是否过期
 	timestampInt, err := strconv.ParseInt(req.Timestamp, 10, 64)
 	if err != nil {
 		s.insertAuthLog(req, 0, "invalid timestamp format", err)
@@ -47,14 +51,12 @@ func (s UserServiceImpl) Login(req request.LoginRequest, chainType model.ChainTy
 		return response.Err(http.StatusBadRequest, "Login timeout, please try again", nil)
 	}
 
-	isUsed, err := s.UserAuthenticationLogRepo.IsSignatureUsed(req.Address, req.Signature)
-	if err != nil {
-		s.insertAuthLog(req, 0, "failed to check signature", err)
-		return response.Err(http.StatusInternalServerError, "failed to check signature", err)
-	}
-	if isUsed {
-		s.insertAuthLog(req, 0, "signature already used", nil)
-		return response.Err(http.StatusBadRequest, "signature already used, please sign again", nil)
+	// 验证签名
+	message := fmt.Sprintf(model.LoginMessageTemplate, req.Timestamp)
+	isValid, err := VerifySolanaSignature(req.Address, req.Signature, message)
+	if err != nil || !isValid {
+		s.insertAuthLog(req, 0, "signature verification failed", err)
+		return response.Err(response.CodeUnauthorized, "Signature verification failed", err)
 	}
 
 	var loginResponse response.LoginResponse
