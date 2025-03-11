@@ -50,22 +50,23 @@ func (s *PointsServiceImpl) PointsDetail(userID uint64, cursor *uint, limit int,
 
 	details := make([]response.PointsDetail, len(records))
 	for i, record := range records {
-		typeName := ""
-		switch model.RecordType(record.RecordType) {
-		case model.Trading:
-			typeName = "trading"
-		case model.Invite:
-			typeName = "invite"
-		case model.Activity:
-			typeName = "activity"
-		case model.BuyG:
-			typeName = "buy_g"
-		}
+		// typeName := ""
+		// switch model.RecordType(record.RecordType) {
+		// case model.Trading:
+		// 	typeName = "trading"
+		// case model.Invite:
+		// 	typeName = "invite"
+		// case model.Activity:
+		// 	typeName = "activity"
+		// case model.BuyG:
+		// 	typeName = "buy_g"
+		// }
 
 		details[i] = response.PointsDetail{
 			Points:    formatPoints(record.PointsChange),
+			Amount:    formatPoints(record.TokenAmount),
 			Timestamp: record.CreateTime.Unix(),
-			Type:      typeName, // You might want to map RecordType to appropriate string value
+			Type:      record.RecordType, // 积分类型
 		}
 	}
 

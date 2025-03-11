@@ -22,6 +22,8 @@ type PointRecords struct {
 	PointsBalance     uint64    `gorm:"column:points_balance;type:bigint unsigned;default:0" json:"points_balance"`
 	RecordType        int8      `gorm:"column:record_type;type:tinyint;not null" json:"record_type"`
 	InviteeID         uint      `gorm:"column:invitee_id;default null" json:"invitee_id,omitempty"`
+	NativeTokenAmount uint64    `gorm:"column:native_token_amount;type:bigint unsigned;default:0" json:"native_token_amount"`
+	TokenAmount       uint64    `gorm:"column:token_amount;type:bigint unsigned;default:0" json:"token_amount"`
 	TransactionHash   string    `gorm:"column:transaction_hash;type:varchar(88)" json:"transaction_hash,omitempty"`
 	TransactionDetail string    `gorm:"column:transaction_detail;type:text" json:"transaction_detail,omitempty"`
 	CreateTime        time.Time `gorm:"column:create_time;type:datetime" json:"create_time"`
