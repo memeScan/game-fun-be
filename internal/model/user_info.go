@@ -82,11 +82,6 @@ func (r *UserInfoRepo) GetOrCreateUserByAddress(address string, chainType uint8,
 		return &user, nil
 	}
 
-	inviteUser, err := r.getInviteUser(inviteCode, chainType)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get user by invitation code: %v", err)
-	}
-
 	now := time.Now()
 	user = UserInfo{
 		Address:        address,
@@ -95,6 +90,12 @@ func (r *UserInfoRepo) GetOrCreateUserByAddress(address string, chainType uint8,
 		CreateTime:     now,
 		UpdateTime:     now,
 		InvitationCode: util.GenerateInviteCode(address),
+	}
+
+	inviteUser, err := r.getInviteUser(inviteCode, chainType)
+
+	if err != nil {
+		util.Log().Error("Failed to find inviter, invalid invitation code: %v", err)
 	}
 
 	r.setInviterInfo(&user, inviteUser)
