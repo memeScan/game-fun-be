@@ -52,7 +52,7 @@ func (g *GlobalHandler) NativeTokePrice(c *gin.Context) {
 // @Success 200 {object} response.Response{data=response.TokenBalance} "成功返回原生代币余额"
 // @Failure 500 {object} response.Response "服务器内部错误"
 // @Router /global/{chain_type}/native_balance [get]
-func (g *GlobalHandler) SolBalance(c *gin.Context) {
+func (g *GlobalHandler) NativeBalance(c *gin.Context) {
 	userAddress, errResp := GetAddressFromContext(c)
 	if errResp != nil {
 		c.JSON(errResp.Code, errResp)

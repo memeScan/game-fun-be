@@ -111,7 +111,7 @@ func NewRouter() *gin.Engine {
 		auth.GET("points/:chain_type/detail", pointsHandler.PointsDetail)
 		auth.GET("points/:chain_type/invite/detail", pointsHandler.InvitedPointsDetail)
 		auth.GET("points/:chain_type/estimated", pointsHandler.PointsEstimated)
-		auth.GET("global/:chain_type/sol_balance", globalHandler.SolBalance)
+		auth.GET("global/:chain_type/native_balance", globalHandler.NativeBalance)
 		auth.GET("global/:chain_type/ticker_balance/:ticker_address", globalHandler.TickerBalance)
 		auth.GET("swap/:chain_type/get_transaction", swapHandler.GetTransaction)
 		auth.GET("swap/:chain_type/send_transaction", swapHandler.SendTransaction)

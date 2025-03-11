@@ -182,8 +182,8 @@ func (s *SwapServiceImpl) processAntiMev(req request.SwapRouteRequest) (bool, st
 
 func (s *SwapServiceImpl) buildGameFunGInstructionStruct(req request.SwapRouteRequest, inAmount string) httpRequest.SwapGInstructionStruct {
 	return httpRequest.SwapGInstructionStruct{
-		// User:        req.FromAddress,
-		User:        "GXL1pXLNKzFq7rzbFsGor6NaMsSMjoKhLqmxe8vsh7Gg",
+		User: req.FromAddress,
+		// User:        "GXL1pXLNKzFq7rzbFsGor6NaMsSMjoKhLqmxe8vsh7Gg",
 		InputAmount: inAmount,
 		InputMint:   req.TokenInAddress,
 		// OutputMint:  req.TokenOutAddress,
@@ -199,8 +199,8 @@ func (s *SwapServiceImpl) buildGameFunGInstructionStruct(req request.SwapRouteRe
 
 func (s *SwapServiceImpl) buildBuyGWithPointsStruct(req request.SwapRouteRequest, points string) httpRequest.BuyGWithPointsStruct {
 	return httpRequest.BuyGWithPointsStruct{
-		// User:        req.FromAddress,
-		User:      "GXL1pXLNKzFq7rzbFsGor6NaMsSMjoKhLqmxe8vsh7Gg",
+		User: req.FromAddress,
+		// User:      "GXL1pXLNKzFq7rzbFsGor6NaMsSMjoKhLqmxe8vsh7Gg",
 		Points:    points,
 		InputMint: req.TokenInAddress,
 		// OutputMint:  req.TokenOutAddress,

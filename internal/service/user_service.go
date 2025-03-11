@@ -31,23 +31,23 @@ func (s UserServiceImpl) Login(req request.LoginRequest, chainType model.ChainTy
 	// 判断签名是否已经使用过
 	isUsed, err := s.UserAuthenticationLogRepo.IsSignatureUsed(req.Address, req.Signature)
 	if err != nil {
-		s.insertAuthLog(req, 0, "failed to check signature", err)
+		s.insertAuthLog(req, 0, "failed to check signature")
 		return response.Err(http.StatusInternalServerError, "failed to check signature", err)
 	}
 	if isUsed {
-		s.insertAuthLog(req, 0, "signature already used", nil)
+		s.insertAuthLog(req, 0, "signature already used")
 		return response.Err(http.StatusBadRequest, "signature already used, please sign again", nil)
 	}
 
 	// 判断签名有效期是否过期
 	timestampInt, err := strconv.ParseInt(req.Timestamp, 10, 64)
 	if err != nil {
-		s.insertAuthLog(req, 0, "invalid timestamp format", err)
+		s.insertAuthLog(req, 0, "invalid timestamp format")
 		return response.Err(http.StatusBadRequest, "Invalid timestamp format", err)
 	}
 	timestamp := time.Unix(timestampInt, 0)
 	if time.Since(timestamp) > 3*time.Minute {
-		s.insertAuthLog(req, 0, "login timeout", nil)
+		s.insertAuthLog(req, 0, "login timeout")
 		return response.Err(http.StatusBadRequest, "Login timeout, please try again", nil)
 	}
 
@@ -55,7 +55,7 @@ func (s UserServiceImpl) Login(req request.LoginRequest, chainType model.ChainTy
 	message := fmt.Sprintf(model.LoginMessageTemplate, req.Timestamp)
 	isValid, err := VerifySolanaSignature(req.Address, req.Signature, message)
 	if err != nil || !isValid {
-		s.insertAuthLog(req, 0, "signature verification failed", err)
+		s.insertAuthLog(req, 0, "signature verification failed")
 		return response.Err(response.CodeUnauthorized, "Signature verification failed", err)
 	}
 
@@ -64,7 +64,7 @@ func (s UserServiceImpl) Login(req request.LoginRequest, chainType model.ChainTy
 	case model.ChainTypeSolana:
 		userInfo, err := s.userInfoRepo.GetOrCreateUserByAddress(req.Address, uint8(chainType), req.InviteCode)
 		if err != nil {
-			s.insertAuthLog(req, 0, "failed to get or create user", err)
+			s.insertAuthLog(req, 0, "failed to get or create user")
 			return response.Err(http.StatusInternalServerError, "Failed to get or create user", err)
 		}
 
@@ -74,7 +74,7 @@ func (s UserServiceImpl) Login(req request.LoginRequest, chainType model.ChainTy
 
 		token, exists, err := redis.GetToken(userTokenKey)
 		if err != nil {
-			s.insertAuthLog(req, 0, "failed to get token from Redis", err)
+			s.insertAuthLog(req, 0, "failed to get token from Redis")
 			return response.Err(http.StatusInternalServerError, "Failed to get token from Redis", err)
 		}
 
@@ -86,31 +86,31 @@ func (s UserServiceImpl) Login(req request.LoginRequest, chainType model.ChainTy
 
 		token, expireTime, err := auth.GenerateJWT(userInfo.Address, userIDStr, model.TokenExpireDuration)
 		if err != nil {
-			s.insertAuthLog(req, 0, "failed to generate JWT", err)
+			s.insertAuthLog(req, 0, "failed to generate JWT")
 			return response.Err(http.StatusInternalServerError, "Failed to generate JWT", err)
 		}
 
 		err = redis.Set(userTokenKey, token, model.TokenExpireDuration)
 		if err != nil {
-			s.insertAuthLog(req, 0, "failed to store token in Redis", err)
+			s.insertAuthLog(req, 0, "failed to store token in Redis")
 			return response.Err(http.StatusInternalServerError, "Failed to store token in Redis", err)
 		}
 
-		if err := s.insertAuthLog(req, 1, "login successful", nil); err != nil {
+		if err := s.insertAuthLog(req, 1, "login successful"); err != nil {
 			return response.Err(http.StatusInternalServerError, "Failed to create authentication log", err)
 		}
 
 		loginResponse = buildLoginResponse(token, expireTime, userInfo)
 
 	default:
-		s.insertAuthLog(req, 0, fmt.Sprintf("unsupported chain type: %v", chainType), nil)
+		s.insertAuthLog(req, 0, fmt.Sprintf("unsupported chain type: %v", chainType))
 		return response.Err(response.CodeUnauthorized, fmt.Sprintf("Unsupported chain type: %v", chainType), nil)
 	}
 
 	return response.Success(loginResponse)
 }
 
-func (s UserServiceImpl) insertAuthLog(req request.LoginRequest, status int8, message string, err error) error {
+func (s UserServiceImpl) insertAuthLog(req request.LoginRequest, status int8, message string) error {
 	parsedTimestamp, err := strconv.ParseInt(req.Timestamp, 10, 64)
 	if err != nil {
 		util.Log().Error("Error parsing timestamp: %v", err)
