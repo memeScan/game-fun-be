@@ -347,9 +347,12 @@ func (s *SwapServiceImpl) calculateSwapAmounts(
 		inPriceUSD, outPriceUSD = outPriceUSD, inPriceUSD
 	}
 
-	multiplier := decimal.NewFromFloat(math.Pow(10, float64(inDecimals)))
-	inAmount := req.InAmount.Mul(multiplier)
-	inAmountUSD = inAmount.Mul(inPriceUSD)
+	// 计算 10^inDecimals
+	decimalsFactor := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(inDecimals)))
+
+	// 计算 inAmountUSD
+	inAmountUSD = req.InAmount.Mul(inPriceUSD).Div(decimalsFactor)
+
 	if req.PlatformType == "g_points" {
 		divisor := decimal.NewFromInt(2)
 		inAmountUSD = inAmountUSD.Div(divisor)
@@ -450,17 +453,10 @@ func (s *SwapServiceImpl) SendTransaction(userID string, swapTransaction string,
 	}
 
 	resp, err := httpUtil.SendGameFunTransaction(swapTransaction, isJito, isUsePoint)
-	if err != nil {
-		return response.Err(http.StatusInternalServerError, "Failed to send swap transaction", err)
+	if err != nil || resp == nil || resp.Code != 2000 {
+		return response.Err(http.StatusInternalServerError, "Failed to get send transaction", err)
 	}
-	defer resp.Body.Close() // 读取完毕后关闭，避免泄漏
-
-	readAll, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return response.Err(http.StatusInternalServerError, "Failed to read response body", err)
-	}
-
-	return response.Success(string(readAll))
+	return response.Success(resp.Data)
 }
 
 func (s *SwapServiceImpl) GetSwapStatusBySignature(swapTransaction string) response.Response {
