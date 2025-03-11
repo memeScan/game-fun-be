@@ -1,6 +1,9 @@
 package service
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
 	"game-fun-be/internal/constants"
 	"game-fun-be/internal/model"
 	"game-fun-be/internal/pkg/httpRequest"
@@ -10,14 +13,11 @@ import (
 	"game-fun-be/internal/redis"
 	"game-fun-be/internal/request"
 	"game-fun-be/internal/response"
-	"log"
-
-	"encoding/json"
-	"errors"
-	"fmt"
 	"io"
+	"log"
 	"math"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -41,8 +41,7 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 		return response.Err(http.StatusBadRequest, "price query failed", priceErr)
 	}
 
-	// Get token and pool details
-	tokenDetail, poolDetail, errResp := s.getTokenAndPoolInfo(req.TokenAddress, chainType)
+	tokenDetail, poolDetail, errResp := s.getTokenAndPoolInfo(req.TokenAddress, chainType, req.PlatformType)
 	if errResp != nil {
 		return s.handleErrorResponse(errResp)
 	}
@@ -79,7 +78,13 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 			} else if req.SwapType == "buy" && chainType == 1 {
 				req.TokenOutAddress = "ZziTphJ4pYsbWZtpR8TaHy2xDqbNyf8yEp5d5jvpump"
 			}
-			swapStruct := s.buildGameFunGInstructionStruct(req, inAmountStr)
+			swapStruct := s.buildGameFunGInstructionStruct(req, poolDetail, inAmountStr)
+			// swapJSON, err := json.MarshalIndent(swapStruct, "", "  ") // 转换为格式化的 JSON
+			// if err != nil {
+			// 	log.Printf("Failed to marshal swapStruct to JSON: %v", err)
+			// } else {
+			// 	log.Printf("swapStruct JSON:\n%s", swapJSON) // 打印 JSON
+			// }
 			return s.getGameFunGInstruction(swapStruct)
 		},
 		"g_points": func() (*httpRespone.SwapTransactionResponse, error) {
@@ -134,7 +139,7 @@ func (s *SwapServiceImpl) handleErrorResponse(errResp *response.Response) respon
 	return response.Err(errResp.Code, errResp.Msg, errors.New(errResp.Error))
 }
 
-func (s *SwapServiceImpl) getTokenAndPoolInfo(tokenAddress string, chainType uint8) (*model.TokenInfo, *model.TokenLiquidityPool, *response.Response) {
+func (s *SwapServiceImpl) getTokenAndPoolInfo(tokenAddress string, chainType uint8, platformType string) (*model.TokenInfo, *model.TokenLiquidityPool, *response.Response) {
 	tokenDetail, err := model.GetTokenInfoByAddress(tokenAddress, chainType)
 	if tokenDetail == nil {
 		return nil, nil, &response.Response{
@@ -149,7 +154,7 @@ func (s *SwapServiceImpl) getTokenAndPoolInfo(tokenAddress string, chainType uin
 		}
 	}
 
-	poolDetail, err := QueryAndCheckPool(tokenAddress, chainType, 1)
+	poolDetail, err := QueryAndCheckPool(tokenAddress, chainType, 2)
 	if poolDetail == nil {
 		return nil, nil, &response.Response{
 			Code: http.StatusOK,
@@ -187,20 +192,22 @@ func (s *SwapServiceImpl) processAntiMev(req request.SwapRouteRequest) (bool, st
 	return true, jitotip, jitoOrderId, nil
 }
 
-func (s *SwapServiceImpl) buildGameFunGInstructionStruct(req request.SwapRouteRequest, inAmount string) httpRequest.SwapGInstructionStruct {
+func (s *SwapServiceImpl) buildGameFunGInstructionStruct(req request.SwapRouteRequest, poolDetail *model.TokenLiquidityPool, inAmount string) httpRequest.SwapGInstructionStruct {
 	return httpRequest.SwapGInstructionStruct{
-		User: req.FromAddress,
-		// User:        "GXL1pXLNKzFq7rzbFsGor6NaMsSMjoKhLqmxe8vsh7Gg",
-		InputAmount: inAmount,
-		InputMint:   req.TokenInAddress,
-		// OutputMint:  req.TokenOutAddress,
-		OutputMint:  req.TokenOutAddress,
-		SlippageBps: req.Slippage,
-		GMint:       "ZziTphJ4pYsbWZtpR8TaHy2xDqbNyf8yEp5d5jvpump",
-		Amm:         "4ZaJqcDxgCCMpBL6TiAz6A8H8zQ6imas4eMs3Hk4ra52",
-		Market:      "75dsjBhyyMsbEoqhgQGCdunYDrgmmPSmBDinnzqVL9Hv",
-		GAmm:        "4ZaJqcDxgCCMpBL6TiAz6A8H8zQ6imas4eMs3Hk4ra52",
-		GMarket:     "75dsjBhyyMsbEoqhgQGCdunYDrgmmPSmBDinnzqVL9Hv",
+		User:            req.FromAddress,
+		InputAmount:     inAmount,
+		InputMint:       req.TokenInAddress,
+		OutputMint:      req.TokenOutAddress,
+		SlippageBps:     req.Slippage,
+		PoolPcAddress:   poolDetail.PcAddress,
+		PoolCoinAddress: poolDetail.CoinAddress,
+		PoolPcReserve:   strconv.FormatUint(poolDetail.PoolPcReserve, 10),
+		PoolCoinReserve: strconv.FormatUint(poolDetail.PoolCoinReserve, 10),
+		GMint:           os.Getenv("GMINT_ADDRESS"),
+		Amm:             os.Getenv("AMM_ADDRESS"),
+		Market:          os.Getenv("MARKET_ADDRESS"),
+		GAmm:            os.Getenv("GAMM_ADDRESS"),
+		GMarket:         os.Getenv("GMARKET_ADDRESS"),
 	}
 }
 
@@ -213,11 +220,11 @@ func (s *SwapServiceImpl) buildBuyGWithPointsStruct(req request.SwapRouteRequest
 		// OutputMint:  req.TokenOutAddress,
 		OutputMint:  req.TokenOutAddress,
 		SlippageBps: 0,
-		GMint:       "ZziTphJ4pYsbWZtpR8TaHy2xDqbNyf8yEp5d5jvpump",
-		Amm:         "4ZaJqcDxgCCMpBL6TiAz6A8H8zQ6imas4eMs3Hk4ra52",
-		Market:      "75dsjBhyyMsbEoqhgQGCdunYDrgmmPSmBDinnzqVL9Hv",
-		GAmm:        "4ZaJqcDxgCCMpBL6TiAz6A8H8zQ6imas4eMs3Hk4ra52",
-		GMarket:     "75dsjBhyyMsbEoqhgQGCdunYDrgmmPSmBDinnzqVL9Hv",
+		GMint:       os.Getenv("GMINT_ADDRESS"),
+		Amm:         os.Getenv("AMM_ADDRESS"),
+		Market:      os.Getenv("MARKET_ADDRESS"),
+		GAmm:        os.Getenv("GAMM_ADDRESS"),
+		GMarket:     os.Getenv("GMARKET_ADDRESS"),
 	}
 
 }
