@@ -80,7 +80,7 @@ func ConsumePumpfunTopics() error {
 	topicConsumer.AddHandler(TopicRayCreate, RaydiumImmediateHandler)
 	topicConsumer.AddHandler(TopicRayAddLiquidity, RaydiumImmediateHandler)
 	topicConsumer.AddHandler(TopicRayRemoveLiquidity, RaydiumImmediateHandler)
-	topicConsumer.AddBatchHandler(TopicRaySwap, RaydiumBatchHandler, batchSize, 30, batchTimeout)
+	topicConsumer.AddBatchHandler(TopicRaySwap, RaydiumBatchHandler, batchSize, 1, batchTimeout)
 
 	// 添加未知代币处理器
 	topicConsumer.AddHandler(TopicUnknownToken, UnknownTokenHandler)
