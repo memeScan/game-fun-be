@@ -91,12 +91,13 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 			// 将去掉小数点后的结果转换为字符串
 			pointsString := pointsWithoutDecimal.String()
 			// 计算代币的 USD 价值（代币数量 * 代币单价 * 10^精度）
-			tokenAmount := pointsDecimal.Mul(tokenDetail.Price).Mul(pointsDecimalsFactor)
+			tokenAmount := pointsDecimal.Mul(tokenDetail.Price).Mul(pointsWithoutDecimal)
 			// 计算 SOL 价格 * 10^SOL_DECIMALS
 			solMultiplier := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(model.SOL_DECIMALS)))
 			solAmount := solPriceUSD.Mul(solMultiplier)
 			// 计算需要多少 SOL（代币 USD 价值 / SOL 的 USD 价值）
 			req.InAmount = tokenAmount.Div(solAmount)
+			req.InAmount = req.InAmount.Div(decimal.NewFromInt(2))
 
 			swapStruct := s.buildBuyGWithPointsStruct(req, pointsString)
 			return s.getGetBuyGWithPointsInstruction(req.Points, swapStruct, startTime)
@@ -360,13 +361,14 @@ func (s *SwapServiceImpl) calculateSwapAmounts(
 
 	// 计算 inAmountUSD
 	inAmountUSD = req.InAmount.Mul(inPriceUSD).Div(decimalsFactor)
+	outAmount = inAmountUSD.Div(outPriceUSD)
+	outAmountUSD = outAmount.Mul(outPriceUSD)
 
 	if req.PlatformType == "g_points" {
 		divisor := decimal.NewFromInt(2)
 		inAmountUSD = inAmountUSD.Div(divisor)
+		outAmount = decimal.NewFromFloat(req.Points)
 	}
-	outAmount = inAmountUSD.Div(outPriceUSD)
-	outAmountUSD = outAmount.Mul(outPriceUSD)
 
 	return outAmount, inAmountUSD, outAmountUSD, nil
 }
@@ -380,10 +382,10 @@ func ConstructSwapRouteResponse(req request.SwapRouteRequest, swapResponse *http
 			Quote: response.Quote{
 				InputMint:            req.TokenInAddress,
 				InAmount:             req.InAmount,
+				OutAmount:            amountOut,
 				InDecimals:           inDecimals,
 				OutDecimals:          outDecimals,
 				OutputMint:           req.TokenOutAddress,
-				OutAmount:            amountOut,
 				OtherAmountThreshold: decimal.NewFromInt(0).String(),
 				SlippageBps:          strconv.Itoa(req.Slippage),
 				PlatformFee:          0,
