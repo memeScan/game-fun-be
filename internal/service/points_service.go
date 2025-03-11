@@ -191,7 +191,7 @@ func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string
 
 			// 创建积分记录
 			insertErr := s.pointRecordsRecord.WithTx(tx).CreatePointRecord(&model.PointRecords{
-				UserID:        user.ID,
+				UserID:        inviter.ID,
 				PointsChange:  invitePoints, // 积分变动
 				PointsBalance: user.AvailablePoints + invitePoints,
 				RecordType:    int8(model.Invite), // 积分类型
@@ -224,7 +224,7 @@ func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string
 
 			// 创建积分记录
 			insertErr := s.pointRecordsRecord.WithTx(tx).CreatePointRecord(&model.PointRecords{
-				UserID:        user.ID,
+				UserID:        parentInviter.ID,
 				PointsChange:  parentInviterPoints, // 积分变动
 				PointsBalance: user.AvailablePoints + parentInviterPoints,
 				RecordType:    int8(model.Invite), // 积分类型
