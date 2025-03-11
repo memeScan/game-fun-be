@@ -1040,7 +1040,7 @@ func UnknownTokenHandler(message []byte, topic string) error {
 	// 测试环境跳过处理
 	if conf.IsTest() {
 		// util.Log().Info("Skip processing unknown token in test environment: %s", tokenAddress)
-		// return nil
+		return nil
 	}
 
 	// 使用 SETNX 进行原子检查和设置
