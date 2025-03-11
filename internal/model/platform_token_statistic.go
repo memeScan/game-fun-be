@@ -46,7 +46,7 @@ func (r *PlatformTokenStatisticRepo) IncrementStatisticsAndUpdateTime(address st
 		updates[string(pt)] = gorm.Expr(string(pt)+" + ?", val)
 	}
 	updates["update_time"] = time.Now()
-	return r.db.Model(&UserInfo{}).
+	return r.db.Model(&PlatformTokenStatistic{}).
 		Where("token_address = ?", address).
 		Updates(updates).Error
 }

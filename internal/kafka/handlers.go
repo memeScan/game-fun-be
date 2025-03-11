@@ -1368,8 +1368,8 @@ func gameInTradeHandler(message []byte, topic string) error {
 	pointsService := service.NewPointsServiceImpl(userInfoRepo, pointRecordsRepo, PlatformTokenStatisticRepo)
 
 	amounts := map[model.StatisticType]uint64{
-		model.FeeAmount:  tradeMsg.FeeBaseAmount,
-		model.BackAmount: tradeMsg.PointsAmount,
+		model.FeeAmount:    tradeMsg.FeeBaseAmount,
+		model.PointsAmount: tradeMsg.PointsAmount,
 	}
 
 	err := pointsService.CreatePointRecord(tradeMsg.User, tradeMsg.PointsAmount, tradeMsg.Signature, string(message), model.BuyG, tradeMsg.QuoteAmount, tradeMsg.BaseAmount, true, tradeMsg.QuoteToken, amounts)

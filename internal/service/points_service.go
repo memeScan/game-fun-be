@@ -113,9 +113,9 @@ func (s *PointsServiceImpl) CreatePointRecord(wallet_address string, point uint6
 			return insertErr
 		}
 
-		userPoints := make(map[model.PointType]uint64)
-		userPoints[model.AvailablePoints] = point
-		userPoints[model.TradingPoints] = point
+		// userPoints := make(map[model.PointType]uint64)
+		// userPoints[model.AvailablePoints] = point
+		// userPoints[model.TradingPoints] = point
 
 		// 更新统计数据
 		if err := s.platformTokenStatisticRepo.WithTx(tx).IncrementStatisticsAndUpdateTime(tokenAddress, amounts); err != nil {
