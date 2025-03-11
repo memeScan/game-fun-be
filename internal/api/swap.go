@@ -73,7 +73,7 @@ func (s *SwapHandler) GetTransaction(c *gin.Context) {
 // @Param is_anti_mev query bool false "是否启用 Anti-MEV（默认为 false）"
 // @Success 200 {object} response.Response "成功返回交易结果"
 // @Failure 500 {object} response.Response "服务器内部错误"
-// @Router /swap/{chain_type}/send_transaction [post]
+// @Router /swap/{chain_type}/send_transaction [get]
 func (s *SwapHandler) SendTransaction(c *gin.Context) {
 	userID, errResp := GetUserIDFromContext(c)
 	if errResp != nil {

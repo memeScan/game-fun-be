@@ -32,7 +32,19 @@ func NewSwapService() *SwapServiceImpl {
 }
 
 func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType uint8) response.Response {
+
 	startTime := time.Now()
+
+	solPriceUSD, priceErr := getSolPrice()
+	if req.SwapType == "buy" && chainType == 1 {
+		solMultiplier := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(model.SOL_DECIMALS)))
+		req.InAmount = req.InAmount.Mul(solMultiplier)
+	}
+	inAmountUint64 := req.InAmount.BigInt().Uint64()
+
+	if priceErr != nil {
+		return response.Err(http.StatusBadRequest, "price query failed", priceErr)
+	}
 
 	// Get token and pool details
 	tokenDetail, poolDetail, errResp := s.getTokenAndPoolInfo(req.TokenAddress, chainType)
@@ -43,7 +55,7 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 	// Process Anti-MEV logic
 	mev, jitotip, jitoOrderId, errResp := s.processAntiMev(req)
 	if errResp != nil {
-		// return s.handleErrorResponse(errResp)
+		return s.handleErrorResponse(errResp)
 	}
 
 	// Create map for platform-specific functions
@@ -57,11 +69,21 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 			return s.getRaydiumTradeTx(swapStruct)
 		},
 		"g_external": func() (*httpRespone.SwapTransactionResponse, error) {
-			swapStruct := s.buildGameFunGInstructionStruct(req)
+			swapStruct := s.buildGameFunGInstructionStruct(req, inAmountUint64)
 			return s.getGameFunGInstruction(swapStruct)
 		},
 		"g_points": func() (*httpRespone.SwapTransactionResponse, error) {
-			swapStruct := s.buildBuyGWithPointsStruct(req)
+			pointsDecimal := decimal.NewFromFloat(req.Points) // 用户输入的 Points（代币数量）
+			// 计算 10^decimals，确保计算精度
+			decimalsFactor := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(tokenDetail.Decimals)))
+			// 计算代币的 USD 价值（代币数量 * 代币单价 * 10^精度）
+			tokenAmount := pointsDecimal.Mul(tokenDetail.Price).Mul(decimalsFactor)
+			// 计算 SOL 价格 * 10^SOL_DECIMALS
+			solMultiplier := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(model.SOL_DECIMALS)))
+			solAmount := solPriceUSD.Mul(solMultiplier)
+			// 计算需要多少 SOL（代币 USD 价值 / SOL 的 USD 价值）
+			req.InAmount = tokenAmount.Div(solAmount)
+			swapStruct := s.buildBuyGWithPointsStruct(req, inAmountUint64)
 			return s.getGetBuyGWithPointsInstruction(req.Points, swapStruct)
 		},
 	}
@@ -78,28 +100,17 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 	}
 
 	// Calculate amounts
-	// platform := model.CreatedPlatformType(tokenDetail.CreatedPlatformType)
-	// inDecimals := model.SOL_DECIMALS
-	// outDecimals := platform.GetDecimals()
+	platform := model.CreatedPlatformType(tokenDetail.CreatedPlatformType)
+	inDecimals := model.SOL_DECIMALS
+	outDecimals := platform.GetDecimals()
 
-	// outAmount, inAmountUSD, outAmountUSD, errResp := s.calculateSwapAmounts(req, tokenDetail, inDecimals, outDecimals)
-	// if errResp != nil {
-	// 	return s.handleErrorResponse(errResp)
-	// }
-
-	inDecimals := 6
-	outDecimals := 6
-	outAmount := 0
-	inAmountUSD := 0
-	outAmountUSD := 0
-
-	// Convert int to *decimal.Decimal
-	outAmountDecimal := decimal.NewFromInt(int64(outAmount))
-	inAmountUSDDecimal := decimal.NewFromInt(int64(inAmountUSD))
-	outAmountUSDDecimal := decimal.NewFromInt(int64(outAmountUSD))
+	outAmount, inAmountUSD, outAmountUSD, errResp := s.calculateSwapAmounts(req, tokenDetail, solPriceUSD, inDecimals, outDecimals)
+	if errResp != nil {
+		return s.handleErrorResponse(errResp)
+	}
 
 	// Return the constructed response
-	return ConstructSwapRouteResponse(req, swapTransaction, uint8(inDecimals), uint8(outDecimals), outAmountDecimal, inAmountUSDDecimal, outAmountUSDDecimal, startTime, jitoOrderId)
+	return ConstructSwapRouteResponse(req, swapTransaction, uint8(inDecimals), uint8(outDecimals), outAmount, inAmountUSD, outAmountUSD, startTime, jitoOrderId)
 }
 
 // Helper function to handle error responses
@@ -160,35 +171,35 @@ func (s *SwapServiceImpl) processAntiMev(req request.SwapRouteRequest) (bool, st
 	return true, jitotip, jitoOrderId, nil
 }
 
-func (s *SwapServiceImpl) buildGameFunGInstructionStruct(req request.SwapRouteRequest) httpRequest.SwapGInstructionStruct {
+func (s *SwapServiceImpl) buildGameFunGInstructionStruct(req request.SwapRouteRequest, inAmount uint64) httpRequest.SwapGInstructionStruct {
 	return httpRequest.SwapGInstructionStruct{
-		User:         req.FromAddress,
-		InputAmount:  req.InAmount,
-		InputMint:    req.TokenInAddress,
-		OutputMint:   req.TokenOutAddress,
-		SlippageBps:  req.Slippage,
-		GMint:        "8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump",
-		Amm:          "8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump",
-		Market:       "8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump",
-		GAmm:         "6nAhKDdipgLXtpR7evvTbRjK79jqeVSPMFKHZeooXohn",
-		GMarket:      "VzbqwVfdmSqBR5qCtnpHjhT7twkDhoUxJDFKMzVsv6H",
-		FeeRecipient: "91K5B783HsRWNmpgJ7miurv4iXmH5Du8mm8LrBdQtwqY",
+		// User:        req.FromAddress,
+		User:        "GXL1pXLNKzFq7rzbFsGor6NaMsSMjoKhLqmxe8vsh7Gg",
+		InputAmount: inAmount,
+		InputMint:   req.TokenInAddress,
+		OutputMint:  req.TokenOutAddress,
+		SlippageBps: req.Slippage,
+		GMint:       "ZziTphJ4pYsbWZtpR8TaHy2xDqbNyf8yEp5d5jvpump",
+		Amm:         "4ZaJqcDxgCCMpBL6TiAz6A8H8zQ6imas4eMs3Hk4ra52",
+		Market:      "75dsjBhyyMsbEoqhgQGCdunYDrgmmPSmBDinnzqVL9Hv",
+		GAmm:        "4ZaJqcDxgCCMpBL6TiAz6A8H8zQ6imas4eMs3Hk4ra52",
+		GMarket:     "75dsjBhyyMsbEoqhgQGCdunYDrgmmPSmBDinnzqVL9Hv",
 	}
 }
 
-func (s *SwapServiceImpl) buildBuyGWithPointsStruct(req request.SwapRouteRequest) httpRequest.BuyGWithPointsStruct {
+func (s *SwapServiceImpl) buildBuyGWithPointsStruct(req request.SwapRouteRequest, inAmount uint64) httpRequest.BuyGWithPointsStruct {
 	return httpRequest.BuyGWithPointsStruct{
-		User:         req.FromAddress,
-		InputAmount:  req.InAmount,
-		InputMint:    req.TokenInAddress,
-		OutputMint:   req.TokenOutAddress,
-		SlippageBps:  req.Slippage,
-		GMint:        "8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump",
-		Amm:          "8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump",
-		Market:       "8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump",
-		GAmm:         "6nAhKDdipgLXtpR7evvTbRjK79jqeVSPMFKHZeooXohn",
-		GMarket:      "VzbqwVfdmSqBR5qCtnpHjhT7twkDhoUxJDFKMzVsv6H",
-		FeeRecipient: "91K5B783HsRWNmpgJ7miurv4iXmH5Du8mm8LrBdQtwqY",
+		// User:        req.FromAddress,
+		User:        "GXL1pXLNKzFq7rzbFsGor6NaMsSMjoKhLqmxe8vsh7Gg",
+		InputAmount: inAmount,
+		InputMint:   req.TokenInAddress,
+		OutputMint:  req.TokenOutAddress,
+		SlippageBps: req.Slippage,
+		GMint:       "ZziTphJ4pYsbWZtpR8TaHy2xDqbNyf8yEp5d5jvpump",
+		Amm:         "4ZaJqcDxgCCMpBL6TiAz6A8H8zQ6imas4eMs3Hk4ra52",
+		Market:      "75dsjBhyyMsbEoqhgQGCdunYDrgmmPSmBDinnzqVL9Hv",
+		GAmm:        "4ZaJqcDxgCCMpBL6TiAz6A8H8zQ6imas4eMs3Hk4ra52",
+		GMarket:     "75dsjBhyyMsbEoqhgQGCdunYDrgmmPSmBDinnzqVL9Hv",
 	}
 
 }
@@ -313,23 +324,13 @@ func (s *SwapServiceImpl) getGetBuyGWithPointsInstruction(points float64, swapSt
 func (s *SwapServiceImpl) calculateSwapAmounts(
 	req request.SwapRouteRequest,
 	tokenDetail *model.TokenInfo,
+	inPriceUSD decimal.Decimal,
 	inDecimals, outDecimals uint8,
 ) (
 	outAmount, inAmountUSD, outAmountUSD decimal.Decimal,
 	err *response.Response,
 ) {
-
-	inPriceUSD, priceErr := getSolPrice()
-
-	if priceErr != nil {
-		return decimal.Decimal{}, decimal.Decimal{}, decimal.Decimal{}, &response.Response{
-			Code: http.StatusInternalServerError,
-			Msg:  "failed to get SOL price",
-		}
-	}
-
 	outPriceUSD := tokenDetail.Price
-
 	if req.SwapType == "sell" {
 		inDecimals, outDecimals = outDecimals, inDecimals
 		inPriceUSD, outPriceUSD = outPriceUSD, inPriceUSD
@@ -338,6 +339,10 @@ func (s *SwapServiceImpl) calculateSwapAmounts(
 	multiplier := decimal.NewFromFloat(math.Pow(10, float64(inDecimals)))
 	inAmount := req.InAmount.Mul(multiplier)
 	inAmountUSD = inAmount.Mul(inPriceUSD)
+	if req.PlatformType == "g_points" {
+		divisor := decimal.NewFromInt(2)
+		inAmountUSD = inAmountUSD.Div(divisor)
+	}
 	outAmount = inAmountUSD.Div(outPriceUSD)
 	outAmountUSD = outAmount.Mul(outPriceUSD)
 
@@ -448,16 +453,26 @@ func (s *SwapServiceImpl) SendTransaction(userID string, swapTransaction string,
 }
 
 func (s *SwapServiceImpl) GetSwapStatusBySignature(swapTransaction string) response.Response {
+
 	resp, err := httpUtil.GetSwapStatusBySignature(swapTransaction)
-	if err != nil || resp == nil {
+	if err != nil || resp == nil || resp.Code != 2000 {
 		return response.Err(http.StatusInternalServerError, "Failed to get swap request status", err)
 	}
 
-	defer resp.Body.Close()
+	status := 0
 
-	readAll, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return response.Err(http.StatusInternalServerError, "failed to read response body", err)
+	if resp.Data == "success" {
+		status = 1
+	} else if resp.Data == "failed" {
+		status = 2
+	} else if resp.Data == "processing" {
+		status = 0
 	}
-	return response.Success(string(readAll))
+
+	return response.Success(
+		map[string]interface{}{
+			"status": status,
+		},
+	)
+
 }

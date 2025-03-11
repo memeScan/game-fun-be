@@ -378,14 +378,26 @@ func SendGameFunTransaction(swapTransaction string, isJito bool, isUsePoint bool
 	return resp, nil
 }
 
-func GetSwapStatusBySignature(signature string) (*http.Response, error) {
+func GetSwapStatusBySignature(signature string) (*httpRespone.ApiResponse, error) {
 	url := fmt.Sprintf("%s?signature=%s", ApiTransactionStatus, signature)
 
-	resp, err := httpClient.Get(url)
+	resp, err := GetHTTPClient().Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get swap request status: %w", err)
+		return nil, fmt.Errorf("failed to get priority fee: %w", err)
 	}
-	return resp, nil
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read priority fee response body: %w", err)
+	}
+
+	var apiResp *httpRespone.ApiResponse
+	if err := json.Unmarshal(body, &apiResp); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal priority fee response: %w", err)
+	}
+
+	return apiResp, nil
 }
 
 func GetTokenInfoDefi(tokenAddresses []string, chainType uint8) ([]httpRespone.Token, error) {
