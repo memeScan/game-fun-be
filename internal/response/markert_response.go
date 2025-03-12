@@ -50,18 +50,16 @@ type MarketTicker struct {
 	BuyTokenVolume24Usd  string `json:"buy_token_volume_24h_usd" example:"15435782.918031"`
 	SellTokenVolume24H   string `json:"sell_token_volume_24h" example:"15435782.918031"`
 	SellTokenVolume24Usd string `json:"sell_token_volume_24h_usd" example:"15435782.918031"`
-
-	PriceChange1H       string `json:"price_change_1h" example:"0.005103"`
-	TxCount1H           int    `json:"tx_count_1h" example:"271"`
-	BuyTxCount1H        int    `json:"buy_tx_count_1h" example:"271"`
-	SellTxCount1H       int    `json:"sell_tx_count_1h" example:"271"`
-	TokenVolume1H       string `json:"token_volume_1h" example:"379231.972430"`
-	TokenVolume1HUsd    string `json:"token_volume_1h_usd" example:"379231.972430"`
-	BuyTokenVolume1H    string `json:"buy_token_volume_1h" example:"379231.972430"`
-	BuyTokenVolume1Usd  string `json:"buy_token_volume_1h_usd" example:"379231.972430"`
-	SellTokenVolume1H   string `json:"sell_token_volume_1h" example:"379231.972430"`
-	SellTokenVolume1Usd string `json:"sell_token_volume_1h_usd" example:"379231.972430"`
-
+	PriceChange1H        string `json:"price_change_1h" example:"0.005103"`
+	TxCount1H            int    `json:"tx_count_1h" example:"271"`
+	BuyTxCount1H         int    `json:"buy_tx_count_1h" example:"271"`
+	SellTxCount1H        int    `json:"sell_tx_count_1h" example:"271"`
+	TokenVolume1H        string `json:"token_volume_1h" example:"379231.972430"`
+	TokenVolume1HUsd     string `json:"token_volume_1h_usd" example:"379231.972430"`
+	BuyTokenVolume1H     string `json:"buy_token_volume_1h" example:"379231.972430"`
+	BuyTokenVolume1Usd   string `json:"buy_token_volume_1h_usd" example:"379231.972430"`
+	SellTokenVolume1H    string `json:"sell_token_volume_1h" example:"379231.972430"`
+	SellTokenVolume1Usd  string `json:"sell_token_volume_1h_usd" example:"379231.972430"`
 	PriceChange30M       string `json:"price_change_30m" example:"0.000836"`
 	TxCount30M           int    `json:"tx_count_30m" example:"25"`
 	BuyTxCount30M        int    `json:"buy_tx_count_30m" example:"25"`
@@ -72,20 +70,18 @@ type MarketTicker struct {
 	BuyTokenVolume30Usd  string `json:"buy_token_volume_30m_usd" example:"62269.324250"`
 	SellTokenVolume30M   string `json:"sell_token_volume_30m" example:"62269.324250"`
 	SellTokenVolume30Usd string `json:"sell_token_volume_30m_usd" example:"62269.324250"`
-
-	PriceChange5M       string `json:"price_change_5m" example:"0.000836"`
-	TxCount5M           int    `json:"tx_count_5m" example:"25"`
-	BuyTxCount5M        int    `json:"buy_tx_count_5m" example:"25"`
-	SellTxCount5M       int    `json:"sell_tx_count_5m" example:"25"`
-	TokenVolume5M       string `json:"token_volume_5m" example:"62269.324250"`
-	TokenVolume5MUsd    string `json:"token_volume_5m_usd" example:"62269.324250"`
-	BuyTokenVolume5M    string `json:"buy_token_volume_5m" example:"62269.324250"`
-	BuyTokenVolume5Usd  string `json:"buy_token_volume_5m_usd" example:"62269.324250"`
-	SellTokenVolume5M   string `json:"sell_token_volume_5m" example:"62269.324250"`
-	SellTokenVolume5Usd string `json:"sell_token_volume_5m_usd" example:"62269.324250"`
-
-	MarketCap  string `json:"market_cap" example:"50417.320729000000000"`
-	LastSwapAt int64  `json:"last_swap_at" example:"1740887399"`
+	PriceChange5M        string `json:"price_change_5m" example:"0.000836"`
+	TxCount5M            int    `json:"tx_count_5m" example:"25"`
+	BuyTxCount5M         int    `json:"buy_tx_count_5m" example:"25"`
+	SellTxCount5M        int    `json:"sell_tx_count_5m" example:"25"`
+	TokenVolume5M        string `json:"token_volume_5m" example:"62269.324250"`
+	TokenVolume5MUsd     string `json:"token_volume_5m_usd" example:"62269.324250"`
+	BuyTokenVolume5M     string `json:"buy_token_volume_5m" example:"62269.324250"`
+	BuyTokenVolume5Usd   string `json:"buy_token_volume_5m_usd" example:"62269.324250"`
+	SellTokenVolume5M    string `json:"sell_token_volume_5m" example:"62269.324250"`
+	SellTokenVolume5Usd  string `json:"sell_token_volume_5m_usd" example:"62269.324250"`
+	MarketCap            string `json:"market_cap" example:"50417.320729000000000"`
+	LastSwapAt           int64  `json:"last_swap_at" example:"1740887399"`
 
 	// High1H             string `json:"high_1h" example:"0.000050417320729"`            // 1小时最高价
 	// Low1H              string `json:"low_1h" example:"0.000050161350930"`             // 1小时最低价

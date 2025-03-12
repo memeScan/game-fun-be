@@ -16,10 +16,10 @@ import (
 
 	"log"
 	"math"
+	"net/http"
+	"reflect"
 	"strconv"
 	"time"
-
-	"net/http"
 
 	"github.com/shopspring/decimal"
 )
@@ -61,13 +61,19 @@ func (s *TickerServiceImpl) Tickers(req request.TickersRequest, chainType model.
 }
 
 func (s *TickerServiceImpl) TickerDetail(tokenAddress string, chainType model.ChainType) response.Response {
-	redisKey := GetRedisKey(constants.TokenInfo, tokenAddress)
-
 	var tickerResponse response.GetTickerResponse
 
-	tokenInfo, err := s.getTokenInfo(tokenAddress, chainType, redisKey)
+	tokenHolders := 0
+	tradeDataResponse, err := GetMarketData(tokenAddress, chainType.ToString())
+	if err == nil {
+		tokenHolders = tradeDataResponse.Data.Holder
+	}
+	tokenInfo, err := s.tokenInfoRepo.GetTokenInfoByAddress(tokenAddress, uint8(chainType))
 	if err != nil {
-		return response.Err(http.StatusInternalServerError, "Failed to get token info", err)
+		return response.Err(http.StatusInternalServerError, "Failed to get token info by address", err)
+	}
+	if tokenInfo == nil {
+		return response.Success(tickerResponse)
 	}
 
 	tickerResponse.Market = response.Market{
@@ -80,7 +86,8 @@ func (s *TickerServiceImpl) TickerDetail(tokenAddress string, chainType model.Ch
 		URI:             tokenInfo.URI,
 		Price:           tokenInfo.Price,
 		CreateTimestamp: tokenInfo.TransactionTime.Unix(),
-		Rank:            0,
+		Holders:         tokenHolders,
+		Rank:            1,
 	}
 
 	var extInfo model.ExtInfo
@@ -104,59 +111,64 @@ func (s *TickerServiceImpl) TickerDetail(tokenAddress string, chainType model.Ch
 	if marketTicker.Code != http.StatusOK {
 		return response.Err(http.StatusInternalServerError, "Failed to get market ticker", fmt.Errorf(marketTicker.Msg))
 	}
-	marketData, ok := marketTicker.Data.(response.MarketTicker)
-	if !ok {
-		return response.Err(http.StatusInternalServerError, "Failed to convert market ticker data to MarketTicker", fmt.Errorf("type assertion failed"))
+	var marketData response.MarketTicker
+	if marketTicker.Data != nil {
+		var ok bool
+		marketData, ok = marketTicker.Data.(response.MarketTicker)
+		if !ok {
+			return response.Err(http.StatusInternalServerError, "Failed to convert market ticker data to MarketTicker", fmt.Errorf("type assertion failed"))
+		}
 	}
-
 	tickerResponse.MarketTicker = marketData
 
-	// 4. 返回响应
 	return response.Success(tickerResponse)
 }
 
-// getTokenInfo 获取代币信息（优先从 Redis 和 MySQL 获取）
-func (s *TickerServiceImpl) getTokenInfo(tokenAddress string, chainType model.ChainType, redisKey string) (*model.TokenInfo, error) {
-	// 1. 从 Redis 获取
-	value, err := redis.Get(redisKey)
-	if err == nil && value != "" {
-		var tokenInfo model.TokenInfo
-		if err := redis.Unmarshal(value, &tokenInfo); err == nil {
-			return &tokenInfo, nil
-		}
-		util.Log().Error("Failed to unmarshal token info from Redis: %v", err)
-	}
+func GetMarketData(tokenAddress, chainType string) (*httpRespone.TradeDataResponse, error) {
+	var TradeDataResponse *httpRespone.TradeDataResponse
+	marketDataKey := GetRedisKey(constants.TokenTradeData, tokenAddress)
 
-	// 2. 从 MySQL 获取
-	tokenInfo, err := s.tokenInfoRepo.GetTokenInfoByAddress(tokenAddress, uint8(chainType))
+	// 从 Redis 获取市场数据
+	marketData, err := redis.Get(marketDataKey)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get token info from MySQL: %v", err)
-	}
-	if tokenInfo != nil {
-		// 将数据缓存到 Redis
-		if err := redis.Set(redisKey, tokenInfo); err != nil {
-			util.Log().Error("Failed to set token info in Redis: %v", err)
+		util.Log().Error(fmt.Sprintf("Failed to get market data from Redis: %v", err))
+	} else if marketData != "" {
+		// 如果 Redis 中有数据，反序列化
+		err = redis.Unmarshal(marketData, &TradeDataResponse)
+		if err != nil {
+			util.Log().Error(fmt.Sprintf("Failed to unmarshal market data: %v", err))
+		} else {
+			// 使用 Redis 中的数据
+			return TradeDataResponse, nil
 		}
-		return tokenInfo, nil
 	}
 
-	// 3. 如果 Redis 和 MySQL 都没有数据，返回 nil
-	return nil, nil
-}
-
-// getTokenMetaDataFromAPI 从 API 获取代币元数据
-func (s *TickerServiceImpl) getTokenMetaDataFromAPI(tokenAddress string, chainType string) (httpRespone.TokenMetaData, error) {
-	tokenMetaDatas, err := httpUtil.GetTokenMetaData([]string{tokenAddress}, chainType)
+	// 如果 Redis 中没有数据，通过 HTTP 请求获取交易数据
+	tokenTradeData, err := httpUtil.GetTradeData(tokenAddress, chainType)
 	if err != nil {
-		return httpRespone.TokenMetaData{}, fmt.Errorf("failed to get token meta data from API: %v", err)
+		util.Log().Error(fmt.Sprintf("Failed to get trade data from HTTP: %v", err))
+		return nil, err
 	}
 
-	tokenMetaData, exists := tokenMetaDatas.Data[tokenAddress]
-	if !exists {
-		return httpRespone.TokenMetaData{}, fmt.Errorf("token address %s not found in API response", tokenAddress)
+	// 检查 tokenTradeData 是否为 nil
+	if tokenTradeData == nil {
+		util.Log().Error("Trade data is nil")
+		return nil, fmt.Errorf("trade data is nil")
 	}
 
-	return tokenMetaData, nil
+	// 检查 tokenTradeData.Data 是否为零值
+	if reflect.ValueOf(tokenTradeData.Data).IsZero() {
+		util.Log().Error("Trade data is empty")
+		return nil, fmt.Errorf("trade data is empty")
+	}
+
+	// 将交易数据存储到 Redis
+	err = redis.Set(marketDataKey, tokenTradeData, 3*time.Minute)
+	if err != nil {
+		util.Log().Error(fmt.Sprintf("Failed to set trade data to Redis: %v", err))
+	}
+
+	return tokenTradeData, nil
 }
 
 func (s *TickerServiceImpl) MarketTicker(tokenAddress string, chainType model.ChainType) response.Response {
@@ -209,7 +221,7 @@ func (s *TickerServiceImpl) MarketTicker(tokenAddress string, chainType model.Ch
 	price5m := float64(0)
 	price1h := float64(0)
 	price24h := float64(0)
-
+	marketCap := uint64(0)
 	nativePrice := float64(0)
 	solPrice := float64(0)
 	priceChange1m := float64(0)
@@ -225,6 +237,7 @@ func (s *TickerServiceImpl) MarketTicker(tokenAddress string, chainType model.Ch
 			decimals = bucket.LastTransactionPrice.Latest.Hits.Hits[0].Source.Decimals
 			nativePrice = bucket.LastTransactionPrice.Latest.Hits.Hits[0].Source.NativePrice
 			lastSwapAt = bucket.LastTransactionPrice.Latest.Hits.Hits[0].Source.TransactionTime
+			marketCap = bucket.LastTransactionPrice.Latest.Hits.Hits[0].Source.MarketCap
 
 			// sol 的价格
 			solPrice = price / nativePrice
@@ -251,18 +264,10 @@ func (s *TickerServiceImpl) MarketTicker(tokenAddress string, chainType model.Ch
 			price24h = bucket.LastTransaction24hPrice.Latest.Hits.Hits[0].Source.Price
 		}
 
-		if price != 0 && price1m != 0 {
-			priceChange1m = (price - price1m) / price1m
-		}
-		if price != 0 && price5m != 0 {
-			priceChange5m = (price - price5m) / price5m
-		}
-		if price != 0 && price1h != 0 {
-			priceChange1h = (price - price1h) / price1h
-		}
-		if price != 0 && price24h != 0 {
-			priceChange24h = (price - price24h) / price24h
-		}
+		priceChange1m = calculatePriceChange(price, price1m)
+		priceChange5m = calculatePriceChange(price, price5m)
+		priceChange1h = calculatePriceChange(price, price1h)
+		priceChange24h = calculatePriceChange(price, price24h)
 
 		if bucket.BuyVolume1m.TotalVolume.Value > 0 {
 			buyVolume1m, _ = processVolume(bucket.BuyVolume1m.TotalVolume.Value, solPrice, decimals)
@@ -351,6 +356,7 @@ func (s *TickerServiceImpl) MarketTicker(tokenAddress string, chainType model.Ch
 	analytics.TotalCount5m = analytics.BuyCount5m.Add(analytics.SellCount5m)
 	analytics.TotalCount1h = analytics.BuyCount1h.Add(analytics.SellCount1h)
 	analytics.TotalCount24h = analytics.BuyCount24h.Add(analytics.SellCount24h)
+	analytics.MarketCap = strconv.FormatUint(marketCap, 10)
 	analytics.LastSwapAt = timestamp
 	marketTicker := populateMarketTicker(analytics)
 
@@ -408,6 +414,7 @@ func populateMarketTicker(analytics response.TokenMarketAnalyticsResponse) respo
 		BuyTokenVolume5Usd:   roundTo9(currentPrice.Mul(analytics.BuyVolume5m)).String(),
 		SellTokenVolume5Usd:  roundTo9(currentPrice.Mul(analytics.SellVolume5m)).String(),
 		LastSwapAt:           analytics.LastSwapAt,
+		MarketCap:            analytics.MarketCap,
 	}
 }
 

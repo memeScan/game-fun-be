@@ -318,3 +318,32 @@ func TestGetBondingCurves(t *testing.T) {
 			curveInfo.Data.Complete)
 	}
 }
+
+// func TestGetPriorityFee(t *testing.T) {
+//     setupTest(t)
+
+//     // 调用 GetPriorityFee 方法
+//     gasFeeResponse, err := httpUtil.GetPriorityFee()
+
+//     // 检查是否有错误
+//     if err != nil {
+//         t.Fatalf("Failed to get priority fee: %v", err)
+//     }
+
+//     // 检查返回值是否为空
+//     if gasFeeResponse == nil {
+//         t.Fatal("Expected response, got nil")
+//     }
+
+//     // 打印返回的 GasFeeResponse 信息
+//     t.Logf("Received Priority Fee Response: Low=%s, High=%s, Medium=%s",
+//         gasFeeResponse.PriorityFeeLevels.Low, gasFeeResponse.PriorityFeeLevels.High, gasFeeResponse.PriorityFeeLevels.Medium)
+
+//     // 检查 BaseFee 和 PriorityFee 是否为空
+//     if gasFeeResponse.PriorityFeeLevels.Min == 0 {
+//         t.Error("Expected non-empty BaseFee")
+//     }
+//     if gasFeeResponse.PriorityFeeLevels.Medium == 0 {
+//         t.Error("Expected non-empty PriorityFee")
+//     }
+// }

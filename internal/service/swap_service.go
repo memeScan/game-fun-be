@@ -73,18 +73,7 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 			return s.getRaydiumTradeTx(swapStruct)
 		},
 		"g_external": func() (*httpRespone.SwapTransactionResponse, error) {
-			if req.SwapType == "sell" && chainType == 1 {
-				req.TokenInAddress = "ZziTphJ4pYsbWZtpR8TaHy2xDqbNyf8yEp5d5jvpump"
-			} else if req.SwapType == "buy" && chainType == 1 {
-				req.TokenOutAddress = "ZziTphJ4pYsbWZtpR8TaHy2xDqbNyf8yEp5d5jvpump"
-			}
 			swapStruct := s.buildGameFunGInstructionStruct(req, poolDetail, inAmountStr)
-			// swapJSON, err := json.MarshalIndent(swapStruct, "", "  ") // 转换为格式化的 JSON
-			// if err != nil {
-			// 	log.Printf("Failed to marshal swapStruct to JSON: %v", err)
-			// } else {
-			// 	log.Printf("swapStruct JSON:\n%s", swapJSON) // 打印 JSON
-			// }
 			return s.getGameFunGInstruction(swapStruct)
 		},
 		"g_points": func() (*httpRespone.SwapTransactionResponse, error) {

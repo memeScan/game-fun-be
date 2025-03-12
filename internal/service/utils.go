@@ -116,3 +116,16 @@ func StringToTimestamp(timeStr string, layout string) (int64, error) {
 	}
 	return t.Unix(), nil
 }
+
+// 定义一个方法，用于保留两位小数
+func roundToTwoDecimalPlaces(value float64) float64 {
+	return math.Round(value*100) / 100
+}
+
+// 计算价格变化并保留两位小数
+func calculatePriceChange(currentPrice, previousPrice float64) float64 {
+	if currentPrice != 0 && previousPrice != 0 {
+		return roundToTwoDecimalPlaces((currentPrice - previousPrice) / previousPrice)
+	}
+	return 0
+}
