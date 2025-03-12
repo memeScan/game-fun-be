@@ -221,7 +221,7 @@ func (s *TickerServiceImpl) MarketTicker(tokenAddress string, chainType model.Ch
 	price5m := float64(0)
 	price1h := float64(0)
 	price24h := float64(0)
-	marketCap := uint64(0)
+	marketCap := float64(0)
 	nativePrice := float64(0)
 	solPrice := float64(0)
 	priceChange1m := float64(0)
@@ -356,7 +356,7 @@ func (s *TickerServiceImpl) MarketTicker(tokenAddress string, chainType model.Ch
 	analytics.TotalCount5m = analytics.BuyCount5m.Add(analytics.SellCount5m)
 	analytics.TotalCount1h = analytics.BuyCount1h.Add(analytics.SellCount1h)
 	analytics.TotalCount24h = analytics.BuyCount24h.Add(analytics.SellCount24h)
-	analytics.MarketCap = strconv.FormatUint(marketCap, 10)
+	analytics.MarketCap = strconv.FormatFloat(marketCap, 'f', -1, 64)
 	analytics.LastSwapAt = timestamp
 	marketTicker := populateMarketTicker(analytics)
 

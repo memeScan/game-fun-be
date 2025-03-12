@@ -498,7 +498,7 @@ func TokenMarketAnalyticsQuery(tokenAddress string, chainType uint8) (string, er
 										},
 									},
 									"_source": map[string]interface{}{
-										"includes": []string{"price", "decimals", "native_price", "transaction_time"}, // 只返回价格字段
+										"includes": []string{"price", "decimals", "native_price", "transaction_time", "market_cap"}, // 只返回价格字段
 									},
 								},
 							},
