@@ -357,6 +357,7 @@ func (s *TickerServiceImpl) MarketTicker(tokenAddress string, chainType model.Ch
 	analytics.TotalCount24h = analytics.BuyCount24h.Add(analytics.SellCount24h)
 	analytics.MarketCap = strconv.FormatFloat(marketCap, 'f', -1, 64)
 	analytics.LastSwapAt = timestamp
+	analytics.Price = price
 	marketTicker := populateMarketTicker(analytics)
 
 	// 4. 返回成功响应
