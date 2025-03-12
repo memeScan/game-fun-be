@@ -47,7 +47,7 @@ type Kline struct {
 // InsertTransaction 插入单条交易数据
 func InsertTransaction(tx *TokenTransactionCk) error {
 	query := `
-        INSERT INTO token_transaction_ck_new (
+        INSERT INTO token_transaction_ck_new_all (
             transaction_id, transaction_hash, chain_type, user_address, token_address,
             pool_address, base_token_amount, quote_token_amount, decimals,
             base_token_price, quote_token_price, transaction_amount_usd,
@@ -85,7 +85,7 @@ func InsertTransaction(tx *TokenTransactionCk) error {
 // BatchInsertTransactions 批量插入交易数据
 func BatchInsertTransactions(txs []*TokenTransactionCk) error {
 	batch, err := ClickHouseClient.PrepareBatch(context.Background(), `
-        INSERT INTO token_transaction_ck_new (
+        INSERT INTO token_transaction_ck_new_all (
             transaction_id, transaction_hash, chain_type, user_address, token_address,
             pool_address, base_token_amount, quote_token_amount, decimals,
             base_token_price, quote_token_price, transaction_amount_usd,
@@ -215,7 +215,7 @@ func getIntervalSeconds(interval string) int {
 func GetTokenTransactions(tokenAddress string, limit int) ([]TokenTransactionCk, error) {
 	query := `
         SELECT *
-        FROM token_transaction_ck_new 
+        FROM token_transaction_ck_new_all 
         WHERE token_address = ?
         ORDER BY transaction_time DESC , user_address DESC
         LIMIT ?
