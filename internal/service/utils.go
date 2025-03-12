@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"strconv"
+	"time"
 
 	"github.com/gagliardetto/solana-go"
+	"github.com/shopspring/decimal"
 )
 
 func VerifySolanaSignature(address, signature, message string) (bool, error) {
@@ -62,4 +65,49 @@ func FormatPercent(value float64) string {
 		value = -value // 取绝对值
 	}
 	return fmt.Sprintf("%s%.2f", sign, value) // 去掉百分号
+}
+
+// ConvertDecimalToInt 将 decimal.Decimal 转换为 int，支持四舍五入
+func ConvertDecimalToInt(value decimal.Decimal, round bool) int {
+	if round {
+		// 如果需要四舍五入，先调用 Round(0) 方法
+		value = value.Round(0)
+	}
+	// 转换为 int
+	return int(value.IntPart())
+}
+
+func safeNewFromFloat(value float64) (decimal.Decimal, error) {
+	if math.IsInf(value, 0) || math.IsNaN(value) {
+		return decimal.Decimal{}, fmt.Errorf("invalid value: %v", value)
+	}
+	return decimal.NewFromFloat(value), nil
+}
+
+func processVolume(value float64, solPrice float64, decimals int) (decimal.Decimal, error) {
+	volume, err := safeNewFromFloat(value)
+	if err != nil {
+		return decimal.Decimal{}, fmt.Errorf("invalid volume value: %v", err)
+	}
+
+	solPriceDec, err := safeNewFromFloat(solPrice)
+	if err != nil {
+		return decimal.Decimal{}, fmt.Errorf("invalid solPrice: %v", err)
+	}
+
+	return volume.Div(decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(decimals)))).Mul(solPriceDec), nil
+}
+
+// 定义时间布局常量
+const (
+	ISO8601Layout = "2006-01-02T15:04:05Z"
+)
+
+// StringToTimestamp 将时间字符串转换为时间戳
+func StringToTimestamp(timeStr string, layout string) (int64, error) {
+	t, err := time.Parse(layout, timeStr)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse time: %v", err)
+	}
+	return t.Unix(), nil
 }

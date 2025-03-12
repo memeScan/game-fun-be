@@ -53,6 +53,12 @@ func ConsumePumpfunTopics() error {
 		batchSize = 100 // 默认值
 	}
 
+	// 从环境变量获取批处理参数
+	minSize, _ := strconv.Atoi(os.Getenv("KAFKA_MIN_SIZE"))
+	if minSize == 0 {
+		minSize = 10 // 默认值
+	}
+
 	batchTimeout, _ := time.ParseDuration(os.Getenv("KAFKA_BATCH_TIMEOUT"))
 	if batchTimeout == 0 {
 		batchTimeout = 100 * time.Millisecond // 默认值
@@ -75,13 +81,13 @@ func ConsumePumpfunTopics() error {
 	topicConsumer.AddHandler(TopicPumpCreate, PumpfunImmediateHandler)
 	topicConsumer.AddHandler(TopicPumpComplete, PumpfunImmediateHandler)
 	topicConsumer.AddHandler(TopicPumpSetParams, PumpfunImmediateHandler)
-	topicConsumer.AddBatchHandler(TopicPumpTrade, PumpfunBatchHandler, batchSize, 30, batchTimeout)
+	topicConsumer.AddBatchHandler(TopicPumpTrade, PumpfunBatchHandler, batchSize, minSize, batchTimeout)
 
 	// 添加 Raydium 相关的处理器
 	topicConsumer.AddHandler(TopicRayCreate, RaydiumImmediateHandler)
 	topicConsumer.AddHandler(TopicRayAddLiquidity, RaydiumImmediateHandler)
 	topicConsumer.AddHandler(TopicRayRemoveLiquidity, RaydiumImmediateHandler)
-	topicConsumer.AddBatchHandler(TopicRaySwap, RaydiumBatchHandler, batchSize, 30, batchTimeout)
+	topicConsumer.AddBatchHandler(TopicRaySwap, RaydiumBatchHandler, batchSize, minSize, batchTimeout)
 
 	// 添加未知代币处理器
 	topicConsumer.AddHandler(TopicUnknownToken, UnknownTokenHandler)
@@ -747,11 +753,11 @@ func processCurrentDayRaydiumTransactions(transactions []*model.TokenTransaction
 		len(poolInfoMap))
 
 	// 5. 处理 Elasticsearch 数据
-	// esStart := time.Now()
-	// if err := processElasticsearchData(transactions, tokenInfoMap, poolInfoMap); err != nil {
-	// 	return err
-	// }
-	// util.Log().Info("5. 处理 Elasticsearch 数据耗时: %v", time.Since(esStart))
+	esStart := time.Now()
+	if err := processElasticsearchData(transactions, tokenInfoMap, poolInfoMap); err != nil {
+		return err
+	}
+	util.Log().Info("5. 处理 Elasticsearch 数据耗时: %v", time.Since(esStart))
 
 	// 6. 处理 ClickHouse 数据
 	chStart := time.Now()
