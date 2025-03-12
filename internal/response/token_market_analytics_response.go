@@ -11,7 +11,7 @@ type TokenMarketAnalyticsResponse struct {
 	PriceChange1h  float64         `json:"price_change_1h"`
 	PriceChange24h float64         `json:"price_change_24h"`
 	Volume1m       decimal.Decimal `json:"volume_1m"`
-	Price          float64         `json:"Price"`
+	Price          decimal.Decimal `json:"price"`
 
 	Volume5m      decimal.Decimal `json:"volume_5m"`
 	Volume1h      decimal.Decimal `json:"volume_1h"`

@@ -202,11 +202,9 @@ func (s *SwapServiceImpl) buildGameFunGInstructionStruct(req request.SwapRouteRe
 
 func (s *SwapServiceImpl) buildBuyGWithPointsStruct(req request.SwapRouteRequest, points string) httpRequest.BuyGWithPointsStruct {
 	return httpRequest.BuyGWithPointsStruct{
-		User: req.FromAddress,
-		// User:      "GXL1pXLNKzFq7rzbFsGor6NaMsSMjoKhLqmxe8vsh7Gg",
-		Points:    points,
-		InputMint: req.TokenInAddress,
-		// OutputMint:  req.TokenOutAddress,
+		User:        req.FromAddress,
+		Points:      points,
+		InputMint:   req.TokenInAddress,
 		OutputMint:  req.TokenOutAddress,
 		SlippageBps: 0,
 		GMint:       os.Getenv("GMINT_ADDRESS"),
@@ -215,7 +213,6 @@ func (s *SwapServiceImpl) buildBuyGWithPointsStruct(req request.SwapRouteRequest
 		GAmm:        os.Getenv("GAMM_ADDRESS"),
 		GMarket:     os.Getenv("GMARKET_ADDRESS"),
 	}
-
 }
 
 func (s *SwapServiceImpl) buildSwapPumpStruct(req request.SwapRouteRequest, tokenDetail *model.TokenInfo, poolDetail *model.TokenLiquidityPool, mev bool, jitotip string) httpRequest.SwapPumpStruct {
