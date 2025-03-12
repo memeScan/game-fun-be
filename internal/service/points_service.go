@@ -181,7 +181,7 @@ func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string
 
 	return model.DB.Transaction(func(tx *gorm.DB) error {
 
-		user, err := s.userInfoRepo.WithTx(tx).GetOrCreateUserByAddress(address, 1, "")
+		_, user, err := s.userInfoRepo.WithTx(tx).GetOrCreateUserByAddress(address, 1, "")
 		if err != nil {
 			return err // 400 Bad Request
 		}
