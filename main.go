@@ -82,12 +82,12 @@ func main() {
 	}
 
 	// 初始化配置
-	initializer.Setup(currentEnv.String())
+	producer := initializer.Setup(currentEnv.String())
 
 	// 装载路由
 	gin.SetMode(os.Getenv("GIN_MODE"))
 
-	r := server.NewRouter()
+	r := server.NewRouter(producer)
 
 	// 从环境变量获取端口，如果没有设置，则使用默认值 8080
 	port := os.Getenv("PORT")

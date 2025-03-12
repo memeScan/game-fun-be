@@ -1484,8 +1484,8 @@ func pointTxStatusHandler(message []byte, topic string) error {
 	}
 
 	// 设置最大重试次数和重试间隔
-	maxRetries := 5
-	retryInterval := 3 * time.Second
+	maxRetries := 3
+	retryInterval := 10 * time.Second
 
 	for attempt := 0; attempt <= maxRetries; attempt++ {
 		resp, err := httpUtil.GetSwapStatusBySignature(statusMsg.Signature)
@@ -1514,8 +1514,18 @@ func pointTxStatusHandler(message []byte, topic string) error {
 		} else if resp.Data == "processing" {
 			// 处理中状态，如果已达到最大重试次数则退出
 			if attempt == maxRetries {
+				// 失败状态，恢复用户积分
+				userInfoRepo := model.NewUserInfoRepo()
+				if err := userInfoRepo.IncrementAvailablePointsByUserID(statusMsg.UserId, statusMsg.Points); err != nil {
+					util.Log().Error("Failed to restore points for user %d after transaction %s failed: %v",
+						statusMsg.UserId, statusMsg.Signature, err)
+					return fmt.Errorf("transaction failed but could not restore points: %w", err)
+				}
+				util.Log().Info("Transaction %s failed, restored %d points to user %d",
+					statusMsg.Signature, statusMsg.Points, statusMsg.UserId)
+
 				util.Log().Error("Transaction %s still in processing status after %d retries", statusMsg.Signature, maxRetries)
-				return fmt.Errorf("transaction still in processing after maximum retries")
+				return nil
 			}
 
 			// 等待指定时间后重试

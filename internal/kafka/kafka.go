@@ -16,7 +16,7 @@ var (
 	KafkaConfig   *sarama.Config
 )
 
-func Kafka() {
+func Kafka() sarama.SyncProducer {
 	// 从环境变量获取 Kafka 配置
 	brokers := strings.Split(os.Getenv("KAFKA_BROKERS"), ",")
 
@@ -34,6 +34,7 @@ func Kafka() {
 	version := KafkaConfig.Version
 	util.Log().Info("Kafka version: %v", version)
 	util.Log().Info("Kafka connected successfully to: %v", brokers)
+	return producer
 }
 
 // SendMessage 发送消息到指定的 topic

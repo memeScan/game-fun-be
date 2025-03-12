@@ -21,15 +21,19 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/IBM/sarama"
 	"github.com/shopspring/decimal"
 )
 
 type SwapServiceImpl struct {
 	userInfoRepo *model.UserInfoRepo
+	kafka        sarama.SyncProducer
 }
 
-func NewSwapService() *SwapServiceImpl {
-	return &SwapServiceImpl{}
+func NewSwapService(producer sarama.SyncProducer) *SwapServiceImpl {
+	return &SwapServiceImpl{
+		kafka: producer,
+	}
 }
 
 func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType uint8) response.Response {
@@ -415,6 +419,12 @@ func ConstructSwapRouteResponse(req request.SwapRouteRequest, swapResponse *http
 
 func (s *SwapServiceImpl) SendTransaction(userID string, userAddress string, swapRequest request.SwapRequest) response.Response {
 	isUsePoint := false
+	userIDUint64, err := strconv.ParseUint(userID, 10, 64)
+	if err != nil {
+		util.Log().Error("Failed to convert userID to uint64: %v", err)
+		return response.Err(http.StatusInternalServerError, "Invalid user ID", err)
+	}
+	points := uint64(0)
 	if swapRequest.PlatformType == "g_points" {
 		SwapGPointsKey := GetRedisKey(constants.SwapGPoints, userAddress, swapRequest.StartTime)
 		redisValue, err := redis.Get(SwapGPointsKey)
@@ -426,15 +436,10 @@ func (s *SwapServiceImpl) SendTransaction(userID string, userAddress string, swa
 			util.Log().Error("Key not found in Redis: %s", SwapGPointsKey)
 			return response.Err(http.StatusNotFound, "Transaction expired, please initiate the transaction again!", nil)
 		}
-		points, err := strconv.ParseUint(redisValue, 10, 64)
+		points, err = strconv.ParseUint(redisValue, 10, 64)
 		if err != nil {
 			util.Log().Error("Failed to convert Redis value to uint64: %v", err)
 			return response.Err(http.StatusInternalServerError, "Failed to convert Redis points value to uint64", err)
-		}
-		userIDUint64, err := strconv.ParseUint(userID, 10, 64)
-		if err != nil {
-			util.Log().Error("Failed to convert userID to uint64: %v", err)
-			return response.Err(http.StatusInternalServerError, "Invalid user ID", err)
 		}
 		userInfo, err := s.userInfoRepo.GetUserByUserID(uint(userIDUint64))
 		if err != nil {
@@ -458,9 +463,52 @@ func (s *SwapServiceImpl) SendTransaction(userID string, userAddress string, swa
 	resp, err := httpUtil.SendGameFunTransaction(swapRequest.SwapTransaction, swapRequest.IsAntiMEV, isUsePoint)
 
 	if err != nil || resp == nil || resp.Code != 2000 {
+		if swapRequest.PlatformType == "g_points" {
+			// 交易发送失败，恢复用户积分
+			userInfoRepo := model.NewUserInfoRepo()
+			if err := userInfoRepo.IncrementAvailablePointsByUserID(uint(userIDUint64), points); err != nil {
+				util.Log().Error("Failed to restore points for user %d after transaction %s failed: %v",
+					userIDUint64, swapRequest.SwapTransaction, err)
+				return response.Err(http.StatusInternalServerError, "Failed to restore points, please try again later", err)
+			}
+			util.Log().Info("Transaction %s failed, restored %d points to user %d",
+				swapRequest.SwapTransaction, points, userIDUint64)
+		}
 		return response.Err(http.StatusInternalServerError, "Failed to get send transaction", err)
 	}
+	if swapRequest.PlatformType == "g_points" {
+		// 交易发送成功，发送Kafka积分交易检测消息
+		pointTxStatusMsg := model.PointTxStatusMessage{
+			Signature: resp.Data.Signature,
+			UserId:    uint(userIDUint64),
+			Points:    points,
+		}
+
+		msgBytes, err := json.Marshal(pointTxStatusMsg)
+		if err != nil {
+			util.Log().Error("Failed to marshal point transaction status message: %v", err)
+		} else {
+			// 发送消息到Kafka
+			if err := s.SendMessage("market.point.tx.status.test", msgBytes); err != nil {
+				util.Log().Error("Failed to send point transaction status message to Kafka: %v", err)
+			} else {
+				util.Log().Info("Sent point transaction status check message for transaction %s, user %d, points %d",
+					swapRequest.SwapTransaction, uint(userIDUint64), points)
+			}
+		}
+	}
 	return response.Success(resp.Data)
+}
+
+// SendMessage 发送消息到指定的 topic
+func (s *SwapServiceImpl) SendMessage(topic string, message []byte) error {
+	msg := &sarama.ProducerMessage{
+		Topic: topic,
+		Value: sarama.ByteEncoder(message),
+	}
+
+	_, _, err := s.kafka.SendMessage(msg)
+	return err
 }
 
 func (s *SwapServiceImpl) GetSwapStatusBySignature(swapTransaction string) response.Response {

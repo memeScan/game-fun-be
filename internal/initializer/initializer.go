@@ -11,10 +11,12 @@ import (
 	"game-fun-be/internal/pkg/util"
 	"game-fun-be/internal/redis"
 	"os"
+
+	"github.com/IBM/sarama"
 )
 
 // Setup 初始化所有组件
-func Setup(env string) {
+func Setup(env string) sarama.SyncProducer {
 	// 设置环境变量
 	conf.SetEnv(env)
 
@@ -31,6 +33,7 @@ func Setup(env string) {
 	httpUtil.InitAPI(&endpoint)
 	httpUtil.InitMetrics(redis.RedisClient)
 
+	var producer sarama.SyncProducer
 	// 如果不是 debug 环境
 	if !conf.IsDebug() {
 		// 通过环境变量控制:
@@ -40,7 +43,7 @@ func Setup(env string) {
 			// 在消费 Kafka 时启动定时任务
 			cron.InitCronJobs()
 			// 启动 Kafka 消费
-			kafka.Kafka()
+			producer = kafka.Kafka()
 			go func() {
 				if err := kafka.ConsumePumpfunTopics(); err != nil {
 					util.Log().Error("Failed to consume Kafka topics: %v", err)
@@ -48,4 +51,5 @@ func Setup(env string) {
 			}()
 		}
 	}
+	return producer
 }

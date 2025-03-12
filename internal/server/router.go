@@ -10,6 +10,7 @@ import (
 	"game-fun-be/internal/model"
 	"game-fun-be/internal/service"
 
+	"github.com/IBM/sarama"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -17,7 +18,7 @@ import (
 )
 
 // NewRouter 路由配置
-func NewRouter() *gin.Engine {
+func NewRouter(producer sarama.SyncProducer) *gin.Engine {
 	globalService := service.NewGlobalServiceImpl()
 	globalHandler := api.NewGlobalHandler(globalService)
 
@@ -40,7 +41,7 @@ func NewRouter() *gin.Engine {
 	pointsService := service.NewPointsServiceImpl(userInfoRepo, pointRecordsRepo, platformTokenStatisticRepo)
 	pointsHandler := api.NewPointsHandler(pointsService)
 
-	swapService := service.NewSwapService()
+	swapService := service.NewSwapService(producer)
 	swapHandler := api.NewSwapHandler(swapService)
 
 	r := gin.New()
