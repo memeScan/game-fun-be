@@ -71,6 +71,9 @@ func (r *UserInfoRepo) GetOrCreateUserByAddress(address string, chainType uint8,
 				inviteUser, err := r.getInviteUser(inviteCode, chainType)
 				if err != nil {
 					return nil, fmt.Errorf("failed to get user by invitation code: %v", err)
+				} // 检查邀请人是否是自己
+				if inviteUser.Address == address {
+					util.Log().Error(fmt.Sprint("cannot invite yourself"))
 				}
 				r.setInviterInfo(&user, inviteUser)
 			}
