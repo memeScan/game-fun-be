@@ -149,7 +149,7 @@ func GetKlines(tokenAddress string, interval string, start, end time.Time) ([]Kl
             sum(buy_volume) as buy_volume,
             sum(sell_volume) as sell_volume,
             sum(base_volume) as base_volume
-        FROM token_kline_1s
+        FROM token_kline_1s_all
         WHERE token_address = ?
           AND timestamp >= ?
           AND timestamp < ?
@@ -276,7 +276,7 @@ func GetLatestKline(tokenAddress string) (*Kline, error) {
             buy_volume,
             sell_volume,
             base_volume
-        FROM token_kline_1s
+        FROM token_kline_1s_all
         WHERE token_address = ?
             AND timestamp >= now() - INTERVAL 12 HOUR
         ORDER BY timestamp DESC
