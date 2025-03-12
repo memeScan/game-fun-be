@@ -421,23 +421,23 @@ func (s *SwapServiceImpl) SendTransaction(userID string, userAddress string, swa
 		util.Log().Error("Failed to convert userID to uint64: %v", err)
 		return response.Err(http.StatusInternalServerError, "Invalid user ID", err)
 	}
-	points := uint64(1000)
+	points := uint64(0)
 	if swapRequest.PlatformType == "g_points" {
-		// SwapGPointsKey := GetRedisKey(constants.SwapGPoints, userAddress, swapRequest.StartTime)
-		// redisValue, err := redis.Get(SwapGPointsKey)
+		SwapGPointsKey := GetRedisKey(constants.SwapGPoints, userAddress, swapRequest.StartTime)
+		redisValue, err := redis.Get(SwapGPointsKey)
 		if err != nil {
 			util.Log().Error("Failed to get key from Redis: %v", err)
 			return response.Err(http.StatusInternalServerError, "Failed to retrieve points from Redis", err)
 		}
-		// if redisValue == "" {
-		// 	util.Log().Error("Key not found in Redis: %s", SwapGPointsKey)
-		// 	return response.Err(http.StatusNotFound, "Transaction expired, please initiate the transaction again!", nil)
-		// }
-		// points, err = strconv.ParseUint(redisValue, 10, 64)
-		// if err != nil {
-		// 	util.Log().Error("Failed to convert Redis value to uint64: %v", err)
-		// 	return response.Err(http.StatusInternalServerError, "Failed to convert Redis points value to uint64", err)
-		// }
+		if redisValue == "" {
+			util.Log().Error("Key not found in Redis: %s", SwapGPointsKey)
+			return response.Err(http.StatusNotFound, "Transaction expired, please initiate the transaction again!", nil)
+		}
+		points, err = strconv.ParseUint(redisValue, 10, 64)
+		if err != nil {
+			util.Log().Error("Failed to convert Redis value to uint64: %v", err)
+			return response.Err(http.StatusInternalServerError, "Failed to convert Redis points value to uint64", err)
+		}
 		userInfo, err := s.userInfoRepo.GetUserByUserID(uint(userIDUint64))
 		if err != nil {
 			return response.Err(http.StatusInternalServerError, "Unable to retrieve user information, transaction failed!", err)
