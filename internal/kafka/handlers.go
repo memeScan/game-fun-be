@@ -4,6 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
+	"sync"
+	"sync/atomic"
+	"time"
+
+	"game-fun-be/internal/clickhouse"
 	"game-fun-be/internal/conf"
 	"game-fun-be/internal/constants"
 	"game-fun-be/internal/es"
@@ -13,13 +21,6 @@ import (
 	"game-fun-be/internal/pkg/util"
 	"game-fun-be/internal/redis"
 	"game-fun-be/internal/service"
-	"os"
-	"strconv"
-	"strings"
-	"sync"
-	"time"
-
-	"sync/atomic"
 
 	"github.com/IBM/sarama"
 	"github.com/shopspring/decimal"
@@ -142,7 +143,7 @@ func handlePumpfunCreate(message []byte) error {
 
 	util.Log().Info("成功创建代币信息: %s", createMsg.Mint)
 
-	//创建代币流动性池
+	// 创建代币流动性池
 	liquidityPoolService := &service.TokenLiquidityPoolService{}
 	liquidityPool := liquidityPoolService.CreatePumpFunInitialPool(&createMsg)
 	liquidityPool.RealNativeReserves, _ = strconv.ParseUint(model.PUMP_INITIAL_REALSOL_TOKEN_RESERVES, 10, 64)
@@ -221,7 +222,6 @@ func PumpfunBatchHandler(topic string, messages []sarama.ConsumerMessage, partit
 }
 
 func handlePumpTradeMessages(messages []sarama.ConsumerMessage) error {
-
 	var tokenTradeMessages []*model.TokenTradeMessage
 	for _, msg := range messages {
 		var tokenTradeMsg model.TokenTradeMessage
@@ -577,7 +577,6 @@ func processCreatorTransaction(tokenInfo *model.TokenInfo, tx *model.TokenTransa
 			tokenInfo.DevStatus = uint8(model.DevStatusIncrease) // 加仓
 		}
 	}
-
 }
 
 // 处理历史交易数据
@@ -848,7 +847,6 @@ func handleRaydiumCreate(message []byte) error {
 }
 
 func handleRaydiumAddLiquidity(message []byte) error {
-
 	var createMsg model.RaydiumCreateMessage
 	if err := json.Unmarshal(message, &createMsg); err != nil {
 		util.Log().Error("Failed to unmarshal raydium-create message: %v", err)
@@ -875,7 +873,6 @@ func handleRaydiumAddLiquidity(message []byte) error {
 }
 
 func handleRaydiumRemoveLiquidity(message []byte) error {
-
 	var createMsg model.RaydiumCreateMessage
 	if err := json.Unmarshal(message, &createMsg); err != nil {
 		util.Log().Error("Failed to unmarshal raydium-create message: %v", err)
@@ -1155,7 +1152,7 @@ func UnknownTokenHandler(message []byte, topic string) error {
 
 	util.Log().Info("Successfully processed unknown token: %s", tokenAddress)
 
-	//补充池子信息
+	// 补充池子信息
 	if tokenInfo.CreatedPlatformType == uint8(model.CreatedPlatformTypePump) {
 		// 先检查数据库是否已存在
 		liquidityPoolService := &service.TokenLiquidityPoolService{}
@@ -1180,7 +1177,7 @@ func UnknownTokenHandler(message []byte, topic string) error {
 			return nil
 		}
 
-		//创建代币流动性池
+		// 创建代币流动性池
 		var createMsg model.TokenInfoMessage
 		createMsg.Mint = tokenAddress
 		createMsg.BondingCurve = tokenInfo.PoolAddress
@@ -1249,7 +1246,6 @@ func UnknownTokenHandler(message []byte, topic string) error {
 		util.Log().Info("Successfully processed unknown raydium pool: %s", pool.PoolAddress)
 		return nil
 	}
-
 }
 
 func saveRaydiumPool(tokenAddress string) error {
@@ -1332,6 +1328,7 @@ func gameOutTradeHandler(message []byte, topic string) error {
 	fee_decimal := decimal.NewFromInt(int64(feeBaseAmount)).Shift(6)
 	result := coef_decimal.Mul(fee_decimal).Div(adjustedQuoteReserves.Mul(discount_decimal).Div(adjustedNativeReserves))
 	point := result.IntPart()
+
 	// fmt.Println("point: %d", point)
 	// util.Log().Info("poolQuotaRe: %d", point)
 	util.Log().Info("Trade variables: "+
@@ -1341,15 +1338,54 @@ func gameOutTradeHandler(message []byte, topic string) error {
 		"\nfeeQuoteAmount: %d"+
 		"\nbuybackFeeBaseAmount: %d"+
 		"\nquoteAmount: %d"+
-		"\nbaseAmount: %d",
+		"\nbaseAmount: %d"+
+		"\npoint: %d",
 		poolQuoteReserve,
 		poolBaseReserve,
 		feeBaseAmount,
 		feeQuoteAmount,
 		buybackFeeBaseAmount,
 		quoteAmount,
-		baseAmount)
-	util.Log().Info("point: %d", point)
+		baseAmount,
+		point)
+
+	proxyTx := &clickhouse.ProxyTransaction{
+		TransactionHash:         tradeMsg.Signature,
+		ChainType:               uint8(model.ChainTypeSolana),
+		ProxyType:               uint8(model.ProxyTypeGame),
+		UserAddress:             tradeMsg.User,
+		TokenAddress:            tradeMsg.QuoteToken,
+		PoolAddress:             tradeMsg.PoolAddress,
+		BaseTokenAmount:         baseAmount,
+		QuoteTokenAmount:        quoteAmount,
+		BaseTokenReserveAmount:  poolBaseReserve,
+		QuoteTokenReserveAmount: poolQuoteReserve,
+		Decimals:                uint8(tradeMsg.Decimals),
+		TransactionType: func() uint8 {
+			if tradeMsg.IsBuy {
+				return uint8(model.TransactionTypeBuy)
+			}
+			return uint8(model.TransactionTypeSell)
+		}(),
+		IsBurn: func() uint8 {
+			if tradeMsg.IsBurn {
+				return 1
+			}
+			return 0
+		}(),
+		PointsAmount:         uint64(point),
+		FeeQuoteAmount:       feeQuoteAmount,
+		FeeBaseAmount:        feeBaseAmount,
+		BuybackFeeBaseAmount: buybackFeeBaseAmount,
+		BlockTime:            time.Now(),
+		TransactionTime:      time.Now(),
+		CreateTime:           time.Now(),
+	}
+
+	if err := clickhouse.InsertProxyTransaction(proxyTx); err != nil {
+		util.Log().Error("Failed to insert proxy transaction: %v", err)
+		return fmt.Errorf("failed to insert proxy transaction: %v", err)
+	}
 
 	pointRecordsRepo := model.NewPointRecordsRepo()
 	userInfoRepo := model.NewUserInfoRepo()
@@ -1384,8 +1420,6 @@ func gameInTradeHandler(message []byte, topic string) error {
 		util.Log().Error("Failed to unmarshal game-in-trade message: %v", err)
 		return fmt.Errorf("failed to unmarshal game-in-trade message: %v", err)
 	}
-	//TODO: 更新积分记录表（类型兑换并购买）
-
 	pointRecordsRepo := model.NewPointRecordsRepo()
 	userInfoRepo := model.NewUserInfoRepo()
 	PlatformTokenStatisticRepo := model.NewPlatformTokenStatisticRepo()
@@ -1395,6 +1429,29 @@ func gameInTradeHandler(message []byte, topic string) error {
 	pointsAmount, _ := strconv.ParseUint(tradeMsg.PointsAmount, 10, 64)
 	quoteAmount, _ := strconv.ParseUint(tradeMsg.QuoteAmount, 10, 64)
 	baseAmount, _ := strconv.ParseUint(tradeMsg.BaseAmount, 10, 64)
+
+	// 将交易数据插入到ClickHouse
+	proxyTx := &clickhouse.ProxyTransaction{
+		TransactionHash:  tradeMsg.Signature,
+		ChainType:        uint8(model.ChainTypeSolana), // 假设是Solana链
+		ProxyType:        uint8(model.ProxyTypeGameIn), // 假设GameIn类型
+		UserAddress:      tradeMsg.User,
+		TokenAddress:     tradeMsg.QuoteToken,
+		BaseTokenAmount:  baseAmount,
+		QuoteTokenAmount: quoteAmount,
+		Decimals:         uint8(tradeMsg.Decimals),        // 假设默认精度为9，如果有具体值应该从tradeMsg获取
+		TransactionType:  uint8(model.TransactionTypeBuy), // 使用BuyG类型
+		PointsAmount:     pointsAmount,
+		FeeBaseAmount:    feeBaseAmount,
+		TransactionTime:  time.Now(),
+		BlockTime:        time.Now(), // 如果tradeMsg中有区块时间应该使用那个
+	}
+
+	// 插入到ClickHouse
+	if err := clickhouse.InsertProxyTransaction(proxyTx); err != nil {
+		util.Log().Error("Failed to insert game-in trade to ClickHouse: %v", err)
+		return fmt.Errorf("failed to insert game-in trade to ClickHouse: %v", err)
+	}
 
 	amounts := map[model.StatisticType]uint64{
 		model.FeeAmount:    feeBaseAmount,
