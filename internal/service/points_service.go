@@ -8,6 +8,7 @@ import (
 	"game-fun-be/internal/pkg/util"
 	"game-fun-be/internal/response"
 
+	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
 
@@ -291,4 +292,10 @@ func formatPoints(points uint64) string {
 
 func formatSol(points uint64) string {
 	return fmt.Sprintf("%.9f", float64(points)/1e9)
+}
+
+func formatSolUsd(solUsdPrice decimal.Decimal) string {
+	price := solUsdPrice.Shift(-9)
+	// Use 6 decimal places instead if needed for crypto prices
+	return price.Round(6).StringFixed(6)
 }
