@@ -36,4 +36,6 @@ type TokenMarketAnalyticsResponse struct {
 	SellVolume24h  decimal.Decimal `json:"sell_volume_24h"`
 	LastSwapAt     int64           `json:"last_swap_at"`
 	MarketCap      string          `json:"market_cap"`
+	Holders        int             `json:"holders" example:"4204"`
+	Rank           int             `json:"rank" example:"1"`
 }

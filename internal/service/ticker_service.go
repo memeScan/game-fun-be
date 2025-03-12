@@ -63,11 +63,6 @@ func (s *TickerServiceImpl) Tickers(req request.TickersRequest, chainType model.
 func (s *TickerServiceImpl) TickerDetail(tokenAddress string, chainType model.ChainType) response.Response {
 	var tickerResponse response.GetTickerResponse
 
-	tokenHolders := 0
-	tradeDataResponse, err := GetMarketData(tokenAddress, chainType.ToString())
-	if err == nil {
-		tokenHolders = tradeDataResponse.Data.Holder
-	}
 	tokenInfo, err := s.tokenInfoRepo.GetTokenInfoByAddress(tokenAddress, uint8(chainType))
 	if err != nil {
 		return response.Err(http.StatusInternalServerError, "Failed to get token info by address", err)
@@ -86,8 +81,6 @@ func (s *TickerServiceImpl) TickerDetail(tokenAddress string, chainType model.Ch
 		URI:             tokenInfo.URI,
 		Price:           tokenInfo.Price,
 		CreateTimestamp: tokenInfo.TransactionTime.Unix(),
-		Holders:         tokenHolders,
-		Rank:            1,
 	}
 
 	var extInfo model.ExtInfo
@@ -194,6 +187,12 @@ func (s *TickerServiceImpl) MarketTicker(tokenAddress string, chainType model.Ch
 
 	if len(aggregationResult.Buckets) == 0 {
 		return response.Success(analytics)
+	}
+
+	tokenHolders := 0
+	tradeDataResponse, err := GetMarketData(tokenAddress, chainType.ToString())
+	if err == nil {
+		tokenHolders = tradeDataResponse.Data.Holder
 	}
 
 	buyVolume1m := decimal.NewFromInt(0)
@@ -325,7 +324,7 @@ func (s *TickerServiceImpl) MarketTicker(tokenAddress string, chainType model.Ch
 		fmt.Println("Error:", err)
 		timestamp = 0
 	}
-
+	analytics.Holders = tokenHolders
 	analytics.TokenAddress = tokenAddress
 	analytics.BuyVolume1m = buyVolume1m
 	analytics.SellVolume1m = sellVolume1m
@@ -415,6 +414,8 @@ func populateMarketTicker(analytics response.TokenMarketAnalyticsResponse) respo
 		SellTokenVolume5Usd:  roundTo9(currentPrice.Mul(analytics.SellVolume5m)).String(),
 		LastSwapAt:           analytics.LastSwapAt,
 		MarketCap:            analytics.MarketCap,
+		Holders:              analytics.Holders,
+		Rank:                 1,
 	}
 }
 

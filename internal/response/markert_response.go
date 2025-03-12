@@ -18,9 +18,7 @@ type Market struct {
 	Creator         string          `json:"creator" example:"3P3PMv28AM7SvNkGmAdHCusPwahSB9QG9z5o4gTvmNBX"`      // 创建者地址
 	URI             string          `json:"uri" example:"https://static.super.exchange/m/official/super.json"`   // URI
 	Price           decimal.Decimal `json:"price" example:"0.000050417320729"`                                   // 当前价格
-	Rank            int             `json:"rank" example:"1"`
 	CreateTimestamp int64           `json:"create_timestamp" example:"1740033455"`
-	Holders         int             `json:"holders" example:"4204"`
 }
 
 // MarketMetadata 市场元数据
@@ -43,7 +41,7 @@ type MarketTicker struct {
 	PriceChange24H       string `json:"price_change_24h" example:"0.224965"`
 	TxCount24H           int    `json:"tx_count_24h" example:"7590"`
 	BuyTxCount24H        int    `json:"buy_tx_count_24h" example:"7566"`
-	SellTxCount24H       int    `json:"Sell_tx_count_24h" example:"7566"`
+	SellTxCount24H       int    `json:"sell_tx_count_24h" example:"7566"`
 	TokenVolume24H       string `json:"token_volume_24h" example:"15450301.872331"`
 	TokenVolume24HUsd    string `json:"token_volume_24h_usd" example:"15450301.872331"`
 	BuyTokenVolume24H    string `json:"buy_token_volume_24h" example:"15435782.918031"`
@@ -82,6 +80,8 @@ type MarketTicker struct {
 	SellTokenVolume5Usd  string `json:"sell_token_volume_5m_usd" example:"62269.324250"`
 	MarketCap            string `json:"market_cap" example:"50417.320729000000000"`
 	LastSwapAt           int64  `json:"last_swap_at" example:"1740887399"`
+	Holders              int    `json:"holders" example:"4204"`
+	Rank                 int    `json:"rank" example:"1"`
 
 	// High1H             string `json:"high_1h" example:"0.000050417320729"`            // 1小时最高价
 	// Low1H              string `json:"low_1h" example:"0.000050161350930"`             // 1小时最低价
