@@ -320,7 +320,7 @@ func (s *TickerServiceImpl) MarketTicker(tokenAddress string, chainType model.Ch
 	sellCount24h := decimal.NewFromInt(0)
 
 	price := float64(0)
-	lastSwapAt := time.Now().Unix()
+	lastSwapAt := ""
 
 	price1m := float64(0)
 	price5m := float64(0)
@@ -381,28 +381,28 @@ func (s *TickerServiceImpl) MarketTicker(tokenAddress string, chainType model.Ch
 		}
 
 		if bucket.BuyVolume1m.TotalVolume.Value > 0 {
-			buyVolume1m = decimal.NewFromFloat(bucket.BuyVolume1m.TotalVolume.Value).Div(decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(decimals)))).Mul(decimal.NewFromFloat(solPrice))
+			buyVolume1m, _ = processVolume(bucket.BuyVolume1m.TotalVolume.Value, solPrice, decimals)
 		}
 		if bucket.SellVolume1m.TotalVolume.Value > 0 {
-			sellVolume1m = decimal.NewFromFloat(bucket.SellVolume1m.TotalVolume.Value).Div(decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(decimals)))).Mul(decimal.NewFromFloat(solPrice))
+			sellVolume1m, _ = processVolume(bucket.SellVolume1m.TotalVolume.Value, solPrice, decimals)
 		}
 		if bucket.BuyVolume5m.TotalVolume.Value > 0 {
-			buyVolume5m = decimal.NewFromFloat(bucket.BuyVolume5m.TotalVolume.Value).Div(decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(decimals)))).Mul(decimal.NewFromFloat(solPrice))
+			buyVolume5m, _ = processVolume(bucket.BuyVolume5m.TotalVolume.Value, solPrice, decimals)
 		}
 		if bucket.SellVolume5m.TotalVolume.Value > 0 {
-			sellVolume5m = decimal.NewFromFloat(bucket.SellVolume5m.TotalVolume.Value).Div(decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(decimals)))).Mul(decimal.NewFromFloat(solPrice))
+			sellVolume5m, _ = processVolume(bucket.SellVolume5m.TotalVolume.Value, solPrice, decimals)
 		}
 		if bucket.BuyVolume1h.TotalVolume.Value > 0 {
-			buyVolume1h = decimal.NewFromFloat(bucket.BuyVolume1h.TotalVolume.Value).Div(decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(decimals)))).Mul(decimal.NewFromFloat(solPrice))
+			buyVolume1h, _ = processVolume(bucket.BuyVolume1h.TotalVolume.Value, solPrice, decimals)
 		}
 		if bucket.SellVolume1h.TotalVolume.Value > 0 {
-			sellVolume1h = decimal.NewFromFloat(bucket.SellVolume1h.TotalVolume.Value).Div(decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(decimals)))).Mul(decimal.NewFromFloat(solPrice))
+			sellVolume1h, _ = processVolume(bucket.SellVolume1h.TotalVolume.Value, solPrice, decimals)
 		}
 		if bucket.BuyVolume24h.TotalVolume.Value > 0 {
-			buyVolume24h = decimal.NewFromFloat(bucket.BuyVolume24h.TotalVolume.Value).Div(decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(decimals)))).Mul(decimal.NewFromFloat(solPrice))
+			buyVolume24h, _ = processVolume(bucket.BuyVolume24h.TotalVolume.Value, solPrice, decimals)
 		}
 		if bucket.SellVolume24h.TotalVolume.Value > 0 {
-			sellVolume24h = decimal.NewFromFloat(bucket.SellVolume24h.TotalVolume.Value).Div(decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(decimals)))).Mul(decimal.NewFromFloat(solPrice))
+			sellVolume24h, _ = processVolume(bucket.SellVolume24h.TotalVolume.Value, solPrice, decimals)
 		}
 
 		if bucket.BuyCount1m.BuyVolume.Value > 0 {
@@ -429,6 +429,12 @@ func (s *TickerServiceImpl) MarketTicker(tokenAddress string, chainType model.Ch
 		if bucket.SellCount24h.SellVolume.Value > 0 {
 			sellCount24h = decimal.NewFromInt(bucket.SellCount24h.SellVolume.Value)
 		}
+	}
+
+	timestamp, err := StringToTimestamp(lastSwapAt, ISO8601Layout)
+	if err != nil {
+		fmt.Println("Error:", err)
+		timestamp = 0
 	}
 
 	var analytics response.TokenMarketAnalyticsResponse
@@ -463,7 +469,7 @@ func (s *TickerServiceImpl) MarketTicker(tokenAddress string, chainType model.Ch
 	analytics.PriceChange1h = priceChange1h
 	analytics.PriceChange24h = priceChange24h
 	analytics.CurrentPrice = price
-	analytics.LastSwapAt = lastSwapAt
+	analytics.LastSwapAt = timestamp
 	marketTicker := populateMarketTicker(analytics)
 
 	// 4. 返回成功响应
@@ -484,6 +490,10 @@ func populateMarketTicker(analytics response.TokenMarketAnalyticsResponse) respo
 	txCount5m := ConvertDecimalToInt(analytics.TotalCount5m, false)
 	buyCount5m := ConvertDecimalToInt(analytics.BuyCount5m, false)
 	sellCount5m := ConvertDecimalToInt(analytics.SellCount5m, false)
+	currentPrice := decimal.NewFromFloat(analytics.CurrentPrice)
+	roundTo9 := func(d decimal.Decimal) decimal.Decimal {
+		return d.Round(9)
+	}
 	return response.MarketTicker{
 		TxCount24H:           txCount24H,
 		BuyTxCount24H:        buyCount24h,
@@ -506,15 +516,15 @@ func populateMarketTicker(analytics response.TokenMarketAnalyticsResponse) respo
 		BuyTokenVolume5M:     analytics.BuyVolume5m.String(),
 		SellTokenVolume5M:    analytics.SellVolume5m.String(),
 		PriceChange5M:        priceChange5mPercentStr,
-		TokenVolume24HUsd:    decimal.NewFromFloat(analytics.CurrentPrice).Mul(analytics.Volume24h).String(),
-		BuyTokenVolume24Usd:  decimal.NewFromFloat(analytics.CurrentPrice).Mul(analytics.BuyVolume24h).String(),
-		SellTokenVolume24Usd: decimal.NewFromFloat(analytics.CurrentPrice).Mul(analytics.SellVolume24h).String(),
-		TokenVolume1HUsd:     decimal.NewFromFloat(analytics.CurrentPrice).Mul(analytics.Volume1h).String(),
-		BuyTokenVolume1Usd:   decimal.NewFromFloat(analytics.CurrentPrice).Mul(analytics.BuyVolume1h).String(),
-		SellTokenVolume1Usd:  decimal.NewFromFloat(analytics.CurrentPrice).Mul(analytics.SellVolume1h).String(),
-		TokenVolume5MUsd:     decimal.NewFromFloat(analytics.CurrentPrice).Mul(analytics.Volume5m).String(),
-		BuyTokenVolume5Usd:   decimal.NewFromFloat(analytics.CurrentPrice).Mul(analytics.BuyVolume5m).String(),
-		SellTokenVolume5Usd:  decimal.NewFromFloat(analytics.CurrentPrice).Mul(analytics.SellVolume5m).String(),
+		TokenVolume24HUsd:    roundTo9(currentPrice.Mul(analytics.Volume24h)).String(),
+		BuyTokenVolume24Usd:  roundTo9(currentPrice.Mul(analytics.BuyVolume24h)).String(),
+		SellTokenVolume24Usd: roundTo9(currentPrice.Mul(analytics.SellVolume24h)).String(),
+		TokenVolume1HUsd:     roundTo9(currentPrice.Mul(analytics.Volume1h)).String(),
+		BuyTokenVolume1Usd:   roundTo9(currentPrice.Mul(analytics.BuyVolume1h)).String(),
+		SellTokenVolume1Usd:  roundTo9(currentPrice.Mul(analytics.SellVolume1h)).String(),
+		TokenVolume5MUsd:     roundTo9(currentPrice.Mul(analytics.Volume5m)).String(),
+		BuyTokenVolume5Usd:   roundTo9(currentPrice.Mul(analytics.BuyVolume5m)).String(),
+		SellTokenVolume5Usd:  roundTo9(currentPrice.Mul(analytics.SellVolume5m)).String(),
 		LastSwapAt:           analytics.LastSwapAt,
 	}
 }

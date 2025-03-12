@@ -123,7 +123,7 @@ type PriceSource struct {
 	Price           float64 `json:"price"`
 	Decimals        int     `json:"decimals,omitempty"`
 	NativePrice     float64 `json:"native_price,omitempty"`
-	TransactionTime int64   `json:"native_price,transaction_time"`
+	TransactionTime string  `json:"transaction_time,omitempty"`
 }
 
 type MarketCapHit struct {
