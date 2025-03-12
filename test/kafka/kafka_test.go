@@ -57,7 +57,6 @@ func TestKafkaSendMessage(t *testing.T) {
 		topic := "test-topic"
 		message := []byte("test message")
 		err := kafka.SendMessage(topic, message)
-
 		if err != nil {
 			t.Errorf("Expected no error, got %v", err)
 		}
@@ -102,47 +101,47 @@ func TestKafkaIntegration(t *testing.T) {
 		batchSize := 1 // 批次大小
 		messages := make([]*sarama.ProducerMessage, 0, batchSize)
 		for i := 0; i < batchSize; i++ {
-			message := &sarama.ProducerMessage{
-				Topic: kafka.TopicGameOutTrade,
-				Value: sarama.ByteEncoder(fmt.Sprintf(`{
-					"timestamp": %d,
-					"block": 3130978492,
-					"signature": "2ZZf2p6RH4Zr4nKbGV9zmNkGjr3wEgpER9xxJD3WkfqVkCHzoW2HCZtg4JtKwqPmKBB5o6Um8cDjqxksVrBg8UUU",
-					"user": "1SoLxyz987654321abc987654321abc987654322",
-					"poolAddress": "F3UWHvZWy41HpsbWfbBFbvAemYuCn8RJ2qvKfr2346Qf",
-					"isBuy": true,
-					"quoteToken": "8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump",
-					"baseToken": "So11111111111111111111111111111111111111112",
-					"marketAddress": "",
-					"poolQuoteReserve": "18640745631097",
-					"poolBaseReserve": "539997130105",
-					"quoteAmount": "54610438",
-					"baseAmount": "1585960",
-					"decimals": 6,
-					"feeQuoteAmount": "546104",
-					"feeBaseAmount": "15859",
-					"buybackFeeBaseAmount": "7930",
-					"isBurn": false
-				}`, time.Now().Unix())),
-			}
+			// message := &sarama.ProducerMessage{
+			// 	Topic: kafka.TopicGameOutTrade,
+			// 	Value: sarama.ByteEncoder(fmt.Sprintf(`{
+			// 		"timestamp": %d,
+			// 		"block": 1130978492,
+			// 		"signature": "2ZZf2p6RH4Zr4nKbGV9zmNkGjr3wEgpER9xxJD3WkfqVkCHzoW2HCZtg4JtKwqPmKBB5o6Um8cDjqxksVrBg8UUU",
+			// 		"user": "1SoLxyz987654321abc987654321abc987654322",
+			// 		"poolAddress": "F3UWHvZWy41HpsbWfbBFbvAemYuCn8RJ2qvKfr2346Qf",
+			// 		"isBuy": true,
+			// 		"quoteToken": "8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump",
+			// 		"baseToken": "So11111111111111111111111111111111111111112",
+			// 		"marketAddress": "",
+			// 		"poolQuoteReserve": "18640745631097",
+			// 		"poolBaseReserve": "539997130105",
+			// 		"quoteAmount": "54610438",
+			// 		"baseAmount": "1585960",
+			// 		"decimals": 6,
+			// 		"feeQuoteAmount": "546104",
+			// 		"feeBaseAmount": "15859",
+			// 		"buybackFeeBaseAmount": "7930",
+			// 		"isBurn": false
+			// 	}`, time.Now().Unix())),
+			// }
 
-			// 	message := &sarama.ProducerMessage{
-			// 		Topic: kafka.TopicGameInTrade,
-			// 		Value: sarama.ByteEncoder(fmt.Sprintf(`{
-			//     "timestamp": %d,
-			//     "block": 3130978492,
-			//     "signature": "2ZZf2p6RH4Zr4nKbGV9zmNkGjr3wEgpER9xxJD3WkfqVkCHzoW2HCZtg4JtKwqPmKBB5o6Um8cDjqxksVrBg8UUU",
-			//     "user": "SoLxyz987654321abc987654321abc987654321",
-			//     "isBuy": true,
-			//     "quoteToken": "8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump",
-			//     "baseToken": "So11111111111111111111111111111111111111112",
-			//     "quoteAmount": 54610438,
-			//     "baseAmount": 1585960,
-			//     "decimals": 6,
-			//     "pointsAmount": 1000000,
-			//     "feeBaseAmount": 15859
-			// }`, time.Now().Unix())),
-			// 	}
+			message := &sarama.ProducerMessage{
+				Topic: kafka.TopicGameInTrade,
+				Value: sarama.ByteEncoder(fmt.Sprintf(`{
+			    "timestamp": %d,
+			    "block": 6130978492,
+			    "signature": "2ZZf2p6RH4Zr4nKbGV9zmNkGjr3wEgpER9xxJD3WkfqVkCHzoW2HCZtg4JtKwqPmKBB5o6Um8cDjqxksVrBg8UUU",
+			    "user": "SoLxyz987654321abc987654321abc987654321",
+			    "isBuy": true,
+			    "quoteToken": "8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump",
+			    "baseToken": "So11111111111111111111111111111111111111112",
+			    "quoteAmount": "54610438",
+			    "baseAmount": "1585960",
+			    "decimals": 6,
+			    "pointsAmount": "1000000",
+			    "feeBaseAmount": "15859"
+			}`, time.Now().Unix())),
+			}
 			messages = append(messages, message)
 		}
 
@@ -285,5 +284,4 @@ func TestPointTxStatusHandler(t *testing.T) {
 	// 注意：在实际测试中，你应该验证用户积分是否按预期更新
 	// 例如，如果模拟交易失败的情况，应该检查用户积分是否被恢复
 	t.Log("Test completed - check logs for processing results")
-
 }

@@ -192,7 +192,8 @@ type ProxyType uint8
 
 const (
 	ProxyTypeUnknown ProxyType = iota // 0-未知
-	ProxyTypeGame                     // 1-game
+	ProxyTypeGame                     // 1-game  内盘交易
+	ProxyTypeGameIn                   // 2-gameIn 积分购买
 )
 
 // 回购地址
