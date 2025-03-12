@@ -290,5 +290,5 @@ func formatPoints(points uint64) string {
 }
 
 func formatSol(points uint64) string {
-	return fmt.Sprintf("%.9f", float64(points)/1e6)
+	return fmt.Sprintf("%.9f", float64(points)/1e9)
 }
