@@ -33,7 +33,9 @@ func Setup(env string) sarama.SyncProducer {
 	httpUtil.InitAPI(&endpoint)
 	httpUtil.InitMetrics(redis.RedisClient)
 
-	var producer sarama.SyncProducer
+	// 初始化 Kafka 生产者
+	producer := kafka.Kafka()
+
 	// 如果不是 debug 环境
 	if !conf.IsDebug() {
 		// 通过环境变量控制:
@@ -43,7 +45,6 @@ func Setup(env string) sarama.SyncProducer {
 			// 在消费 Kafka 时启动定时任务
 			cron.InitCronJobs()
 			// 启动 Kafka 消费
-			producer = kafka.Kafka()
 			go func() {
 				if err := kafka.ConsumePumpfunTopics(); err != nil {
 					util.Log().Error("Failed to consume Kafka topics: %v", err)
