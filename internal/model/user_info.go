@@ -52,14 +52,15 @@ func (r *UserInfoRepo) getInviteUser(inviteCode string, chainType uint8) (*UserI
 	return inviteUser, nil
 }
 
-func (r *UserInfoRepo) setInviterInfo(user *UserInfo, inviteUser *UserInfo, loginType uint8) {
+func (r *UserInfoRepo) setInviterInfo(user *UserInfo, inviteUser *UserInfo) uint8 {
 	if inviteUser != nil {
 		user.InviterID = inviteUser.ID
-		loginType = 1
 		if inviteUser.InviterID != 0 {
 			user.ParentInviteId = inviteUser.InviterID
 		}
+		return 1 // 如果进入 if 语句，返回 1
 	}
+	return 0 // 否则返回 0
 }
 
 func (r *UserInfoRepo) GetOrCreateUserByAddress(address string, chainType uint8, inviteCode string) (uint8, *UserInfo, error) {
@@ -67,23 +68,33 @@ func (r *UserInfoRepo) GetOrCreateUserByAddress(address string, chainType uint8,
 	loginType := uint8(0)
 	result := DB.Where("address = ? AND chain_type = ?", address, chainType).First(&user)
 	if result.Error == nil {
+		var needSave bool // 是否需要保存的标志
+
 		if user.Status == 0 {
 			user.Status = 1
-			if user.InviterID == 0 && inviteCode != "" {
-				inviteUser, err := r.getInviteUser(inviteCode, chainType)
-				if err != nil {
-					return 0, nil, fmt.Errorf("failed to get user by invitation code: %v", err)
-				} // 检查邀请人是否是自己
-				if inviteUser.Address == address {
-					util.Log().Error(fmt.Sprint("cannot invite yourself"))
-				}
-				r.setInviterInfo(&user, inviteUser, loginType)
+			needSave = true // 状态变化，需要保存
+		}
+		if user.InviterID == 0 && inviteCode != "" {
+			inviteUser, err := r.getInviteUser(inviteCode, chainType)
+			if err != nil {
+				return 0, nil, fmt.Errorf("failed to get user by invitation code: %v", err)
 			}
+			// 检查邀请人是否是自己
+			if inviteUser.Address == address {
+				util.Log().Error(fmt.Sprint("cannot invite yourself"))
+			}
+			loginType = r.setInviterInfo(&user, inviteUser)
+			needSave = true // 邀请人信息变化，需要保存
+		}
+
+		// 如果有变化，更新 UpdateTime 并保存
+		if needSave {
 			user.UpdateTime = time.Now()
 			if err := DB.Save(&user).Error; err != nil {
 				return 0, nil, err
 			}
 		}
+
 		return loginType, &user, nil
 	}
 
@@ -117,7 +128,7 @@ func (r *UserInfoRepo) GetOrCreateUserByAddress(address string, chainType uint8,
 		util.Log().Error("Failed to find inviter, invalid invitation code: %v", err)
 	}
 
-	r.setInviterInfo(&user, inviteUser, loginType)
+	loginType = r.setInviterInfo(&user, inviteUser)
 
 	result = DB.Create(&user)
 	if result.Error != nil {
