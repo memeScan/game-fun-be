@@ -51,7 +51,7 @@ func (r *PointRecordsRepo) GetPointRecordsByUserIDWithCursor(userID uint64, curs
 	var records []*PointRecords
 	query := DB.Where("user_id = ?", userID).Order("id desc").Limit(limit + 1) // Request one extra record
 
-	if cursor != nil {
+	if cursor != nil && *cursor != 0 {
 		query = query.Where("id > ?", *cursor) // Changed from > to < for desc order
 	}
 
