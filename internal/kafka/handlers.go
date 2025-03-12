@@ -748,11 +748,11 @@ func processCurrentDayRaydiumTransactions(transactions []*model.TokenTransaction
 		len(poolInfoMap))
 
 	// 5. 处理 Elasticsearch 数据
-	// esStart := time.Now()
-	// if err := processElasticsearchData(transactions, tokenInfoMap, poolInfoMap); err != nil {
-	// 	return err
-	// }
-	// util.Log().Info("5. 处理 Elasticsearch 数据耗时: %v", time.Since(esStart))
+	esStart := time.Now()
+	if err := processElasticsearchData(transactions, tokenInfoMap, poolInfoMap); err != nil {
+		return err
+	}
+	util.Log().Info("5. 处理 Elasticsearch 数据耗时: %v", time.Since(esStart))
 
 	// 6. 处理 ClickHouse 数据
 	chStart := time.Now()
