@@ -230,7 +230,6 @@ func GetTokenTransactions(tokenAddress string, limit int) ([]TokenTransactionCk,
 
 	for rows.Next() {
 		var tx TokenTransactionCk
-		var isBuyback uint8 // Use uint8 as intermediate type for boolean field
 
 		if err := rows.Scan(
 			&tx.TransactionID,
@@ -246,16 +245,13 @@ func GetTokenTransactions(tokenAddress string, limit int) ([]TokenTransactionCk,
 			&tx.QuoteTokenPrice,
 			&tx.TransactionAmountUSD,
 			&tx.TransactionType,
+			&tx.IsBuyback, // Scan into uint8 variable
 			&tx.PlatformType,
-			&isBuyback, // Scan into uint8 variable
 			&tx.TransactionTime,
 			&tx.CreateTime,
 		); err != nil {
 			return nil, fmt.Errorf("scan row failed: %w", err)
 		}
-
-		// Explicitly convert the uint8 to bool (only true if value is 1)
-		tx.IsBuyback = isBuyback == 1
 
 		transactions = append(transactions, tx)
 	}
