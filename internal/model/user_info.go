@@ -82,9 +82,10 @@ func (r *UserInfoRepo) GetOrCreateUserByAddress(address string, chainType uint8,
 			// 检查邀请人是否是自己
 			if inviteUser.Address == address {
 				util.Log().Error(fmt.Sprint("cannot invite yourself"))
+			} else {
+				loginType = r.setInviterInfo(&user, inviteUser)
+				needSave = true // 邀请人信息变化，需要保存
 			}
-			loginType = r.setInviterInfo(&user, inviteUser)
-			needSave = true // 邀请人信息变化，需要保存
 		}
 
 		// 如果有变化，更新 UpdateTime 并保存
