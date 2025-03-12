@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/gagliardetto/solana-go"
+	"github.com/shopspring/decimal"
 )
 
 func VerifySolanaSignature(address, signature, message string) (bool, error) {
@@ -62,4 +63,14 @@ func FormatPercent(value float64) string {
 		value = -value // 取绝对值
 	}
 	return fmt.Sprintf("%s%.2f", sign, value) // 去掉百分号
+}
+
+// ConvertDecimalToInt 将 decimal.Decimal 转换为 int，支持四舍五入
+func ConvertDecimalToInt(value decimal.Decimal, round bool) int {
+	if round {
+		// 如果需要四舍五入，先调用 Round(0) 方法
+		value = value.Round(0)
+	}
+	// 转换为 int
+	return int(value.IntPart())
 }

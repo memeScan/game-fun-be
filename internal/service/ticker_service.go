@@ -264,133 +264,258 @@ func (s *TickerServiceImpl) getTokenMetaDataFromAPI(tokenAddress string, chainTy
 }
 
 func (s *TickerServiceImpl) MarketTicker(tokenAddress string, chainType model.ChainType) response.Response {
-	var marketTicker response.MarketTicker
-	// // 从clickhoues 获取
-	// tokenMarketAnalytics, err := s.tokenMarketAnalyticsRepo.GetTokenMarketAnalytics(tokenAddress, chainType.Uint8())
-	// if err != nil {
-	// 	return response.Err(http.StatusInternalServerError, "Failed to retrieve token market analytics from ClickHouse", err)
-	// }
-
-	// if tokenMarketAnalytics != nil {
-	// 	marketTicker = response.MarketTicker{
-	// 		// High24H:            fmt.Sprintf("%f", tokenMarketAnalytics.Price24H),
-	// 		// Low24H:             fmt.Sprintf("%f", tokenMarketAnalytics.Price24H),
-	// 		TokenVolume24H:     fmt.Sprintf("%f", tokenMarketAnalytics.TokenVolume24H),
-	// 		BuyTokenVolume24H:  fmt.Sprintf("%f", tokenMarketAnalytics.BuyTokenVolume24H),
-	// 		SellTokenVolume24H: fmt.Sprintf("%f", tokenMarketAnalytics.TokenVolume24H-tokenMarketAnalytics.BuyTokenVolume24H), PriceChange24H: fmt.Sprintf("%f", tokenMarketAnalytics.PriceChange24H),
-	// 		TxCount24H:     int(tokenMarketAnalytics.TxCount24H),
-	// 		BuyTxCount24H:  int(tokenMarketAnalytics.BuyTxCount24H),
-	// 		SellTxCount24H: int(tokenMarketAnalytics.TxCount24H) - int(tokenMarketAnalytics.BuyTxCount24H),
-	// 		// NativeVolume24H:    "0",
-	// 		// BuyNativeVolume24H: "0",
-	// 		// High1H:             fmt.Sprintf("%f", tokenMarketAnalytics.Price1H),
-	// 		// Low1H:              fmt.Sprintf("%f", tokenMarketAnalytics.Price1H),
-	// 		TokenVolume1H:     fmt.Sprintf("%f", tokenMarketAnalytics.TokenVolume1H),
-	// 		BuyTokenVolume1H:  fmt.Sprintf("%f", tokenMarketAnalytics.BuyTokenVolume1H),
-	// 		SellTokenVolume1H: fmt.Sprintf("%f", tokenMarketAnalytics.TokenVolume1H-tokenMarketAnalytics.BuyTokenVolume1H),
-	// 		PriceChange1H:     fmt.Sprintf("%f", tokenMarketAnalytics.PriceChange1H),
-	// 		TxCount1H:         int(tokenMarketAnalytics.TxCount1H),
-	// 		BuyTxCount1H:      int(tokenMarketAnalytics.BuyTxCount1H),
-	// 		SellTxCount1H:     int(tokenMarketAnalytics.TxCount1H) - int(tokenMarketAnalytics.BuyTxCount1H),
-	// 		// NativeVolume1H:     "0",
-	// 		// BuyNativeVolume1H:  "0",
-	// 		// High5M:             fmt.Sprintf("%f", tokenMarketAnalytics.Price5M),
-	// 		// Low5M:              fmt.Sprintf("%f", tokenMarketAnalytics.Price5M),
-	// 		TokenVolume5M:     fmt.Sprintf("%f", tokenMarketAnalytics.TokenVolume5M),
-	// 		BuyTokenVolume5M:  fmt.Sprintf("%f", tokenMarketAnalytics.BuyTokenVolume5M),
-	// 		SellTokenVolume5M: fmt.Sprintf("%f", tokenMarketAnalytics.TokenVolume5M-tokenMarketAnalytics.BuyTokenVolume5M),
-	// 		PriceChange5M:     fmt.Sprintf("%f", tokenMarketAnalytics.PriceChange5M),
-	// 		TxCount5M:         int(tokenMarketAnalytics.TxCount5M),
-	// 		BuyTxCount5M:      int(tokenMarketAnalytics.BuyTxCount5M),
-	// 		SellTxCount5M:     int(tokenMarketAnalytics.TxCount5M) - int(tokenMarketAnalytics.BuyTxCount5M),
-	// 		// NativeVolume5M:     "0",
-	// 		// BuyNativeVolume5M:  "0",
-	// 		// 查询es
-	// 		// LastSwapAt:    tokenInfo.TransactionTime.Unix(),
-	// 		// MarketCap:     tokenInfo.MarketCap.String(),
-	// 	}
-	// 	return response.Success(marketTicker)
-	// }
-
-	redisKey := GetRedisKey(constants.TokenTradeData, tokenAddress)
-
-	var tradeData httpRespone.TradeData
-
-	// 1. 优先从 Redis 获取数据
-	value, err := redis.Get(redisKey)
-	if err != nil {
-		util.Log().Error("Failed to get data from Redis: %v", err)
-	} else if value != "" {
-		if err := redis.Unmarshal(value, &tradeData); err != nil {
-			util.Log().Error("Failed to unmarshal trade data: %v", err)
-		} else {
-			marketTicker = populateMarketTicker(tradeData)
-		}
-	} else {
-		// 2. 如果 Redis 中没有数据，调用 API 获取数据
-		tokenMarketDataRes, err := httpUtil.GetTradeData(tokenAddress, chainType.ToString())
-		if err != nil {
-			util.Log().Error("Failed to get trade data for token %s on chain %s: %v", tokenAddress, chainType.ToString(), err)
-			return response.Err(http.StatusInternalServerError, "failed to get trade data: %w", err)
-		}
-
-		// 3. 如果 API 返回的数据有效，更新 marketTicker 并缓存到 Redis
-		if tokenMarketDataRes != nil {
-			marketTicker = populateMarketTicker(tokenMarketDataRes.Data)
-
-			// 缓存数据到 Redis，设置过期时间为 10 分钟
-			if err := redis.Set(redisKey, tokenMarketDataRes.Data, 20*time.Minute); err != nil {
-				util.Log().Error("Failed to set data in Redis: %v", err)
-			}
-		} else {
-			// 如果 API 返回的数据为空，返回错误
-			return response.Err(http.StatusInternalServerError, "API returned empty data", fmt.Errorf("API returned empty data"))
+	queryJSON, err := query.TokenMarketAnalyticsQuery(tokenAddress, uint8(chainType))
+	if queryJSON == "" {
+		return response.Response{
+			Code: http.StatusNotFound,
+			Msg:  "token not found",
 		}
 	}
+	if err != nil {
+		return response.Response{
+			Code: http.StatusInternalServerError,
+			Msg:  "failed to search token",
+		}
+	}
+
+	result, err := es.SearchTokenTransactionsWithAggs(es.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS, queryJSON, es.UNIQUE_TOKENS)
+	if result == nil {
+		return response.Response{
+			Code: http.StatusNotFound,
+			Msg:  "token not found",
+		}
+	}
+
+	aggregationResult, err := es.UnmarshalAggregationResult(result)
+
+	if err != nil {
+		return response.Response{
+			Code: http.StatusInternalServerError,
+			Msg:  "Failed to get pump rank",
+		}
+	}
+	if len(aggregationResult.Buckets) == 0 {
+		return response.Response{
+			Code: http.StatusOK,
+			Msg:  "No data found",
+		}
+	}
+
+	buyVolume1m := decimal.NewFromInt(0)
+	sellVolume1m := decimal.NewFromInt(0)
+	buyVolume5m := decimal.NewFromInt(0)
+	sellVolume5m := decimal.NewFromInt(0)
+	buyVolume1h := decimal.NewFromInt(0)
+	sellVolume1h := decimal.NewFromInt(0)
+	buyVolume24h := decimal.NewFromInt(0)
+	sellVolume24h := decimal.NewFromInt(0)
+
+	buyCount1m := decimal.NewFromInt(0)
+	sellCount1m := decimal.NewFromInt(0)
+	buyCount5m := decimal.NewFromInt(0)
+	sellCount5m := decimal.NewFromInt(0)
+	buyCount1h := decimal.NewFromInt(0)
+	sellCount1h := decimal.NewFromInt(0)
+	buyCount24h := decimal.NewFromInt(0)
+	sellCount24h := decimal.NewFromInt(0)
+
+	price := float64(0)
+	lastSwapAt := time.Now().Unix()
+
+	price1m := float64(0)
+	price5m := float64(0)
+	price1h := float64(0)
+	price24h := float64(0)
+
+	nativePrice := float64(0)
+	solPrice := float64(0)
+	priceChange1m := float64(0)
+	priceChange5m := float64(0)
+	priceChange1h := float64(0)
+	priceChange24h := float64(0)
+	var decimals int
+
+	for _, bucket := range aggregationResult.Buckets {
+
+		if len(bucket.LastTransactionPrice.Latest.Hits.Hits) > 0 {
+			price = bucket.LastTransactionPrice.Latest.Hits.Hits[0].Source.Price
+			decimals = bucket.LastTransactionPrice.Latest.Hits.Hits[0].Source.Decimals
+			nativePrice = bucket.LastTransactionPrice.Latest.Hits.Hits[0].Source.NativePrice
+			lastSwapAt = bucket.LastTransactionPrice.Latest.Hits.Hits[0].Source.TransactionTime
+
+			// sol 的价格
+			solPrice = price / nativePrice
+			decimals = response.SolDecimals
+
+		} else {
+			decimals = 0
+			price = 0
+			continue
+		}
+		if len(bucket.LastTransaction1mPrice.Latest.Hits.Hits) > 0 {
+			price1m = bucket.LastTransaction1mPrice.Latest.Hits.Hits[0].Source.Price
+		} else {
+			price1m = 0
+		}
+		if len(bucket.LastTransaction5mPrice.Latest.Hits.Hits) > 0 {
+			price5m = bucket.LastTransaction5mPrice.Latest.Hits.Hits[0].Source.Price
+		}
+		if len(bucket.LastTransaction1hPrice.Latest.Hits.Hits) > 0 {
+			price1h = bucket.LastTransaction1hPrice.Latest.Hits.Hits[0].Source.Price
+		}
+		if len(bucket.LastTransaction24hPrice.Latest.Hits.Hits) > 0 {
+			price24h = bucket.LastTransaction24hPrice.Latest.Hits.Hits[0].Source.Price
+		}
+
+		if price != 0 && price1m != 0 {
+			priceChange1m = (price - price1m) / price1m
+		}
+		if price != 0 && price5m != 0 {
+			priceChange5m = (price - price5m) / price5m
+		}
+		if price != 0 && price1h != 0 {
+			priceChange1h = (price - price1h) / price1h
+		}
+		if price != 0 && price24h != 0 {
+			priceChange24h = (price - price24h) / price24h
+		}
+
+		if bucket.BuyVolume1m.TotalVolume.Value > 0 {
+			buyVolume1m = decimal.NewFromFloat(bucket.BuyVolume1m.TotalVolume.Value).Div(decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(decimals)))).Mul(decimal.NewFromFloat(solPrice))
+		}
+		if bucket.SellVolume1m.TotalVolume.Value > 0 {
+			sellVolume1m = decimal.NewFromFloat(bucket.SellVolume1m.TotalVolume.Value).Div(decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(decimals)))).Mul(decimal.NewFromFloat(solPrice))
+		}
+		if bucket.BuyVolume5m.TotalVolume.Value > 0 {
+			buyVolume5m = decimal.NewFromFloat(bucket.BuyVolume5m.TotalVolume.Value).Div(decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(decimals)))).Mul(decimal.NewFromFloat(solPrice))
+		}
+		if bucket.SellVolume5m.TotalVolume.Value > 0 {
+			sellVolume5m = decimal.NewFromFloat(bucket.SellVolume5m.TotalVolume.Value).Div(decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(decimals)))).Mul(decimal.NewFromFloat(solPrice))
+		}
+		if bucket.BuyVolume1h.TotalVolume.Value > 0 {
+			buyVolume1h = decimal.NewFromFloat(bucket.BuyVolume1h.TotalVolume.Value).Div(decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(decimals)))).Mul(decimal.NewFromFloat(solPrice))
+		}
+		if bucket.SellVolume1h.TotalVolume.Value > 0 {
+			sellVolume1h = decimal.NewFromFloat(bucket.SellVolume1h.TotalVolume.Value).Div(decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(decimals)))).Mul(decimal.NewFromFloat(solPrice))
+		}
+		if bucket.BuyVolume24h.TotalVolume.Value > 0 {
+			buyVolume24h = decimal.NewFromFloat(bucket.BuyVolume24h.TotalVolume.Value).Div(decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(decimals)))).Mul(decimal.NewFromFloat(solPrice))
+		}
+		if bucket.SellVolume24h.TotalVolume.Value > 0 {
+			sellVolume24h = decimal.NewFromFloat(bucket.SellVolume24h.TotalVolume.Value).Div(decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(decimals)))).Mul(decimal.NewFromFloat(solPrice))
+		}
+
+		if bucket.BuyCount1m.BuyVolume.Value > 0 {
+			buyCount1m = decimal.NewFromInt(bucket.BuyCount1m.BuyVolume.Value)
+		}
+		if bucket.SellCount1m.SellVolume.Value > 0 {
+			sellCount1m = decimal.NewFromInt(bucket.SellCount1m.SellVolume.Value)
+		}
+		if bucket.BuyCount5m.BuyVolume.Value > 0 {
+			buyCount5m = decimal.NewFromInt(bucket.BuyCount5m.BuyVolume.Value)
+		}
+		if bucket.SellCount5m.SellVolume.Value > 0 {
+			sellCount5m = decimal.NewFromInt(bucket.SellCount5m.SellVolume.Value)
+		}
+		if bucket.BuyCount1h.BuyVolume.Value > 0 {
+			buyCount1h = decimal.NewFromInt(bucket.BuyCount1h.BuyVolume.Value)
+		}
+		if bucket.SellCount1h.SellVolume.Value > 0 {
+			sellCount1h = decimal.NewFromInt(bucket.SellCount1h.SellVolume.Value)
+		}
+		if bucket.BuyCount24h.BuyVolume.Value > 0 {
+			buyCount24h = decimal.NewFromInt(bucket.BuyCount24h.BuyVolume.Value)
+		}
+		if bucket.SellCount24h.SellVolume.Value > 0 {
+			sellCount24h = decimal.NewFromInt(bucket.SellCount24h.SellVolume.Value)
+		}
+	}
+
+	var analytics response.TokenMarketAnalyticsResponse
+
+	analytics.TokenAddress = tokenAddress
+	analytics.BuyVolume1m = buyVolume1m
+	analytics.SellVolume1m = sellVolume1m
+	analytics.BuyVolume5m = buyVolume5m
+	analytics.SellVolume5m = sellVolume5m
+	analytics.BuyVolume1h = buyVolume1h
+	analytics.SellVolume1h = sellVolume1h
+	analytics.BuyVolume24h = buyVolume24h
+	analytics.SellVolume24h = sellVolume24h
+	analytics.Volume1m = analytics.BuyVolume1m.Add(analytics.SellVolume1m)
+	analytics.Volume5m = analytics.BuyVolume5m.Add(analytics.SellVolume5m)
+	analytics.Volume1h = analytics.BuyVolume1h.Add(analytics.SellVolume1h)
+	analytics.Volume24h = analytics.BuyVolume24h.Add(analytics.SellVolume24h)
+	analytics.TotalCount1m = analytics.BuyCount1m.Add(analytics.SellCount1m)
+	analytics.TotalCount5m = analytics.BuyCount5m.Add(analytics.SellCount5m)
+	analytics.TotalCount1h = analytics.BuyCount1h.Add(analytics.SellCount1h)
+	analytics.TotalCount24h = analytics.BuyCount24h.Add(analytics.SellCount24h)
+	analytics.BuyCount1m = buyCount1m
+	analytics.BuyCount5m = buyCount5m
+	analytics.BuyCount1h = buyCount1h
+	analytics.BuyCount24h = buyCount24h
+	analytics.SellCount1m = sellCount1m
+	analytics.SellCount5m = sellCount5m
+	analytics.SellCount1h = sellCount1h
+	analytics.SellCount24h = sellCount24h
+	analytics.PriceChange1m = priceChange1m
+	analytics.PriceChange5m = priceChange5m
+	analytics.PriceChange1h = priceChange1h
+	analytics.PriceChange24h = priceChange24h
+	analytics.CurrentPrice = price
+	analytics.LastSwapAt = lastSwapAt
+	marketTicker := populateMarketTicker(analytics)
 
 	// 4. 返回成功响应
 	return response.Success(marketTicker)
 }
 
 // populateMarketTicker 将 TradeData 转换为 MarketTicker
-func populateMarketTicker(tradeData httpRespone.TradeData) response.MarketTicker {
-
-	priceChange24hPercentStr := FormatPercent(tradeData.PriceChange24hPercent)
-	priceChange1hPercentStr := FormatPercent(tradeData.PriceChange1hPercent)
-	priceChange30mPercentStr := FormatPercent(tradeData.PriceChange30mPercent)
-
+func populateMarketTicker(analytics response.TokenMarketAnalyticsResponse) response.MarketTicker {
+	priceChange24hPercentStr := FormatPercent(analytics.PriceChange24h)
+	priceChange1hPercentStr := FormatPercent(analytics.PriceChange1h)
+	priceChange5mPercentStr := FormatPercent(analytics.PriceChange5m)
+	txCount24H := ConvertDecimalToInt(analytics.TotalCount24h, false)
+	buyCount24h := ConvertDecimalToInt(analytics.BuyCount24h, false)
+	sellCount24h := ConvertDecimalToInt(analytics.SellCount24h, false)
+	txCount1H := ConvertDecimalToInt(analytics.TotalCount1h, false)
+	buyCount1h := ConvertDecimalToInt(analytics.BuyCount1h, false)
+	sellCount1h := ConvertDecimalToInt(analytics.SellCount1h, false)
+	txCount5m := ConvertDecimalToInt(analytics.TotalCount5m, false)
+	buyCount5m := ConvertDecimalToInt(analytics.BuyCount5m, false)
+	sellCount5m := ConvertDecimalToInt(analytics.SellCount5m, false)
 	return response.MarketTicker{
-		TxCount24H:           int(tradeData.Trade24h),
-		BuyTxCount24H:        int(tradeData.Buy24h),
-		SellTxCount24H:       int(tradeData.Sell24h),
-		TokenVolume24H:       fmt.Sprintf("%f", tradeData.Volume24h),
-		TokenVolume24HUsd:    fmt.Sprintf("%f", tradeData.Volume24hUSD),
-		BuyTokenVolume24H:    fmt.Sprintf("%f", tradeData.VolumeBuy24h),
-		BuyTokenVolume24Usd:  fmt.Sprintf("%f", tradeData.VolumeBuy24hUSD),
-		SellTokenVolume24H:   fmt.Sprintf("%f", tradeData.VolumeSell24h),
-		SellTokenVolume24Usd: fmt.Sprintf("%f", tradeData.VolumeSell24hUSD),
+		TxCount24H:           txCount24H,
+		BuyTxCount24H:        buyCount24h,
+		SellTxCount24H:       sellCount24h,
+		TokenVolume24H:       analytics.Volume24h.String(),
+		BuyTokenVolume24H:    analytics.BuyVolume24h.String(),
+		SellTokenVolume24H:   analytics.SellVolume24h.String(),
 		PriceChange24H:       priceChange24hPercentStr,
-		TxCount1H:            int(tradeData.Trade1h),
-		BuyTxCount1H:         int(tradeData.Buy1h),
-		SellTxCount1H:        int(tradeData.Sell1h),
-		TokenVolume1H:        fmt.Sprintf("%f", tradeData.Volume1h),
-		TokenVolume1HUsd:     fmt.Sprintf("%f", tradeData.Volume1hUSD),
-		BuyTokenVolume1H:     fmt.Sprintf("%f", tradeData.VolumeBuy1h),
-		BuyTokenVolume1Usd:   fmt.Sprintf("%f", tradeData.VolumeBuy1hUSD),
-		SellTokenVolume1H:    fmt.Sprintf("%f", tradeData.VolumeSell1h),
-		SellTokenVolume1Usd:  fmt.Sprintf("%f", tradeData.VolumeSell1hUSD),
+		TxCount1H:            txCount1H,
+		BuyTxCount1H:         buyCount1h,
+		SellTxCount1H:        sellCount1h,
+		TokenVolume1H:        analytics.Volume1h.String(),
+		BuyTokenVolume1H:     analytics.BuyVolume1h.String(),
+		SellTokenVolume1H:    analytics.SellVolume1h.String(),
 		PriceChange1H:        priceChange1hPercentStr,
-		TxCount30M:           int(tradeData.Trade30m),
-		BuyTxCount30M:        int(tradeData.Buy30m),
-		SellTxCount30M:       int(tradeData.Sell30m),
-		TokenVolume30M:       fmt.Sprintf("%f", tradeData.Volume30m),
-		TokenVolume30MUsd:    fmt.Sprintf("%f", tradeData.Volume30mUsd),
-		BuyTokenVolume30M:    fmt.Sprintf("%f", tradeData.VolumeBuy30m),
-		BuyTokenVolume30Usd:  fmt.Sprintf("%f", tradeData.VolumeBuy30mUsd),
-		SellTokenVolume30M:   fmt.Sprintf("%f", tradeData.VolumeSell30m),
-		SellTokenVolume30Usd: fmt.Sprintf("%f", tradeData.VolumeSell30mUsd),
-		PriceChange30M:       priceChange30mPercentStr,
-		LastSwapAt:           tradeData.LastTradeUnixTime,
+		TxCount5M:            txCount5m,
+		BuyTxCount5M:         buyCount5m,
+		SellTxCount5M:        sellCount5m,
+		TokenVolume5M:        analytics.Volume5m.String(),
+		BuyTokenVolume5M:     analytics.BuyVolume5m.String(),
+		SellTokenVolume5M:    analytics.SellVolume5m.String(),
+		PriceChange5M:        priceChange5mPercentStr,
+		TokenVolume24HUsd:    decimal.NewFromFloat(analytics.CurrentPrice).Mul(analytics.Volume24h).String(),
+		BuyTokenVolume24Usd:  decimal.NewFromFloat(analytics.CurrentPrice).Mul(analytics.BuyVolume24h).String(),
+		SellTokenVolume24Usd: decimal.NewFromFloat(analytics.CurrentPrice).Mul(analytics.SellVolume24h).String(),
+		TokenVolume1HUsd:     decimal.NewFromFloat(analytics.CurrentPrice).Mul(analytics.Volume1h).String(),
+		BuyTokenVolume1Usd:   decimal.NewFromFloat(analytics.CurrentPrice).Mul(analytics.BuyVolume1h).String(),
+		SellTokenVolume1Usd:  decimal.NewFromFloat(analytics.CurrentPrice).Mul(analytics.SellVolume1h).String(),
+		TokenVolume5MUsd:     decimal.NewFromFloat(analytics.CurrentPrice).Mul(analytics.Volume5m).String(),
+		BuyTokenVolume5Usd:   decimal.NewFromFloat(analytics.CurrentPrice).Mul(analytics.BuyVolume5m).String(),
+		SellTokenVolume5Usd:  decimal.NewFromFloat(analytics.CurrentPrice).Mul(analytics.SellVolume5m).String(),
+		LastSwapAt:           analytics.LastSwapAt,
 	}
 }
 
