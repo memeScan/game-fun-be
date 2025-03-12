@@ -59,12 +59,17 @@ func UnmarshalJSON(jsonStr string, target interface{}) error {
 }
 
 func FormatPercent(value float64) string {
+	// 如果 value 是 0.00，直接返回 "0"
+	if value == 0.00 {
+		return "0"
+	}
+
 	sign := "+"
 	if value < 0 {
 		sign = "-"
 		value = -value // 取绝对值
 	}
-	return fmt.Sprintf("%s%.2f", sign, value) // 去掉百分号
+	return fmt.Sprintf("%s%.2f", sign, value)
 }
 
 // ConvertDecimalToInt 将 decimal.Decimal 转换为 int，支持四舍五入

@@ -1,14 +1,14 @@
 package server
 
 import (
+	"time"
+
 	"game-fun-be/internal/api"
 	"game-fun-be/internal/api/ws"
 	"game-fun-be/internal/clickhouse"
 	"game-fun-be/internal/interceptor"
 	"game-fun-be/internal/model"
 	"game-fun-be/internal/service"
-
-	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -18,7 +18,6 @@ import (
 
 // NewRouter 路由配置
 func NewRouter() *gin.Engine {
-
 	globalService := service.NewGlobalServiceImpl()
 	globalHandler := api.NewGlobalHandler(globalService)
 
@@ -98,6 +97,7 @@ func NewRouter() *gin.Engine {
 		v1.POST("users/:chain_type/login", userHandler.Login)
 		v1.GET("tickers/:chain_type", tickerHandler.Tickers)
 		v1.GET("tickers/:chain_type/detail/:ticker_address", tickerHandler.TickerDetail)
+		v1.GET("tickers/:chain_type/statistic/:ticker_address", tickerHandler.TickerPointsStatistic)
 		v1.GET("tickers/:chain_type/market/:ticker_address", tickerHandler.MarketTicker)
 		v1.GET("tickers/:chain_type/search", tickerHandler.SearchTickers)
 		v1.GET("tickers/:chain_type/swap_histories/:ticker_address", tickerHandler.SwapHistories)
