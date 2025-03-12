@@ -324,6 +324,7 @@ func (s *TickerServiceImpl) MarketTicker(tokenAddress string, chainType model.Ch
 		fmt.Println("Error:", err)
 		timestamp = 0
 	}
+	var priceDecimal decimal.Decimal = decimal.NewFromFloat(price)
 	analytics.Holders = tokenHolders
 	analytics.TokenAddress = tokenAddress
 	analytics.BuyVolume1m = buyVolume1m
@@ -357,7 +358,7 @@ func (s *TickerServiceImpl) MarketTicker(tokenAddress string, chainType model.Ch
 	analytics.TotalCount24h = analytics.BuyCount24h.Add(analytics.SellCount24h)
 	analytics.MarketCap = strconv.FormatFloat(marketCap, 'f', -1, 64)
 	analytics.LastSwapAt = timestamp
-	analytics.Price = price
+	analytics.Price = priceDecimal
 	marketTicker := populateMarketTicker(analytics)
 
 	// 4. 返回成功响应
@@ -417,6 +418,7 @@ func populateMarketTicker(analytics response.TokenMarketAnalyticsResponse) respo
 		MarketCap:            analytics.MarketCap,
 		Holders:              analytics.Holders,
 		Rank:                 1,
+		Price:                analytics.Price,
 	}
 }
 
