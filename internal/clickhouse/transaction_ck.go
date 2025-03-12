@@ -279,7 +279,7 @@ func GetLatestKline(tokenAddress string) (*Kline, error) {
         FROM token_kline_1s_all
         WHERE token_address = ?
             AND timestamp >= now() - INTERVAL 12 HOUR
-        ORDER BY timestamp DESC
+        ORDER BY timestamp DESC, max_transaction_id DESC
         LIMIT 1
     `
 
