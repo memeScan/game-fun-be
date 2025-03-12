@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/olivere/elastic/v7"
@@ -42,6 +43,20 @@ func Elasticsearch() {
 
 	//预创建索引结构
 	ctx := context.Background()
+
+	// 首先检查别名是否已存在
+	aliasExists, aliasErr := AliasExists(ES_INDEX_TOKEN_TRANSACTIONS_ALIAS)
+	if aliasErr != nil {
+		log.Fatalf("Error checking if alias exists: %s", aliasErr)
+	}
+
+	// 如果别名已存在，表示初始化已完成，直接返回
+	if aliasExists {
+		util.Log().Info("Elasticsearch alias '%s' already exists, initialization already completed", ES_INDEX_TOKEN_TRANSACTIONS_ALIAS)
+		return
+	}
+
+	// 继续检查索引是否存在
 	exists, err := ESClient.IndexExists(ES_INDEX_TOKEN_TRANSACTIONS).Do(ctx)
 	if err != nil {
 		log.Fatalf("Error checking if index exists: %s", err)
@@ -55,14 +70,15 @@ func Elasticsearch() {
 			log.Fatalf("Error creating token transactions index: %s", err)
 		}
 
-		// 创建别名指向索引
-		currentIndex := ES_INDEX_TOKEN_TRANSACTIONS
-		if aliasErr := CreateAlias(ES_INDEX_TOKEN_TRANSACTIONS_ALIAS, currentIndex); aliasErr != nil {
-			util.Log().Error("创建指向索引的别名失败: %v", aliasErr)
-		} else {
-			util.Log().Info("成功创建指向索引的别名: %s", ES_INDEX_TOKEN_TRANSACTIONS_ALIAS)
-		}
 		util.Log().Info("Elasticsearch index '%s' created successfully", ES_INDEX_TOKEN_TRANSACTIONS)
+	}
+
+	// 创建别名指向索引
+	currentIndex := ES_INDEX_TOKEN_TRANSACTIONS
+	if aliasErr := CreateAlias(ES_INDEX_TOKEN_TRANSACTIONS_ALIAS, currentIndex); aliasErr != nil {
+		util.Log().Error("创建指向索引的别名失败: %v", aliasErr)
+	} else {
+		util.Log().Info("成功创建指向索引的别名: %s", ES_INDEX_TOKEN_TRANSACTIONS_ALIAS)
 	}
 
 	// ...
@@ -728,4 +744,24 @@ func convertToISODuration(duration string) string {
 		// 如果无法识别，返回原始值
 		return duration
 	}
+}
+
+// AliasExists checks if an alias exists in Elasticsearch
+func AliasExists(aliasName string) (bool, error) {
+	// Get all aliases from Elasticsearch
+	res, err := ESClient.Aliases().Do(context.Background())
+	if err != nil {
+		return false, err
+	}
+
+	// Check if the alias exists in any index
+	for _, indexInfo := range res.Indices {
+		aliases, _ := json.Marshal(indexInfo.Aliases)
+		aliasesStr := string(aliases)
+		if strings.Contains(aliasesStr, fmt.Sprintf(`"%s"`, aliasName)) {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }

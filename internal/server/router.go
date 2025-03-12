@@ -130,7 +130,7 @@ func NewRouter() *gin.Engine {
 	// 健康检查路由
 	r.GET("/health", api.HealthCheck)
 	// 工具路由
-	r.POST("/tools/execute_reindex_job", api.ExecuteReindexJob)
+	r.GET("/tools/execute_reindex_job", api.ExecuteReindexJob)
 	r.POST("/tools/reset_pool_info", api.ResetTokenPoolInfo)
 
 	return r
