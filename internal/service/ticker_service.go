@@ -14,7 +14,6 @@ import (
 	"game-fun-be/internal/request"
 	"game-fun-be/internal/response"
 
-	"encoding/json"
 	"log"
 	"math"
 	"strconv"
@@ -63,144 +62,41 @@ func (s *TickerServiceImpl) Tickers(req request.TickersRequest, chainType model.
 
 func (s *TickerServiceImpl) TickerDetail(tokenAddress string, chainType model.ChainType) response.Response {
 	redisKey := GetRedisKey(constants.TokenInfo, tokenAddress)
-	// 1. 获取代币信息
-	chainTypeStr := chainType.ToString()
+
+	var tickerResponse response.GetTickerResponse
+
 	tokenInfo, err := s.getTokenInfo(tokenAddress, chainType, redisKey)
 	if err != nil {
 		return response.Err(http.StatusInternalServerError, "Failed to get token info", err)
 	}
 
-	// 2. 填充响应数据
-	var tickerResponse response.GetTickerResponse
-	if tokenInfo != nil {
-		tickerResponse.Market = response.Market{
-			MarketID:        tokenInfo.ID,
-			TokenMint:       tokenInfo.TokenAddress,
-			Decimals:        tokenInfo.Decimals,
-			TokenName:       tokenInfo.TokenName,
-			TokenSymbol:     tokenInfo.Symbol,
-			Creator:         tokenInfo.Creator,
-			URI:             tokenInfo.URI,
-			Price:           tokenInfo.Price,
-			CreateTimestamp: tokenInfo.TransactionTime.Unix(),
-			Rank:            0,
-		}
+	tickerResponse.Market = response.Market{
+		MarketID:        tokenInfo.ID,
+		TokenMint:       tokenInfo.TokenAddress,
+		Decimals:        tokenInfo.Decimals,
+		TokenName:       tokenInfo.TokenName,
+		TokenSymbol:     tokenInfo.Symbol,
+		Creator:         tokenInfo.Creator,
+		URI:             tokenInfo.URI,
+		Price:           tokenInfo.Price,
+		CreateTimestamp: tokenInfo.TransactionTime.Unix(),
+		Rank:            0,
+	}
 
-		var extInfo model.ExtInfo
-		if err := UnmarshalJSON(tokenInfo.ExtInfo, &extInfo); err != nil {
-			return response.Err(http.StatusInternalServerError, "Failed to unmarshal ExtInfo", err)
-		}
+	var extInfo model.ExtInfo
+	if err := UnmarshalJSON(tokenInfo.ExtInfo, &extInfo); err != nil {
+		return response.Err(http.StatusInternalServerError, "Failed to unmarshal ExtInfo", err)
+	}
 
-		tickerResponse.MarketMetadata = response.MarketMetadata{
-			ImageURL:    &extInfo.Image,
-			Description: &extInfo.Description,
-			Twitter:     &extInfo.Twitter,
-			Website:     &extInfo.Website,
-			Telegram:    &extInfo.Telegram,
-			Banner:      &extInfo.Banner,
-			Rules:       &extInfo.Rules,
-			Sort:        &extInfo.Sort,
-		}
-	} else {
-		// 查询代币源数据
-		tokenMetaData, err := s.getTokenMetaDataFromAPI(tokenAddress, chainTypeStr)
-		if err != nil {
-			return response.Err(http.StatusInternalServerError, "Failed to get token meta data from API", err)
-		}
-
-		// 查询代币市场信息
-		tokenMarketDataRes, err := GetOrFetchTokenMarketData(tokenAddress, chainTypeStr)
-		if err != nil {
-			return response.Err(http.StatusInternalServerError, "Failed to get token market data", err)
-		}
-
-		tokenCreationInfo, err := httpUtil.GetTokenCreationInfo(tokenAddress, chainTypeStr)
-		if err != nil {
-			return response.Err(http.StatusInternalServerError, "Failed to get token createtion info from API", err)
-		}
-
-		tickerResponse.Market = response.Market{
-			MarketID:        0,
-			Market:          "",
-			TokenMint:       tokenMetaData.Address,
-			NativeVault:     "",
-			TokenVault:      "",
-			Decimals:        tokenMetaData.Decimals,
-			TokenName:       tokenMetaData.Name,
-			TokenSymbol:     tokenMetaData.Symbol,
-			Creator:         tokenCreationInfo.Data.Owner,
-			URI:             tokenMetaData.LogoURI,
-			Price:           decimal.NewFromFloat(tokenMarketDataRes.Data.Price),
-			CreateTimestamp: tokenCreationInfo.Data.BlockUnixTime,
-			Rank:            0,
-		}
-
-		tickerResponse.MarketMetadata = response.MarketMetadata{
-			ImageURL:    &tokenMetaData.LogoURI,
-			Description: tokenMetaData.Extensions.Description,
-			Twitter:     tokenMetaData.Extensions.Twitter,
-			Website:     tokenMetaData.Extensions.Website,
-			Telegram:    tokenMetaData.Extensions.Telegram,
-			Github:      tokenMetaData.Extensions.Github,
-			Banner:      nil,
-			Rules:       nil,
-			Sort:        nil,
-		}
-
-		// 先分配内存，初始化 token 结构体
-		token := &model.TokenInfo{}
-
-		token.TokenAddress = tokenMetaData.Address
-		token.TokenName = tokenMetaData.Name
-		token.Symbol = tokenMetaData.Symbol
-		token.TotalSupply = uint64(tokenMarketDataRes.Data.TotalSupply)
-		token.CirculatingSupply = uint64(tokenMarketDataRes.Data.CirculatingSupply)
-		token.Decimals = tokenMetaData.Decimals
-		token.Creator = tokenCreationInfo.Data.Owner
-		token.ChainType = uint8(chainType)
-		token.CreatedPlatformType = uint8(model.CreatedPlatformTypeGamPump)
-		token.TransactionHash = tokenCreationInfo.Data.TxHash
-		token.URI = tokenMetaData.LogoURI
-		token.TransactionTime = time.Unix(tokenCreationInfo.Data.BlockUnixTime, 0)
-		token.MarketCap = decimal.NewFromFloat(tokenMarketDataRes.Data.MarketCap)
-		token.Price = decimal.NewFromFloat(tokenMarketDataRes.Data.Price)
-		token.CreateTime = time.Now()
-		token.UpdateTime = time.Now()
-
-		// 处理 ExtInfo 结构体
-		var extInfo model.ExtInfo
-		extInfo.Image = tokenMetaData.LogoURI
-		extInfo.Name = tokenMetaData.Name
-		extInfo.Symbol = tokenMetaData.Symbol
-
-		// 确保 Extensions 字段不是 nil，避免解引用空指针
-		if tokenMetaData.Extensions != nil {
-			if tokenMetaData.Extensions.Description != nil {
-				extInfo.Description = *tokenMetaData.Extensions.Description
-			}
-			if tokenMetaData.Extensions.Twitter != nil {
-				extInfo.Twitter = *tokenMetaData.Extensions.Twitter
-			}
-			if tokenMetaData.Extensions.Website != nil {
-				extInfo.Website = *tokenMetaData.Extensions.Website
-			}
-			if tokenMetaData.Extensions.Telegram != nil {
-				extInfo.Telegram = *tokenMetaData.Extensions.Telegram
-			}
-		}
-
-		// 序列化 JSON
-		extInfoJSON, err := json.Marshal(extInfo)
-		if err != nil {
-			util.Log().Error("Failed to marshal ExtInfo to JSON: %v", err)
-			return response.Err(http.StatusInternalServerError, "Failed to marshal ExtInfo to JSON", err)
-		}
-
-		// 赋值 JSON 字符串
-		token.ExtInfo = string(extInfoJSON)
-
-		s.tokenInfoRepo.CreateTokenInfo(token)
-		redis.Set(redisKey, token, 1*time.Minute)
+	tickerResponse.MarketMetadata = response.MarketMetadata{
+		ImageURL:    &extInfo.Image,
+		Description: &extInfo.Description,
+		Twitter:     &extInfo.Twitter,
+		Website:     &extInfo.Website,
+		Telegram:    &extInfo.Telegram,
+		Banner:      &extInfo.Banner,
+		Rules:       &extInfo.Rules,
+		Sort:        &extInfo.Sort,
 	}
 
 	// 3. 获取市场信息
@@ -264,41 +160,28 @@ func (s *TickerServiceImpl) getTokenMetaDataFromAPI(tokenAddress string, chainTy
 }
 
 func (s *TickerServiceImpl) MarketTicker(tokenAddress string, chainType model.ChainType) response.Response {
+	var analytics response.TokenMarketAnalyticsResponse
+
 	queryJSON, err := query.TokenMarketAnalyticsQuery(tokenAddress, uint8(chainType))
-	if queryJSON == "" {
-		return response.Response{
-			Code: http.StatusNotFound,
-			Msg:  "token not found",
-		}
-	}
 	if err != nil {
-		return response.Response{
-			Code: http.StatusInternalServerError,
-			Msg:  "failed to search token",
-		}
+		return response.Err(http.StatusInternalServerError, "Failed to get token creation info from API", err)
 	}
 
 	result, err := es.SearchTokenTransactionsWithAggs(es.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS, queryJSON, es.UNIQUE_TOKENS)
 	if result == nil {
-		return response.Response{
-			Code: http.StatusNotFound,
-			Msg:  "token not found",
-		}
+		return response.Success(analytics)
+	}
+	if err != nil {
+		return response.Err(http.StatusInternalServerError, "Failed to get token transaction data from Elasticsearch", err)
 	}
 
 	aggregationResult, err := es.UnmarshalAggregationResult(result)
-
 	if err != nil {
-		return response.Response{
-			Code: http.StatusInternalServerError,
-			Msg:  "Failed to get pump rank",
-		}
+		return response.Err(http.StatusInternalServerError, "Failed to get token creation info from API", err)
 	}
+
 	if len(aggregationResult.Buckets) == 0 {
-		return response.Response{
-			Code: http.StatusOK,
-			Msg:  "No data found",
-		}
+		return response.Success(analytics)
 	}
 
 	buyVolume1m := decimal.NewFromInt(0)
@@ -352,6 +235,7 @@ func (s *TickerServiceImpl) MarketTicker(tokenAddress string, chainType model.Ch
 			price = 0
 			continue
 		}
+
 		if len(bucket.LastTransaction1mPrice.Latest.Hits.Hits) > 0 {
 			price1m = bucket.LastTransaction1mPrice.Latest.Hits.Hits[0].Source.Price
 		} else {
@@ -437,8 +321,6 @@ func (s *TickerServiceImpl) MarketTicker(tokenAddress string, chainType model.Ch
 		timestamp = 0
 	}
 
-	var analytics response.TokenMarketAnalyticsResponse
-
 	analytics.TokenAddress = tokenAddress
 	analytics.BuyVolume1m = buyVolume1m
 	analytics.SellVolume1m = sellVolume1m
@@ -448,14 +330,6 @@ func (s *TickerServiceImpl) MarketTicker(tokenAddress string, chainType model.Ch
 	analytics.SellVolume1h = sellVolume1h
 	analytics.BuyVolume24h = buyVolume24h
 	analytics.SellVolume24h = sellVolume24h
-	analytics.Volume1m = analytics.BuyVolume1m.Add(analytics.SellVolume1m)
-	analytics.Volume5m = analytics.BuyVolume5m.Add(analytics.SellVolume5m)
-	analytics.Volume1h = analytics.BuyVolume1h.Add(analytics.SellVolume1h)
-	analytics.Volume24h = analytics.BuyVolume24h.Add(analytics.SellVolume24h)
-	analytics.TotalCount1m = analytics.BuyCount1m.Add(analytics.SellCount1m)
-	analytics.TotalCount5m = analytics.BuyCount5m.Add(analytics.SellCount5m)
-	analytics.TotalCount1h = analytics.BuyCount1h.Add(analytics.SellCount1h)
-	analytics.TotalCount24h = analytics.BuyCount24h.Add(analytics.SellCount24h)
 	analytics.BuyCount1m = buyCount1m
 	analytics.BuyCount5m = buyCount5m
 	analytics.BuyCount1h = buyCount1h
@@ -469,6 +343,14 @@ func (s *TickerServiceImpl) MarketTicker(tokenAddress string, chainType model.Ch
 	analytics.PriceChange1h = priceChange1h
 	analytics.PriceChange24h = priceChange24h
 	analytics.CurrentPrice = price
+	analytics.Volume1m = analytics.BuyVolume1m.Add(analytics.SellVolume1m)
+	analytics.Volume5m = analytics.BuyVolume5m.Add(analytics.SellVolume5m)
+	analytics.Volume1h = analytics.BuyVolume1h.Add(analytics.SellVolume1h)
+	analytics.Volume24h = analytics.BuyVolume24h.Add(analytics.SellVolume24h)
+	analytics.TotalCount1m = analytics.BuyCount1m.Add(analytics.SellCount1m)
+	analytics.TotalCount5m = analytics.BuyCount5m.Add(analytics.SellCount5m)
+	analytics.TotalCount1h = analytics.BuyCount1h.Add(analytics.SellCount1h)
+	analytics.TotalCount24h = analytics.BuyCount24h.Add(analytics.SellCount24h)
 	analytics.LastSwapAt = timestamp
 	marketTicker := populateMarketTicker(analytics)
 
@@ -605,6 +487,9 @@ func (s *TickerServiceImpl) TokenDistribution(tokenAddress string, chainType mod
 	}
 	if !tokenHoldersRes.Success {
 		return response.Err(http.StatusInternalServerError, "Failed to fetch token holders data", nil)
+	}
+	if len(tokenHoldersRes.Data.Items) == 0 {
+		return response.Success("No token holders found")
 	}
 	var tokenHolders []response.TokenHolder
 	for _, holder := range tokenHoldersRes.Data.Items {
