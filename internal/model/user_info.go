@@ -3,8 +3,9 @@ package model
 import (
 	"errors"
 	"fmt"
-	"game-fun-be/internal/pkg/util"
 	"time"
+
+	"game-fun-be/internal/pkg/util"
 
 	"gorm.io/gorm"
 )
@@ -112,7 +113,6 @@ func (r *UserInfoRepo) GetOrCreateUserByAddress(address string, chainType uint8,
 	}
 
 	inviteUser, err := r.getInviteUser(inviteCode, chainType)
-
 	if err != nil {
 		util.Log().Error("Failed to find inviter, invalid invitation code: %v", err)
 	}
@@ -156,12 +156,11 @@ func (r *UserInfoRepo) GetUserByInvitationCode(inviteCode string, chainType uint
 }
 
 func (r *UserInfoRepo) GetUsersByInviterId(userID uint64, cursor *uint, limit int) ([]*UserInfo, *uint, bool, error) {
-
 	var users []*UserInfo
 
 	query := DB.Where("inviter_id = ? ", userID).Order("id desc").Limit(limit + 1)
 
-	if cursor != nil {
+	if cursor != nil && *cursor != 0 {
 		query = query.Where("id > ?", *cursor) // Changed from > to < for desc order
 	}
 
@@ -184,7 +183,6 @@ func (r *UserInfoRepo) GetUsersByInviterId(userID uint64, cursor *uint, limit in
 }
 
 func (r *UserInfoRepo) UpdatePointByAddress(address string, point uint64) error {
-
 	// result := DB.Update("available_points", gorm.Expr("available_points + ?", point), "update_time", time.Now()).Where("address = ?", address)
 	// if result.Error != nil {
 

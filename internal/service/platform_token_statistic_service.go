@@ -2,8 +2,12 @@ package service
 
 import (
 	"fmt"
+	"net/http"
+
 	"game-fun-be/internal/model"
 	"game-fun-be/internal/response"
+
+	"github.com/shopspring/decimal"
 )
 
 type PlatformTokenStatisticServiceImpl struct {
@@ -34,11 +38,17 @@ func (s *PlatformTokenStatisticServiceImpl) GetTokenPointsStatistic(tokenAddress
 	if err != nil {
 		return response.DBErr("获取token统计数据失败", err)
 	}
+
+	solUsdPrice, err := getSolPrice()
+	if err != nil {
+		return response.Err(http.StatusInternalServerError, "failed to get sol price", err)
+	}
+
 	platfromTokenStatisticResponse := response.PlatfromTokenStatisticResponse{
 		TokenAddress:  statistics.TokenAddress,
-		FeeAmount:     formatSol(statistics.FeeAmount),
+		FeeAmount:     formatSolUsd(decimal.NewFromInt(int64(statistics.FeeAmount)).Mul(solUsdPrice)),
 		BackAmount:    formatPoints(statistics.BackAmount),
-		BackSolAmount: formatSol(statistics.BackSolAmount),
+		BackSolAmount: formatSolUsd(decimal.NewFromInt(int64(statistics.BackSolAmount)).Mul(solUsdPrice)),
 		BurnAmount:    formatPoints(statistics.BurnAmount),
 		PointsAmount:  formatPoints(statistics.PointsAmount),
 	}

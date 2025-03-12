@@ -62,7 +62,7 @@ func (s UserServiceImpl) Login(req request.LoginRequest, chainType model.ChainTy
 	var loginResponse response.LoginResponse
 	switch chainType {
 	case model.ChainTypeSolana:
-		userInfo, err := s.userInfoRepo.GetOrCreateUserByAddress(req.Address, uint8(chainType), req.InviteCode)
+		loginType, userInfo, err := s.userInfoRepo.GetOrCreateUserByAddress(req.Address, uint8(chainType), req.InviteCode)
 		if err != nil {
 			s.insertAuthLog(req, 0, "failed to get or create user")
 			return response.Err(http.StatusInternalServerError, "Failed to get or create user", err)
@@ -80,7 +80,7 @@ func (s UserServiceImpl) Login(req request.LoginRequest, chainType model.ChainTy
 
 		if exists {
 			expireTime := time.Now().Add(model.TokenExpireDuration)
-			loginResponse = buildLoginResponse(token, expireTime, userInfo)
+			loginResponse = buildLoginResponse(token, expireTime, userInfo, loginType)
 			return response.Success(loginResponse)
 		}
 
@@ -100,7 +100,7 @@ func (s UserServiceImpl) Login(req request.LoginRequest, chainType model.ChainTy
 			return response.Err(http.StatusInternalServerError, "Failed to create authentication log", err)
 		}
 
-		loginResponse = buildLoginResponse(token, expireTime, userInfo)
+		loginResponse = buildLoginResponse(token, expireTime, userInfo, loginType)
 
 	default:
 		s.insertAuthLog(req, 0, fmt.Sprintf("unsupported chain type: %v", chainType))
@@ -133,7 +133,7 @@ func (s UserServiceImpl) insertAuthLog(req request.LoginRequest, status int8, me
 	return s.UserAuthenticationLogRepo.CreateUserAuthenticationLog(authLog)
 }
 
-func buildLoginResponse(token string, expireTime time.Time, userInfo *model.UserInfo) response.LoginResponse {
+func buildLoginResponse(token string, expireTime time.Time, userInfo *model.UserInfo, loginType uint8) response.LoginResponse {
 	return response.LoginResponse{
 		Token:      token,
 		ExpireTime: expireTime,
@@ -143,6 +143,7 @@ func buildLoginResponse(token string, expireTime time.Time, userInfo *model.User
 			TwitterId:       userInfo.TwitterID,
 			TwitterUsername: userInfo.TwitterUsername,
 			InvitationCode:  userInfo.InvitationCode,
+			Type:            loginType,
 		},
 	}
 }

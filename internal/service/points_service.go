@@ -2,10 +2,13 @@ package service
 
 import (
 	"fmt"
-	"game-fun-be/internal/model"
-	"game-fun-be/internal/response"
 	"time"
 
+	"game-fun-be/internal/model"
+	"game-fun-be/internal/pkg/util"
+	"game-fun-be/internal/response"
+
+	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
 
@@ -26,7 +29,6 @@ func NewPointsServiceImpl(userInfoRepo *model.UserInfoRepo, pointRecordsRecord *
  */
 func (s *PointsServiceImpl) Points(userID uint, chainType model.ChainType) response.Response {
 	userInfo, err := s.userInfoRepo.GetUserByUserID(userID)
-
 	if err != nil {
 		return response.DBErr("", err)
 	}
@@ -43,6 +45,7 @@ func (s *PointsServiceImpl) Points(userID uint, chainType model.ChainType) respo
 * get points detail by user id
  */
 func (s *PointsServiceImpl) PointsDetail(userID uint64, cursor *uint, limit int, chainType model.ChainType) response.Response {
+	util.Log().Info("PointsDetail: userID: %d, cursor: %d, limit: %d, chainType: %d", userID, cursor, limit, chainType)
 	records, new_curs, has_more, err := s.pointRecordsRecord.GetPointRecordsByUserIDWithCursor(userID, cursor, limit)
 	if err != nil {
 		return response.DBErr("", err)
@@ -50,18 +53,6 @@ func (s *PointsServiceImpl) PointsDetail(userID uint64, cursor *uint, limit int,
 
 	details := make([]response.PointsDetail, len(records))
 	for i, record := range records {
-		// typeName := ""
-		// switch model.RecordType(record.RecordType) {
-		// case model.Trading:
-		// 	typeName = "trading"
-		// case model.Invite:
-		// 	typeName = "invite"
-		// case model.Activity:
-		// 	typeName = "activity"
-		// case model.BuyG:
-		// 	typeName = "buy_g"
-		// }
-
 		details[i] = response.PointsDetail{
 			Points:    formatPoints(record.PointsChange),
 			Amount:    formatPoints(record.TokenAmount),
@@ -82,9 +73,7 @@ func (s *PointsServiceImpl) PointsDetail(userID uint64, cursor *uint, limit int,
 *
  */
 func (s *PointsServiceImpl) CreatePointRecord(wallet_address string, point uint64, hash string, transactionDetail string, record_type model.RecordType, tokenAmount uint64, nativeTokenAmount uint64, isAddPoints bool, tokenAddress string, amounts map[model.StatisticType]uint64) error {
-
 	return model.DB.Transaction(func(tx *gorm.DB) error {
-
 		user, err := s.userInfoRepo.GetUserByAddress(wallet_address, model.ChainTypeSolana.Uint8())
 		if user == nil || err != nil { // 用户不存在
 			tx.Rollback()
@@ -127,11 +116,9 @@ func (s *PointsServiceImpl) CreatePointRecord(wallet_address string, point uint6
 
 		return nil
 	})
-
 }
 
 func (s *PointsServiceImpl) InvitedPointsDetail(userID uint64, cursor *uint, limit int, chainType model.ChainType) response.Response {
-
 	// 获取用户信息
 	users, new_curs, has_more, err := s.userInfoRepo.GetUsersByInviterId(userID, cursor, limit)
 	if err != nil {
@@ -168,7 +155,6 @@ func (s *PointsServiceImpl) InvitedPointsDetail(userID uint64, cursor *uint, lim
 	}
 
 	pointsTotalResponse := response.InvitedPointsTotalResponse{
-
 		Details: details,
 		HasMore: has_more,
 		Cursor:  new_curs,
@@ -178,7 +164,6 @@ func (s *PointsServiceImpl) InvitedPointsDetail(userID uint64, cursor *uint, lim
 }
 
 func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string, transactionDetail string, tokenAmount uint64, baseTokenAmount uint64, tokenAddress string, amounts map[model.StatisticType]uint64) error {
-
 	return model.DB.Transaction(func(tx *gorm.DB) error {
 
 		_, user, err := s.userInfoRepo.WithTx(tx).GetOrCreateUserByAddress(address, 1, "")
@@ -293,7 +278,6 @@ func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string
 
 		return nil
 	})
-
 }
 
 func (s *PointsServiceImpl) PointsEstimated(userID string, chainType model.ChainType) response.Response {
@@ -308,5 +292,11 @@ func formatPoints(points uint64) string {
 }
 
 func formatSol(points uint64) string {
-	return fmt.Sprintf("%.9f", float64(points)/1e6)
+	return fmt.Sprintf("%.9f", float64(points)/1e9)
+}
+
+func formatSolUsd(solUsdPrice decimal.Decimal) string {
+	price := solUsdPrice.Shift(-9)
+	// Use 6 decimal places instead if needed for crypto prices
+	return price.Round(6).StringFixed(6)
 }

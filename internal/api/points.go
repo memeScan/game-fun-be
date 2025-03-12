@@ -2,9 +2,9 @@ package api
 
 import (
 	"fmt"
-	"game-fun-be/internal/service"
-
 	"strconv"
+
+	"game-fun-be/internal/service"
 
 	"github.com/gin-gonic/gin"
 )
@@ -82,7 +82,11 @@ func (p *PointsHandler) PointsDetail(c *gin.Context) {
 		}
 	}
 
-	limit := c.GetInt("limit")
+	limit, err := strconv.Atoi(c.Query("limit"))
+	if err != nil {
+		fmt.Println("Error converting string to int:", err)
+		return
+	}
 	chainType, errResp := ParseChainTypeWithResponse(c)
 	if errResp != nil {
 		c.JSON(errResp.Code, errResp)
@@ -125,7 +129,11 @@ func (p *PointsHandler) InvitedPointsDetail(c *gin.Context) {
 		}
 	}
 
-	limit := c.GetInt("limit")
+	limit, err := strconv.Atoi(c.Query("limit"))
+	if err != nil {
+		fmt.Println("Error converting string to int:", err)
+		return
+	}
 	chainType, errResp := ParseChainTypeWithResponse(c)
 	if errResp != nil {
 		c.JSON(errResp.Code, errResp)

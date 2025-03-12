@@ -65,11 +65,11 @@ func ConsumePumpfunTopics() error {
 	}
 
 	// Log current configuration values
-	util.Log().Info("Kafka Configuration:\n"+
-		"Batch Size:      %d\n"+
-		"Batch Timeout:   %v\n"+
-		"Brokers:        %s\n"+
-		"Client ID:      %s\n"+
+	util.Log().Info("Kafka Configuration:"+
+		"Batch Size:      %d"+
+		"Batch Timeout:   %v"+
+		"Brokers:        %s"+
+		"Client ID:      %s"+
 		"Group ID:       %s",
 		batchSize,
 		batchTimeout,
@@ -1335,17 +1335,18 @@ func gameOutTradeHandler(message []byte, topic string) error {
 	result := coef_decimal.Mul(fee_decimal).Div(adjustedQuoteReserves.Mul(discount_decimal).Div(adjustedNativeReserves))
 	point := result.IntPart()
 
+	util.Log().Info("tradeMsg: %v", tradeMsg)
 	// fmt.Println("point: %d", point)
 	// util.Log().Info("poolQuotaRe: %d", point)
 	util.Log().Info("Trade variables: "+
-		"\npoolQuoteReserve: %d"+
-		"\npoolBaseReserve: %d"+
-		"\nfeeBaseAmount: %d"+
-		"\nfeeQuoteAmount: %d"+
-		"\nbuybackFeeBaseAmount: %d"+
-		"\nquoteAmount: %d"+
-		"\nbaseAmount: %d"+
-		"\npoint: %d",
+		"poolQuoteReserve: %d"+
+		"poolBaseReserve: %d"+
+		"feeBaseAmount: %d"+
+		"feeQuoteAmount: %d"+
+		"buybackFeeBaseAmount: %d"+
+		"quoteAmount: %d"+
+		"baseAmount: %d"+
+		"point: %d",
 		poolQuoteReserve,
 		poolBaseReserve,
 		feeBaseAmount,

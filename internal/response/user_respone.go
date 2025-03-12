@@ -20,4 +20,5 @@ type UserInfo struct {
 	TwitterId       string `json:"twitter_id"`
 	TwitterUsername string `json:"twitter_username"`
 	InvitationCode  string `json:"invite_code" example:""`
+	Type            uint8  `json:"type"`
 }
