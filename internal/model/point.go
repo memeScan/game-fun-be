@@ -48,7 +48,6 @@ func (r *PointRecordsRepo) CreatePointRecord(record *PointRecords) error {
 // GetPointRecordsByUserIDWithCursor retrieves point records for a user with cursor-based pagination.
 // Returns records, next cursor (if any), hasMore flag, and error
 func (r *PointRecordsRepo) GetPointRecordsByUserIDWithCursor(userID uint64, cursor *uint, limit int) ([]*PointRecords, *uint, bool, error) {
-
 	var records []*PointRecords
 	query := DB.Where("user_id = ?", userID).Order("id desc").Limit(limit + 1) // Request one extra record
 
