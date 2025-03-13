@@ -36,7 +36,7 @@ type ProxyTransaction struct {
 // InsertTransaction 插入单条交易数据
 func InsertProxyTransaction(tx *ProxyTransaction) error {
 	query := `
-        INSERT INTO proxy_transaction_ck (
+        INSERT INTO proxy_transaction_ck_all (
             transaction_hash, chain_type, proxy_type, user_address, token_address,
             pool_address, base_token_amount, quote_token_amount, base_token_reserve_amount,
             quote_token_reserve_amount, decimals, base_token_price, quote_token_price,
