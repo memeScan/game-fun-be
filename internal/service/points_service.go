@@ -80,17 +80,17 @@ func (s *PointsServiceImpl) CreatePointRecord(wallet_address string, point uint6
 			return err // 400 Bad Request
 		}
 		points := user.AvailablePoints
-		if isAddPoints {
-			points += point
-		} else {
-			points -= point
-		}
+		// if isAddPoints {
+		// 	points += point
+		// } else {
+		// 	points -= point
+		// }
 
 		// 创建积分记录
 		insertErr := s.pointRecordsRecord.CreatePointRecord(&model.PointRecords{
 			UserID:            user.ID,
 			PointsChange:      point, // 积分变动
-			PointsBalance:     points,
+			PointsBalance:     points - point,
 			RecordType:        int8(record_type), // 积分类型
 			TransactionHash:   hash,
 			TransactionDetail: transactionDetail,
@@ -165,7 +165,6 @@ func (s *PointsServiceImpl) InvitedPointsDetail(userID uint64, cursor *uint, lim
 
 func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string, transactionDetail string, tokenAmount uint64, baseTokenAmount uint64, tokenAddress string, amounts map[model.StatisticType]uint64) error {
 	return model.DB.Transaction(func(tx *gorm.DB) error {
-
 		_, user, err := s.userInfoRepo.WithTx(tx).GetOrCreateUserByAddress(address, 1, "")
 		if err != nil {
 			return err // 400 Bad Request
@@ -218,7 +217,7 @@ func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string
 			insertErr := s.pointRecordsRecord.WithTx(tx).CreatePointRecord(&model.PointRecords{
 				UserID:        inviter.ID,
 				PointsChange:  invitePoints, // 积分变动
-				PointsBalance: user.AvailablePoints + invitePoints,
+				PointsBalance: inviter.AvailablePoints + invitePoints,
 				RecordType:    int8(model.Invite), // 积分类型
 				InviteeID:     user.ID,
 				CreateTime:    time.Now(),
@@ -232,7 +231,7 @@ func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string
 
 			userPoints := make(map[model.PointType]uint64)
 			userPoints[model.AvailablePoints] = invitePoints
-			userPoints[model.TradingPoints] = invitePoints
+			userPoints[model.InvitePoints] = invitePoints
 
 			// 更新用户积分
 			if err := s.userInfoRepo.WithTx(tx).IncrementMultiplePointsAndUpdateTime(inviter.Address, userPoints); err != nil {
@@ -255,7 +254,7 @@ func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string
 			insertErr := s.pointRecordsRecord.WithTx(tx).CreatePointRecord(&model.PointRecords{
 				UserID:        parentInviter.ID,
 				PointsChange:  parentInviterPoints, // 积分变动
-				PointsBalance: user.AvailablePoints + parentInviterPoints,
+				PointsBalance: parentInviter.AvailablePoints + parentInviterPoints,
 				RecordType:    int8(model.Invite), // 积分类型
 				InviteeID:     user.InviterID,
 				CreateTime:    time.Now(),
