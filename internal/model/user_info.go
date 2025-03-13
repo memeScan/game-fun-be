@@ -82,6 +82,8 @@ func (r *UserInfoRepo) GetOrCreateUserByAddress(address string, chainType uint8,
 			// 检查邀请人是否是自己
 			if inviteUser.Address == address {
 				util.Log().Error(fmt.Sprint("cannot invite yourself"))
+			} else if inviteUser.InviterID == user.ID {
+				util.Log().Error("circular invitation detected: user cannot invite their inviter")
 			} else {
 				loginType = r.setInviterInfo(&user, inviteUser)
 				needSave = true // 邀请人信息变化，需要保存
