@@ -61,7 +61,7 @@ func optimizeKafkaConfig() *sarama.Config {
 	// 从环境变量获取 Client ID，如果没有设置则使用默认值
 	clientID := os.Getenv("KAFKA_CLIENT_ID")
 	if clientID == "" {
-		clientID = "my-token-ai-consumer-1"
+		clientID = "game-fun-consumer-1"
 	}
 	config.ClientID = clientID
 
