@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"os"
 	"time"
 
 	"game-fun-be/internal/model"
@@ -26,7 +27,7 @@ type PointCalculate struct {
 	TransactionTime  time.Time `json:"transaction_time"`
 	QuotaTotalAmount uint64    `json:"quota_total_amount"`
 	VaultAmount      uint64    `json:"vault_amount"`
-	OnlineDay        int       `json:"online_day"`
+	OnlineDayCount   int       `json:"online_day"`
 }
 
 type TransactionAmountDetail struct {
@@ -42,7 +43,6 @@ type TransactionAmountDetailByTime struct {
 	TransactionAmountDetails []TransactionAmountDetail
 	StartTime                time.Time
 	EndTime                  time.Time
-	OnlineDay                int
 }
 
 func NewPointsServiceImpl(userInfoRepo *model.UserInfoRepo, pointRecordsRecord *model.PointRecordsRepo, platformTokenStatisticRepo *model.PlatformTokenStatisticRepo) *PointsServiceImpl {
@@ -200,19 +200,26 @@ func (s *PointsServiceImpl) SavePointsEveryTimeBucket(transactionAmountDetailByT
 		records := make([]*model.PointRecords, len(transactionAmountDetailByTime.TransactionAmountDetails))
 		userPoints := uint64(0)
 		for i, detail := range transactionAmountDetailByTime.TransactionAmountDetails {
+
+			point, onlineDayCount, err := s.CalculatePont(detail.QuotaAmount, transactionAmountDetailByTime.QuotaTotalAmount)
+			if err != nil {
+				return err
+			}
+
 			pointCalculate := PointCalculate{
 				StartTime:        transactionAmountDetailByTime.StartTime,
 				EndTime:          transactionAmountDetailByTime.EndTime,
 				TransactionTime:  detail.TransactionTime,
 				QuotaTotalAmount: detail.QuotaAmount,
 				VaultAmount:      transactionAmountDetailByTime.VaultAmount,
+				OnlineDayCount:   onlineDayCount,
 			}
 			data, err := json.Marshal(pointCalculate)
 			if err != nil {
 				data = []byte{}
 			}
 
-			point := math.Pow(0.995/1.003, float64(transactionAmountDetailByTime.OnlineDay)) * float64(detail.QuotaAmount) / float64(transactionAmountDetailByTime.QuotaTotalAmount*7220)
+			// point := math.Pow(0.995/1.003, float64(transactionAmountDetailByTime.onlineDayCountonlineDayCount)) * float64(detail.QuotaAmount) / float64(transactionAmountDetailByTime.QuotaTotalAmount*7220)
 			records[i] = &model.PointRecords{
 				UserID:            user.ID,
 				PointsChange:      uint64(point),
@@ -318,6 +325,24 @@ func (s *PointsServiceImpl) SavePointsEveryTimeBucket(transactionAmountDetailByT
 
 		return nil
 	})
+}
+
+func (s *PointsServiceImpl) CalculatePont(quotaAmount uint64, quotaTotalAmount uint64) (uint64, int, error) {
+	onlineDate := os.Getenv("ONLINE_DATE")
+	// 计算上线天数
+	onlineDayCount := 1
+	if onlineDate != "" {
+		if onlineTime, err := time.Parse("20060102", onlineDate); err == nil {
+			onlineDayCount = int(time.Now().Sub(onlineTime).Hours()/24) + 1
+			if onlineDayCount < 1 {
+				onlineDayCount = 1
+			}
+		} else {
+			util.Log().Error("Failed to parse ONLINE_DATE: %v", err)
+		}
+	}
+	point := math.Pow(0.995/1.003, float64(onlineDayCount)) * float64(quotaAmount) / float64(quotaTotalAmount*7220)
+	return uint64(point), onlineDayCount, nil
 }
 
 func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string, transactionDetail string, tokenAmount uint64, baseTokenAmount uint64, tokenAddress string, amounts map[model.StatisticType]uint64) error {

@@ -2,9 +2,9 @@ package services_test
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
+	"game-fun-be/internal/cron"
 	"game-fun-be/internal/model"
 	"game-fun-be/internal/response"
 	"game-fun-be/internal/service"
@@ -98,14 +98,17 @@ func TestPointsService_PointsDetail(t *testing.T) {
 }
 
 func TestPointsService_PointsSave(t *testing.T) {
-	globalService := service.NewGlobalServiceImpl()
+	// globalService := service.NewGlobalServiceImpl()
 
 	t.Run("save points success", func(t *testing.T) {
 		// Test input
-		vaultAddress := os.Getenv("VAULT_ADDRESS")
-		tokenAddress := os.Getenv("TOKEN_ADDRESS")
-		resp := globalService.TickerBalance(vaultAddress, tokenAddress, model.ChainTypeSolana)
-		fmt.Println(resp)
+		// vaultAddress := os.Getenv("VAULT_ADDRESS")
+		// tokenAddress := os.Getenv("TOKEN_ADDRESS")
+		// resp := globalService.TickerBalance(vaultAddress, tokenAddress, model.ChainTypeSolana)
+		// t.Logf("resp: %v", resp)
+		// util.Log().Info("resp: %v", resp)
+		// fmt.Println(resp)
+		cron.ExecutePointJob()
 	})
 }
 

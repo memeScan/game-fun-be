@@ -1394,26 +1394,26 @@ func gameOutTradeHandler(message []byte, topic string) error {
 		return fmt.Errorf("failed to insert proxy transaction: %v", err)
 	}
 
-	pointRecordsRepo := model.NewPointRecordsRepo()
-	userInfoRepo := model.NewUserInfoRepo()
-	PlatformTokenStatisticRepo := model.NewPlatformTokenStatisticRepo()
-	pointsService := service.NewPointsServiceImpl(userInfoRepo, pointRecordsRepo, PlatformTokenStatisticRepo)
+	// pointRecordsRepo := model.NewPointRecordsRepo()
+	// userInfoRepo := model.NewUserInfoRepo()
+	// PlatformTokenStatisticRepo := model.NewPlatformTokenStatisticRepo()
+	// pointsService := service.NewPointsServiceImpl(userInfoRepo, pointRecordsRepo, PlatformTokenStatisticRepo)
 
-	amounts := map[model.StatisticType]uint64{
-		model.FeeAmount:     feeBaseAmount,
-		model.BackAmount:    feeQuoteAmount,
-		model.BackSolAmount: buybackFeeBaseAmount,
-	}
+	// amounts := map[model.StatisticType]uint64{
+	// 	model.FeeAmount:     feeBaseAmount,
+	// 	model.BackAmount:    feeQuoteAmount,
+	// 	model.BackSolAmount: buybackFeeBaseAmount,
+	// }
 
-	if tradeMsg.IsBurn {
-		amounts[model.BurnAmount] = feeQuoteAmount
-	}
+	// if tradeMsg.IsBurn {
+	// 	amounts[model.BurnAmount] = feeQuoteAmount
+	// }
 
-	err := pointsService.PointsSave(tradeMsg.User, uint64(point), tradeMsg.Signature, string(message), quoteAmount, baseAmount, tradeMsg.QuoteToken, amounts)
-	if err != nil {
-		util.Log().Error("Failed to save points: %v", err)
-		return fmt.Errorf("failed to save points: %v", err)
-	}
+	// err := pointsService.PointsSave(tradeMsg.User, uint64(point), tradeMsg.Signature, string(message), quoteAmount, baseAmount, tradeMsg.QuoteToken, amounts)
+	// if err != nil {
+	// 	util.Log().Error("Failed to save points: %v", err)
+	// 	return fmt.Errorf("failed to save points: %v", err)
+	// }
 
 	return nil
 }
