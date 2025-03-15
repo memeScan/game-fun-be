@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"game-fun-be/internal/clickhouse"
+	"game-fun-be/internal/conf"
 	"game-fun-be/internal/constants"
 	"game-fun-be/internal/es"
 	"game-fun-be/internal/es/query"
@@ -155,8 +156,12 @@ func GetMarketData(tokenAddress, chainType string) (*httpRespone.TradeDataRespon
 		return nil, fmt.Errorf("trade data is empty")
 	}
 
+	validDuration := 3 * time.Minute
+	if conf.IsTest() {
+		validDuration = 24 * time.Hour
+	}
 	// 将交易数据存储到 Redis
-	err = redis.Set(marketDataKey, tokenTradeData, 3*time.Minute)
+	err = redis.Set(marketDataKey, tokenTradeData, validDuration)
 	if err != nil {
 		util.Log().Error(fmt.Sprintf("Failed to set trade data to Redis: %v", err))
 	}
@@ -529,7 +534,12 @@ func (s *TickerServiceImpl) TokenDistribution(tokenAddress string, chainType mod
 	}
 	tokenDistributionResponse.TokenHolders = tokenHolders
 
-	if err := redis.Set(redisKey, tokenDistributionResponse, 20*time.Minute); err != nil {
+	validDuration := 20 * time.Minute
+	if conf.IsTest() {
+		validDuration = 24 * time.Hour
+	}
+
+	if err := redis.Set(redisKey, tokenDistributionResponse, validDuration); err != nil {
 		log.Printf("Failed to set data in Redis: %v\n", err)
 	}
 	return response.Success(tokenDistributionResponse)
