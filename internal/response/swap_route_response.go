@@ -11,6 +11,8 @@ type SwapRouteData struct {
 	AmountOutUSD decimal.Decimal `json:"amountOutUSD"`
 	PlatformType string          `form:"platform_type" binding:"required,oneof=pump raydium game g_external g_points" example:"pump"`
 	JitoOrderID  interface{}     `json:"jito_order_id"`
+	// 预计获得积分
+	EstimatedPoints decimal.Decimal `json:"estimated_points"` // 预计获得积分
 }
 
 type Quote struct {

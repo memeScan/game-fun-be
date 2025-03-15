@@ -17,4 +17,5 @@ type SwapRouteRequest struct {
 	SwapType        string          `form:"swap_type" binding:"omitempty,oneof=buy sell"`
 	Points          float64         `form:"points" binding:"omitempty" example:"200000000"`
 	PlatformType    string          `form:"platform_type" binding:"required,oneof=pump raydium game g_external g_points" example:"pump"`
+	UserBlance      decimal.Decimal `form:"user_blance" binding:"required" example:"100000000"`
 }

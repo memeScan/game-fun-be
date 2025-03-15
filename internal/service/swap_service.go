@@ -127,6 +127,38 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 	return ConstructSwapRouteResponse(req, swapTransaction, uint8(inDecimals), uint8(outDecimals), outAmount, inAmountUSD, outAmountUSD, startTime, jitoOrderId)
 }
 
+// 添加余额检测接口
+func CheckBalanceSufficient(chainType string, swaType string, PlatformType string, tokneInAmount decimal.Decimal, tokneBlanceAmount decimal.Decimal, nativeTokenPrice decimal.Decimal, nativeTokenDecimals uint8, priorityFee decimal.Decimal) bool {
+	needPayAmount := decimal.NewFromInt(0)
+	if PlatformType == "g_external" {
+		if swaType == "buy" {
+			multiplier := decimal.NewFromFloat(0.005)
+			powerOfTen := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(nativeTokenDecimals)))
+			needPayAmount := multiplier.Mul(powerOfTen)
+			needPayAmount = needPayAmount.Add(priorityFee).Add(tokneInAmount)
+		} else if swaType == "sell" {
+			multiplier := decimal.NewFromFloat(0.003)
+			nativeTokenDecimalsDecimal := decimal.NewFromInt(int64(nativeTokenDecimals))
+			needPayAmount = multiplier.Mul(nativeTokenDecimalsDecimal).Add(priorityFee)
+		}
+	} else if PlatformType == "g_points" {
+		// //
+		// tokneAmount
+
+	}
+
+	// 这里需要实现具体的余额检测逻辑
+
+	// 例如查询用户余额并与amount进行比较
+
+	// 返回true表示余额充足，false表示不足
+
+	if tokneBlanceAmount.LessThan(needPayAmount) {
+		return false
+	}
+	return true
+}
+
 // Helper function to handle error responses
 func (s *SwapServiceImpl) handleErrorResponse(errResp *response.Response) response.Response {
 	return response.Err(errResp.Code, errResp.Msg, errors.New(errResp.Error))
@@ -405,10 +437,11 @@ func ConstructSwapRouteResponse(req request.SwapRouteRequest, swapResponse *http
 				// LastValidBlockHeight: swapResponse.Data.,
 				// RecentBlockhash: swapResponse.Data.SwapTransaction.Message.RecentBlockhash,
 			},
-			PlatformType: req.PlatformType,
-			AmountInUSD:  amountInUSD,
-			AmountOutUSD: amountOutUSD,
-			JitoOrderID:  jitoOrderId,
+			PlatformType:    req.PlatformType,
+			AmountInUSD:     amountInUSD,
+			AmountOutUSD:    amountOutUSD,
+			JitoOrderID:     jitoOrderId,
+			EstimatedPoints: decimal.NewFromInt(200),
 		},
 	}
 	return swapRouteResponse
