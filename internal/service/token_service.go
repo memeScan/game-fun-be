@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"game-fun-be/internal/conf"
 	"game-fun-be/internal/constants"
 	"game-fun-be/internal/es"
 	"game-fun-be/internal/model"
@@ -347,7 +348,7 @@ func (service *TokenInfoService) CreateTokenInfoWithES(info *model.TokenInfo) er
 
 	// 3. 索引到 ES
 	_, err = es.ESClient.Index().
-		Index(es.ES_INDEX_TOKEN_INFO).
+		Index(conf.ES_INDEX_TOKEN_INFO).
 		Id(fmt.Sprintf("%s_%d", info.TokenAddress, info.ChainType)). // 使用 token_address_chainType 作为文档 ID
 		BodyJson(doc).
 		Do(context.Background())
