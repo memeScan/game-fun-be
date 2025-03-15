@@ -66,6 +66,35 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 		return s.handleErrorResponse(errResp)
 	}
 
+	isCanBuyflag := true
+	pointsString := ""
+	if req.PlatformType == "g_external" {
+		isCanBuyflag = CheckBalanceSufficient(chainType, req.SwapType, req.PlatformType, req.InAmount, req.UserBlance, model.SOL_DECIMALS, req.PriorityFee)
+	} else if req.PlatformType == "g_points" {
+		pointsDecimal := decimal.NewFromFloat(req.Points) // 用户输入的 Points（代币数量）
+		// 计算 10^decimals，确保计算精度
+		pointsDecimalsFactor := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(tokenDetail.Decimals)))
+		// 去掉小数点部分，取整
+		pointsWithoutDecimal := pointsDecimal.Mul(pointsDecimalsFactor).Floor()
+		// 将去掉小数点后的结果转换为字符串
+		pointsString = pointsWithoutDecimal.String()
+		// 计算代币的 USD 价值（代币数量 * 代币单价 * 10^精度）
+		tokenUsd := pointsDecimal.Mul(tokenDetail.Price)
+		// 计算需要多少 SOL（代币 USD 价值 / SOL 的 USD 价值）
+		req.InAmount = tokenUsd.Div(solPriceUSD)
+		req.InAmount = req.InAmount.Div(decimal.NewFromInt(2))
+		isCanBuyflag = CheckBalanceSufficient(chainType, req.SwapType, req.PlatformType, req.InAmount, req.UserBlance, model.SOL_DECIMALS, req.PriorityFee)
+	}
+
+	if !isCanBuyflag {
+		return response.Response{
+			Code:  200,
+			Data:  "",
+			Msg:   "Insufficient reserved balance in the wallet. Transaction initiation is not possible.",
+			Error: "",
+		}
+	}
+
 	// Create map for platform-specific functions
 	platformHandlers := map[string]func() (*httpRespone.SwapTransactionResponse, error){
 		"pump": func() (*httpRespone.SwapTransactionResponse, error) {
@@ -81,20 +110,9 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 			return s.getGameFunGInstruction(swapStruct)
 		},
 		"g_points": func() (*httpRespone.SwapTransactionResponse, error) {
-			pointsDecimal := decimal.NewFromFloat(req.Points) // 用户输入的 Points（代币数量）
-			// 计算 10^decimals，确保计算精度
-			pointsDecimalsFactor := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(tokenDetail.Decimals)))
-			// 去掉小数点部分，取整
-			pointsWithoutDecimal := pointsDecimal.Mul(pointsDecimalsFactor).Floor()
-			// 将去掉小数点后的结果转换为字符串
-			pointsString := pointsWithoutDecimal.String()
-			// 计算代币的 USD 价值（代币数量 * 代币单价 * 10^精度）
-			tokenUsd := pointsDecimal.Mul(tokenDetail.Price)
-			// 计算需要多少 SOL（代币 USD 价值 / SOL 的 USD 价值）
-			req.InAmount = tokenUsd.Div(solPriceUSD)
-			req.InAmount = req.InAmount.Div(decimal.NewFromInt(2))
-
 			swapStruct := s.buildBuyGWithPointsStruct(req, pointsString)
+			// 预计能获得多少积分
+
 			return s.getGetBuyGWithPointsInstruction(req.Points, swapStruct, startTime)
 		},
 	}
@@ -128,31 +146,26 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 }
 
 // 添加余额检测接口
-func CheckBalanceSufficient(chainType string, swaType string, PlatformType string, tokneInAmount decimal.Decimal, tokneBlanceAmount decimal.Decimal, nativeTokenPrice decimal.Decimal, nativeTokenDecimals uint8, priorityFee decimal.Decimal) bool {
+func CheckBalanceSufficient(chainType uint8, swaType string, PlatformType string, tokneInAmount decimal.Decimal, tokneBlanceAmount decimal.Decimal, nativeTokenDecimals uint8, priorityFee float64) bool {
 	needPayAmount := decimal.NewFromInt(0)
+	priorityFeeDecimal := decimal.NewFromFloat(priorityFee)
+	powerOfTen := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(nativeTokenDecimals)))
+	scaledPriorityFee := priorityFeeDecimal.Mul(powerOfTen)
 	if PlatformType == "g_external" {
 		if swaType == "buy" {
 			multiplier := decimal.NewFromFloat(0.005)
 			powerOfTen := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(nativeTokenDecimals)))
-			needPayAmount := multiplier.Mul(powerOfTen)
-			needPayAmount = needPayAmount.Add(priorityFee).Add(tokneInAmount)
+			needPayAmount = multiplier.Mul(powerOfTen).Add(scaledPriorityFee).Add(tokneInAmount)
 		} else if swaType == "sell" {
 			multiplier := decimal.NewFromFloat(0.003)
 			nativeTokenDecimalsDecimal := decimal.NewFromInt(int64(nativeTokenDecimals))
-			needPayAmount = multiplier.Mul(nativeTokenDecimalsDecimal).Add(priorityFee)
+			needPayAmount = multiplier.Mul(nativeTokenDecimalsDecimal).Add(scaledPriorityFee)
 		}
 	} else if PlatformType == "g_points" {
-		// //
-		// tokneAmount
-
+		multiplier := decimal.NewFromFloat(0.0025)
+		powerOfTen := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(nativeTokenDecimals)))
+		needPayAmount = multiplier.Mul(powerOfTen).Add(scaledPriorityFee).Add(tokneInAmount)
 	}
-
-	// 这里需要实现具体的余额检测逻辑
-
-	// 例如查询用户余额并与amount进行比较
-
-	// 返回true表示余额充足，false表示不足
-
 	if tokneBlanceAmount.LessThan(needPayAmount) {
 		return false
 	}
