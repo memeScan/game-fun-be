@@ -45,6 +45,11 @@ func (r *PointRecordsRepo) CreatePointRecord(record *PointRecords) error {
 	return DB.Create(record).Error
 }
 
+// CreatePointRecords 创建积分记录
+func (r *PointRecordsRepo) CreatePointRecords(records []*PointRecords) error {
+	return DB.Create(records).Error
+}
+
 // GetPointRecordsByUserIDWithCursor retrieves point records for a user with cursor-based pagination.
 // Returns records, next cursor (if any), hasMore flag, and error
 func (r *PointRecordsRepo) GetPointRecordsByUserIDWithCursor(userID uint64, cursor *uint, limit int) ([]*PointRecords, *uint, bool, error) {

@@ -22,7 +22,7 @@ func init() {
 	// Load configurations
 	confInit()
 	// Initialize router
-	s = server.NewRouter()
+	s = server.NewRouter(nil)
 }
 
 // TestSetup initializes the test environment

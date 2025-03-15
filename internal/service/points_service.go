@@ -1,7 +1,9 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
+	"math"
 	"time"
 
 	"game-fun-be/internal/model"
@@ -16,6 +18,31 @@ type PointsServiceImpl struct {
 	userInfoRepo               *model.UserInfoRepo
 	pointRecordsRecord         *model.PointRecordsRepo
 	platformTokenStatisticRepo *model.PlatformTokenStatisticRepo
+}
+
+type PointCalculate struct {
+	StartTime        time.Time `json:"start_time"`
+	EndTime          time.Time `json:"end_time"`
+	TransactionTime  time.Time `json:"transaction_time"`
+	QuotaTotalAmount uint64    `json:"quota_total_amount"`
+	VaultAmount      uint64    `json:"vault_amount"`
+	OnlineDay        int       `json:"online_day"`
+}
+
+type TransactionAmountDetail struct {
+	QuotaAmount     uint64
+	TransactionHash string
+	TransactionTime time.Time
+}
+
+type TransactionAmountDetailByTime struct {
+	UserAddress              string
+	QuotaTotalAmount         uint64
+	VaultAmount              uint64
+	TransactionAmountDetails []TransactionAmountDetail
+	StartTime                time.Time
+	EndTime                  time.Time
+	OnlineDay                int
 }
 
 func NewPointsServiceImpl(userInfoRepo *model.UserInfoRepo, pointRecordsRecord *model.PointRecordsRepo, platformTokenStatisticRepo *model.PlatformTokenStatisticRepo) *PointsServiceImpl {
@@ -161,6 +188,136 @@ func (s *PointsServiceImpl) InvitedPointsDetail(userID uint64, cursor *uint, lim
 	}
 
 	return response.Success(pointsTotalResponse)
+}
+
+func (s *PointsServiceImpl) SavePointsEveryTimeBucket(transactionAmountDetailByTime TransactionAmountDetailByTime) error {
+	return model.DB.Transaction(func(tx *gorm.DB) error {
+		_, user, err := s.userInfoRepo.WithTx(tx).GetOrCreateUserByAddress(transactionAmountDetailByTime.UserAddress, 1, "")
+		if err != nil {
+			return err // 400 Bad Request
+		}
+
+		records := make([]*model.PointRecords, len(transactionAmountDetailByTime.TransactionAmountDetails))
+		userPoints := uint64(0)
+		for i, detail := range transactionAmountDetailByTime.TransactionAmountDetails {
+			pointCalculate := PointCalculate{
+				StartTime:        transactionAmountDetailByTime.StartTime,
+				EndTime:          transactionAmountDetailByTime.EndTime,
+				TransactionTime:  detail.TransactionTime,
+				QuotaTotalAmount: detail.QuotaAmount,
+				VaultAmount:      transactionAmountDetailByTime.VaultAmount,
+			}
+			data, err := json.Marshal(pointCalculate)
+			if err != nil {
+				data = []byte{}
+			}
+
+			point := math.Pow(0.995/1.003, float64(transactionAmountDetailByTime.OnlineDay)) * float64(detail.QuotaAmount) / float64(transactionAmountDetailByTime.QuotaTotalAmount*7220)
+			records[i] = &model.PointRecords{
+				UserID:            user.ID,
+				PointsChange:      uint64(point),
+				RecordType:        int8(model.Trading),
+				TransactionHash:   detail.TransactionHash,
+				TransactionDetail: string(data),
+				CreateTime:        time.Now(),
+				UpdateTime:        time.Now(),
+			}
+			userPoints += uint64(point)
+		}
+		// 创建积分记录
+		insertErr := s.pointRecordsRecord.WithTx(tx).CreatePointRecords(records)
+		if insertErr != nil {
+			return insertErr
+		}
+
+		userPointsMap := make(map[model.PointType]uint64)
+		userPointsMap[model.AvailablePoints] = userPoints
+		userPointsMap[model.TradingPoints] = userPoints
+
+		// 更新用户积分
+		if err := s.userInfoRepo.WithTx(tx).IncrementMultiplePointsAndUpdateTime(transactionAmountDetailByTime.UserAddress, userPointsMap); err != nil {
+			tx.Rollback()
+			return err
+		}
+
+		// // 更新统计数据
+		// if err := s.platformTokenStatisticRepo.WithTx(tx).IncrementStatisticsAndUpdateTime(transactionAmountDetailByTime.TokenAddress, transactionAmountDetailByTime.Amounts); err != nil {
+		// 	tx.Rollback()
+		// 	return err
+		// }
+
+		if user.InviterID != 0 {
+
+			inviter, err := s.userInfoRepo.WithTx(tx).GetUserByUserID(user.InviterID)
+			if inviter == nil || err != nil { // 用户不存在
+				tx.Rollback()
+				return err // 400 Bad Request
+			}
+
+			invitePoints := uint64(float64(userPoints) * 0.15)
+
+			// 创建积分记录
+			insertErr := s.pointRecordsRecord.WithTx(tx).CreatePointRecord(&model.PointRecords{
+				UserID:       inviter.ID,
+				PointsChange: invitePoints,       // 积分变动
+				RecordType:   int8(model.Invite), // 积分类型
+				InviteeID:    user.ID,
+				CreateTime:   time.Now(),
+				UpdateTime:   time.Now(),
+			})
+			if insertErr != nil {
+				tx.Rollback()
+
+				return insertErr
+			}
+
+			userPointsMap := make(map[model.PointType]uint64)
+			userPointsMap[model.AvailablePoints] = invitePoints
+			userPointsMap[model.InvitePoints] = invitePoints
+
+			// 更新用户积分
+			if err := s.userInfoRepo.WithTx(tx).IncrementMultiplePointsAndUpdateTime(inviter.Address, userPointsMap); err != nil {
+				tx.Rollback()
+				return err
+			}
+
+		}
+
+		if user.ParentInviteId != 0 {
+
+			parentInviter, err := s.userInfoRepo.WithTx(tx).GetUserByUserID(user.ParentInviteId)
+			if parentInviter == nil || err != nil { // 用户不存在
+				return err // 400 Bad Request
+			}
+
+			parentInviterPoints := uint64(float64(userPoints) * 0.05)
+
+			// 创建积分记录
+			insertErr := s.pointRecordsRecord.WithTx(tx).CreatePointRecord(&model.PointRecords{
+				UserID:       parentInviter.ID,
+				PointsChange: parentInviterPoints, // 积分变动
+				RecordType:   int8(model.Invite),  // 积分类型
+				InviteeID:    user.InviterID,
+				CreateTime:   time.Now(),
+				UpdateTime:   time.Now(),
+			})
+			if insertErr != nil {
+				return insertErr
+			}
+
+			userPointsMap := make(map[model.PointType]uint64)
+			userPointsMap[model.AvailablePoints] = parentInviterPoints
+			userPointsMap[model.InvitePoints] = parentInviterPoints
+
+			// 更新用户积分
+			if err := s.userInfoRepo.WithTx(tx).IncrementMultiplePointsAndUpdateTime(parentInviter.Address, userPointsMap); err != nil {
+				return err
+			}
+
+		}
+
+		return nil
+	})
 }
 
 func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string, transactionDetail string, tokenAmount uint64, baseTokenAmount uint64, tokenAddress string, amounts map[model.StatisticType]uint64) error {
