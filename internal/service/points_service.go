@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"strconv"
 	"time"
 
 	"game-fun-be/internal/model"
@@ -331,6 +332,9 @@ func (s *PointsServiceImpl) SavePointsEveryTimeBucket(transactionAmountDetailByT
 
 func (s *PointsServiceImpl) CalculatePointByDay(vaultAmount uint64) (float64, int, error) {
 	onlineDate := os.Getenv("ONLINE_DATE")
+	newCoeffientStr := os.Getenv("NEW_COEFFICIENT")
+
+	newCoeffient, _ := strconv.ParseFloat(newCoeffientStr, 64)
 	// 计算上线天数
 	onlineDayCount := 1
 	if onlineDate != "" {
@@ -343,7 +347,7 @@ func (s *PointsServiceImpl) CalculatePointByDay(vaultAmount uint64) (float64, in
 			util.Log().Error("Failed to parse ONLINE_DATE: %v", err)
 		}
 	}
-	point := math.Pow(0.995/1.003, float64(onlineDayCount)) * float64(vaultAmount) / float64(7220)
+	point := math.Pow(0.995/1.003, float64(onlineDayCount)) * float64(vaultAmount) / newCoeffient
 	return point, onlineDayCount, nil
 }
 
