@@ -25,7 +25,7 @@ func (s *GlobalServiceImpl) NativeTokePrice(chainType model.ChainType) response.
 }
 
 func (s *GlobalServiceImpl) NativeBalance(userAddress string, chainType model.ChainType) response.Response {
-	tokenBalances, err := httpUtil.GetTokenBalance([]string{userAddress}, model.SolanaWrappedSOLAddress)
+	tokenBalances, err := httpUtil.GetTokenBalanceBatch([]string{userAddress}, model.SolanaWrappedSOLAddress)
 	if err != nil {
 		return response.Err(http.StatusInternalServerError, "Failed to get balance", err)
 	}
@@ -39,7 +39,7 @@ func (s *GlobalServiceImpl) NativeBalance(userAddress string, chainType model.Ch
 }
 
 func (s *GlobalServiceImpl) TickerBalance(userAddress string, tokenAddress string, chainType model.ChainType) response.Response {
-	tokenBalances, err := httpUtil.GetTokenBalance([]string{userAddress}, tokenAddress)
+	tokenBalances, err := httpUtil.GetTokenBalanceBatch([]string{userAddress}, tokenAddress)
 	if err != nil {
 		return response.Err(http.StatusInternalServerError, "Failed to get balance", err)
 	}
@@ -48,6 +48,20 @@ func (s *GlobalServiceImpl) TickerBalance(userAddress string, tokenAddress strin
 		Owner:    userAddress,
 		Balance:  (*tokenBalances)[0].Balance,
 		Decimals: (*tokenBalances)[0].Decimals,
+	}
+	return response.Success(balances)
+}
+
+func (s *GlobalServiceImpl) GetTokenBalance(userAddress string, tokenAddress string, chainType model.ChainType) response.Response {
+	tokenBalances, err := httpUtil.GetTokenBalance(userAddress, tokenAddress)
+	if err != nil {
+		return response.Err(http.StatusInternalServerError, "Failed to get balance", err)
+	}
+	balances := response.TokenBalance{
+		Token:    tokenAddress,
+		Owner:    userAddress,
+		Balance:  tokenBalances.Data.Balance,
+		Decimals: tokenBalances.Data.Decimals,
 	}
 	return response.Success(balances)
 }
