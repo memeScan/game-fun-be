@@ -72,6 +72,7 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 	estimatedPoints := decimal.NewFromFloat(0.0)
 
 	if req.PlatformType == "g_external" {
+		//
 		isCanBuyflag = CheckBalanceSufficient(chainType, req.SwapType, req.PlatformType, req.InAmount, req.UserBalance, model.SOL_DECIMALS, req.PriorityFee)
 	} else if req.PlatformType == "g_points" {
 		pointsDecimal := decimal.NewFromFloat(req.Points) // 用户输入的 Points（代币数量）
@@ -165,9 +166,6 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 // 添加余额检测接口
 func CheckBalanceSufficient(chainType uint8, swaType string, PlatformType string, tokneInAmount decimal.Decimal, tokneBalanceAmount decimal.Decimal, nativeTokenDecimals uint8, priorityFee float64) bool {
 	needPayAmount := decimal.NewFromInt(0)
-	multiplier := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(nativeTokenDecimals)))
-	result := tokneInAmount.Mul(multiplier)
-	fmt.Println("result:", result)
 
 	priorityFeeDecimal := decimal.NewFromFloat(priorityFee)
 	powerOfTen := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(nativeTokenDecimals)))
@@ -176,20 +174,19 @@ func CheckBalanceSufficient(chainType uint8, swaType string, PlatformType string
 		if swaType == "buy" {
 			multiplier := decimal.NewFromFloat(0.005)
 			powerOfTen := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(nativeTokenDecimals)))
-			needPayAmount = multiplier.Mul(powerOfTen).Add(scaledPriorityFee).Add(result)
+			needPayAmount = multiplier.Mul(powerOfTen).Add(scaledPriorityFee).Add(tokneInAmount)
 		} else if swaType == "sell" {
 			multiplier := decimal.NewFromFloat(0.003)
 			nativeTokenDecimalsDecimal := decimal.NewFromInt(int64(nativeTokenDecimals))
 			needPayAmount = multiplier.Mul(nativeTokenDecimalsDecimal).Add(scaledPriorityFee)
 		}
 	} else if PlatformType == "g_points" {
+		solMultiplier := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(nativeTokenDecimals)))
+		result := tokneInAmount.Mul(solMultiplier)
 		multiplier := decimal.NewFromFloat(0.0025)
 		powerOfTen := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(nativeTokenDecimals)))
 		needPayAmount = multiplier.Mul(powerOfTen).Add(scaledPriorityFee).Add(result)
-		// 打印结果
-		fmt.Println("needPayAmount:", needPayAmount)
 	}
-	fmt.Println("tokneBalanceAmount:", tokneBalanceAmount)
 
 	if tokneBalanceAmount.LessThan(needPayAmount) {
 		return false
