@@ -156,12 +156,8 @@ func GetMarketData(tokenAddress, chainType string) (*httpRespone.TradeDataRespon
 		return nil, fmt.Errorf("trade data is empty")
 	}
 
-	validDuration := 3 * time.Minute
-	if conf.IsTest() {
-		validDuration = 24 * time.Hour
-	}
 	// 将交易数据存储到 Redis
-	err = redis.Set(marketDataKey, tokenTradeData, validDuration)
+	err = redis.Set(marketDataKey, tokenTradeData, 10*time.Minute)
 	if err != nil {
 		util.Log().Error(fmt.Sprintf("Failed to set trade data to Redis: %v", err))
 	}
@@ -534,12 +530,7 @@ func (s *TickerServiceImpl) TokenDistribution(tokenAddress string, chainType mod
 	}
 	tokenDistributionResponse.TokenHolders = tokenHolders
 
-	validDuration := 20 * time.Minute
-	if conf.IsTest() {
-		validDuration = 24 * time.Hour
-	}
-
-	if err := redis.Set(redisKey, tokenDistributionResponse, validDuration); err != nil {
+	if err := redis.Set(redisKey, tokenDistributionResponse, 10*time.Minute); err != nil {
 		log.Printf("Failed to set data in Redis: %v\n", err)
 	}
 	return response.Success(tokenDistributionResponse)
