@@ -225,6 +225,7 @@ func (s *PointsServiceImpl) SavePointsEveryTimeBucket(transactionAmountDetailByT
 				UserID:            user.ID,
 				PointsChange:      uint64(point),
 				RecordType:        int8(model.Trading),
+				TokenAmount:       detail.QuotaAmount,
 				TransactionHash:   detail.TransactionHash,
 				TransactionDetail: string(data),
 				CreateTime:        time.Now(),
