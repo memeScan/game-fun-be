@@ -80,7 +80,7 @@ func confInit() {
 	model.Database(os.Getenv("MYSQL_DSN"))
 	util.Log().Info("Test environment setup completed1")
 
-	endpoint := os.Getenv("API_ENDPOINT")
+	endpoint := os.Getenv("BLOCKCHAIN_API_ENDPOINT")
 	httpUtil.InitAPI(&endpoint)
 	httpUtil.InitMetrics(redis.RedisClient)
 }

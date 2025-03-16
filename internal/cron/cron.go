@@ -75,7 +75,7 @@ func addJobs() {
 	}
 
 	// 每5分执行一次积分任务
-	_, err = cronJob.AddFunc("0 */10 * * * *", ExecutePointJob)
+	_, err = cronJob.AddFunc("0 */3 * * * *", ExecutePointJob)
 	if err != nil {
 		util.Log().Error("Failed to add ExecutePointJob: %v", err)
 	}

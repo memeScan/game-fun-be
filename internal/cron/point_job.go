@@ -2,11 +2,13 @@ package cron
 
 import (
 	"os"
+	"strconv"
 	"time"
 
 	"game-fun-be/internal/clickhouse"
 	"game-fun-be/internal/constants"
 	"game-fun-be/internal/model"
+	"game-fun-be/internal/pkg/httpUtil"
 	"game-fun-be/internal/pkg/util"
 	"game-fun-be/internal/redis"
 	"game-fun-be/internal/service"
@@ -17,13 +19,14 @@ func ExecutePointJob() {
 
 	tokenAddress := os.Getenv("TOKEN_ADDRESS")
 	vaultAddress := os.Getenv("VAULT_ADDRESS")
+	// vaultAddress := "JHTyzTyf6i8yhXrS8HZSihFHQLW3WYKvAeVJcLAb15K"
 
 	pointRecordsRepo := model.NewPointRecordsRepo()
 	userInfoRepo := model.NewUserInfoRepo()
 	PlatformTokenStatisticRepo := model.NewPlatformTokenStatisticRepo()
 	pointsService := service.NewPointsServiceImpl(userInfoRepo, pointRecordsRepo, PlatformTokenStatisticRepo)
 
-	globalService := service.NewGlobalServiceImpl()
+	// globalService := service.NewGlobalServiceImpl()
 
 	// 获取当前时间并向下取整到最近的10分钟
 	now := time.Now().UTC()
@@ -37,23 +40,12 @@ func ExecutePointJob() {
 		return
 	}
 
-	resp := globalService.TickerBalance(vaultAddress, tokenAddress, model.ChainTypeSolana)
+	tokenBalances, _ := httpUtil.GetTokenBalance(vaultAddress, tokenAddress)
 
-	var balance float64
-	if resp.Data != nil {
-		// 使用类型断言将 resp.Data 转换为具体类型
-		if data, ok := resp.Data.(map[string]interface{}); ok {
-			if balanceVal, exists := data["Balance"]; exists {
-				if balanceFloat, ok := balanceVal.(float64); ok {
-					balance = balanceFloat
-				}
-			}
-		}
-	} else {
-		util.Log().Warning("Failed to get ticker balance or response structure is invalid")
-		balance = 0
-	}
-	vaultAmount := uint64(balance)
+	balanceStr := tokenBalances.Data.Balance
+	vaultAmount, _ := strconv.ParseUint(balanceStr, 0, 64)
+
+	// vaultAmount := uint64(balance)
 	// vaultAmount := uint64(702061951940000)
 
 	// 统计所有用户的交易量总和
