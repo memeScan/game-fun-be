@@ -47,7 +47,7 @@ func (r *PlatformTokenStatisticRepo) IncrementStatisticsAndUpdateTime(address st
 		updates[string(pt)] = gorm.Expr(string(pt)+" + ?", val)
 	}
 	updates["update_time"] = time.Now()
-	return r.db.Model(&PlatformTokenStatistic{}).
+	return DB.Model(&PlatformTokenStatistic{}).
 		Where("token_address = ?", address).
 		Updates(updates).Error
 }
@@ -61,7 +61,6 @@ func (s *PlatformTokenStatisticRepo) GetTokenPointsStatistic(tokenAddress string
 	result := DB.Where("token_address = ?", tokenAddress).First(&statistics)
 	if result.Error != nil {
 		return nil, result.Error
-
 	}
 
 	return &statistics, nil

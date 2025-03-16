@@ -502,3 +502,7 @@ func formatSolUsd(solUsdPrice decimal.Decimal) string {
 	// Use 6 decimal places instead if needed for crypto prices
 	return price.Round(6).StringFixed(6)
 }
+
+func (s *PointsServiceImpl) IncrementStatisticsAndUpdateTime(address string, amounts map[model.StatisticType]uint64) error {
+	return s.platformTokenStatisticRepo.IncrementStatisticsAndUpdateTime(address, amounts)
+}

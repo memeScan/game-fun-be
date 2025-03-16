@@ -1394,10 +1394,10 @@ func gameOutTradeHandler(message []byte, topic string) error {
 		return fmt.Errorf("failed to insert proxy transaction: %v", err)
 	}
 
-	// pointRecordsRepo := model.NewPointRecordsRepo()
-	// userInfoRepo := model.NewUserInfoRepo()
-	// platformTokenStatisticRepo := model.NewPlatformTokenStatisticRepo()
-	// pointsService := service.NewPointsServiceImpl(userInfoRepo, pointRecordsRepo, PlatformTokenStatisticRepo)
+	pointRecordsRepo := model.NewPointRecordsRepo()
+	userInfoRepo := model.NewUserInfoRepo()
+	platformTokenStatisticRepo := model.NewPlatformTokenStatisticRepo()
+	pointsService := service.NewPointsServiceImpl(userInfoRepo, pointRecordsRepo, platformTokenStatisticRepo)
 
 	amounts := map[model.StatisticType]uint64{
 		model.FeeAmount:     feeBaseAmount,
@@ -1415,8 +1415,8 @@ func gameOutTradeHandler(message []byte, topic string) error {
 	// 	return fmt.Errorf("failed to save points: %v", err)
 	// }
 
-	platformTokenStatisticRepo := model.NewPlatformTokenStatisticRepo()
-	err := platformTokenStatisticRepo.IncrementStatisticsAndUpdateTime(tradeMsg.QuoteToken, amounts)
+	// platformTokenStatisticRepo := model.NewPlatformTokenStatisticRepo()
+	err := pointsService.IncrementStatisticsAndUpdateTime(tradeMsg.QuoteToken, amounts)
 	if err != nil {
 		util.Log().Error("Failed to save points: %v", err)
 		return fmt.Errorf("failed to save points: %v", err)
