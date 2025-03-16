@@ -103,7 +103,13 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 		},
 		"g_external": func() (*httpRespone.SwapTransactionResponse, error) {
 			swapStruct := s.buildGameFunGInstructionStruct(req, poolDetail, inAmountStr)
-			return s.getGameFunGInstruction(swapStruct)
+			if isCanBuyflag {
+				return s.getGameFunGInstruction(swapStruct)
+			}
+			return &httpRespone.SwapTransactionResponse{
+				Code:    2000,
+				Message: "Your custom message here",
+			}, nil
 		},
 		"g_points": func() (*httpRespone.SwapTransactionResponse, error) {
 			swapStruct := s.buildBuyGWithPointsStruct(req, pointsString)
