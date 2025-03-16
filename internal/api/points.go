@@ -2,8 +2,10 @@ package api
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 
+	"game-fun-be/internal/pkg/httpUtil"
 	"game-fun-be/internal/service"
 
 	"github.com/gin-gonic/gin"
@@ -11,10 +13,11 @@ import (
 
 type PointsHandler struct {
 	pointsService *service.PointsServiceImpl
+	globalService *service.GlobalServiceImpl
 }
 
-func NewPointsHandler(pointsService *service.PointsServiceImpl) *PointsHandler {
-	return &PointsHandler{pointsService: pointsService}
+func NewPointsHandler(pointsService *service.PointsServiceImpl, globalService *service.GlobalServiceImpl) *PointsHandler {
+	return &PointsHandler{pointsService: pointsService, globalService: globalService}
 }
 
 // Points 获取用户积分数据
@@ -173,6 +176,15 @@ func (p *PointsHandler) PointsEstimated(c *gin.Context) {
 		c.JSON(errResp.Code, errResp)
 		return
 	}
-	res := p.pointsService.PointsEstimated(userID, chainType)
+
+	tokenAddress := os.Getenv("TOKEN_ADDRESS")
+	vaultAddress := os.Getenv("VAULT_ADDRESS")
+
+	tokenBalances, _ := httpUtil.GetTokenBalance(vaultAddress, tokenAddress)
+
+	balanceStr := tokenBalances.Data.Balance
+	vaultAmount, _ := strconv.ParseUint(balanceStr, 0, 64)
+
+	res := p.pointsService.PointsEstimated(userID, vaultAmount, chainType)
 	c.JSON(res.Code, res)
 }

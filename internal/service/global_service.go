@@ -1,10 +1,11 @@
 package service
 
 import (
+	"net/http"
+
 	"game-fun-be/internal/model"
 	"game-fun-be/internal/pkg/httpUtil"
 	"game-fun-be/internal/response"
-	"net/http"
 )
 
 type GlobalServiceImpl struct{}

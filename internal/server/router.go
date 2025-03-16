@@ -39,7 +39,7 @@ func NewRouter(producer sarama.SyncProducer) *gin.Engine {
 	pointRecordsRepo := model.NewPointRecordsRepo()
 
 	pointsService := service.NewPointsServiceImpl(userInfoRepo, pointRecordsRepo, platformTokenStatisticRepo)
-	pointsHandler := api.NewPointsHandler(pointsService)
+	pointsHandler := api.NewPointsHandler(pointsService, globalService)
 
 	swapService := service.NewSwapService(producer)
 	swapHandler := api.NewSwapHandler(swapService)
