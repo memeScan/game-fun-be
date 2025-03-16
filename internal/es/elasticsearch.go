@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"game-fun-be/internal/conf"
 	"game-fun-be/internal/pkg/util"
 	"io"
 	"log"
@@ -45,40 +46,40 @@ func Elasticsearch() {
 	ctx := context.Background()
 
 	// 首先检查别名是否已存在
-	aliasExists, aliasErr := AliasExists(ES_INDEX_TOKEN_TRANSACTIONS_ALIAS)
+	aliasExists, aliasErr := AliasExists(conf.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS)
 	if aliasErr != nil {
 		log.Fatalf("Error checking if alias exists: %s", aliasErr)
 	}
 
 	// 如果别名已存在，表示初始化已完成，直接返回
 	if aliasExists {
-		util.Log().Info("Elasticsearch alias '%s' already exists, initialization already completed", ES_INDEX_TOKEN_TRANSACTIONS_ALIAS)
+		util.Log().Info("Elasticsearch alias '%s' already exists, initialization already completed", conf.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS)
 		return
 	}
 
 	// 继续检查索引是否存在
-	exists, err := ESClient.IndexExists(ES_INDEX_TOKEN_TRANSACTIONS).Do(ctx)
+	exists, err := ESClient.IndexExists(conf.ES_INDEX_TOKEN_TRANSACTIONS).Do(ctx)
 	if err != nil {
 		log.Fatalf("Error checking if index exists: %s", err)
 	}
 
 	if exists {
-		util.Log().Info("Elasticsearch index '%s' already exists", ES_INDEX_TOKEN_TRANSACTIONS)
+		util.Log().Info("Elasticsearch index '%s' already exists", conf.ES_INDEX_TOKEN_TRANSACTIONS)
 	} else {
-		err = CreateTokenTransactionIndex(ES_INDEX_TOKEN_TRANSACTIONS)
+		err = CreateTokenTransactionIndex(conf.ES_INDEX_TOKEN_TRANSACTIONS)
 		if err != nil {
 			log.Fatalf("Error creating token transactions index: %s", err)
 		}
 
-		util.Log().Info("Elasticsearch index '%s' created successfully", ES_INDEX_TOKEN_TRANSACTIONS)
+		util.Log().Info("Elasticsearch index '%s' created successfully", conf.ES_INDEX_TOKEN_TRANSACTIONS)
 	}
 
 	// 创建别名指向索引
-	currentIndex := ES_INDEX_TOKEN_TRANSACTIONS
-	if aliasErr := CreateAlias(ES_INDEX_TOKEN_TRANSACTIONS_ALIAS, currentIndex); aliasErr != nil {
+	currentIndex := conf.ES_INDEX_TOKEN_TRANSACTIONS
+	if aliasErr := CreateAlias(conf.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS, currentIndex); aliasErr != nil {
 		util.Log().Error("创建指向索引的别名失败: %v", aliasErr)
 	} else {
-		util.Log().Info("成功创建指向索引的别名: %s", ES_INDEX_TOKEN_TRANSACTIONS_ALIAS)
+		util.Log().Info("成功创建指向索引的别名: %s", conf.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS)
 	}
 
 	// ...
