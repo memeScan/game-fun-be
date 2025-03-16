@@ -3,10 +3,12 @@ package cron
 import (
 	"context"
 	"fmt"
+	"game-fun-be/internal/conf"
 	"game-fun-be/internal/es"
 	"game-fun-be/internal/model"
 	"game-fun-be/internal/pkg/util"
 	"game-fun-be/internal/service"
+	"strings"
 	"time"
 
 	"github.com/olivere/elastic/v7"
@@ -17,7 +19,7 @@ func ExecuteReindexJob() error {
 	util.Log().Info("执行重新索引任务")
 
 	// 1. 获取当前别名对应的实际索引名称
-	currentIndex, err := es.GetAliasActualIndex(es.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS)
+	currentIndex, err := es.GetAliasActualIndex(conf.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS)
 	if err != nil {
 		return fmt.Errorf("获取当前索引名称失败: %v", err)
 	}
@@ -25,13 +27,26 @@ func ExecuteReindexJob() error {
 
 	// 从当前索引名提取版本号并递增
 	var currentVersion int
-	_, err = fmt.Sscanf(currentIndex, "token_transactions_new_v%d", &currentVersion)
-	if err != nil {
-		return fmt.Errorf("解析当前索引版本号失败: %v", err)
-	}
+	var newIndex string
 
-	// 创建新索引名称（版本号+1）
-	newIndex := fmt.Sprintf("token_transactions_new_v%d", currentVersion+1)
+	// 检查是否包含 test 标识
+	if strings.Contains(currentIndex, "_test_v") {
+		// 测试环境索引格式: token_transactions_new_test_v1
+		_, err = fmt.Sscanf(currentIndex, "token_transactions_new_test_v%d", &currentVersion)
+		if err != nil {
+			return fmt.Errorf("解析测试环境当前索引版本号失败: %v", err)
+		}
+		// 创建新索引名，版本号+1
+		newIndex = fmt.Sprintf("token_transactions_new_test_v%d", currentVersion+1)
+	} else {
+		// 生产环境索引格式: token_transactions_new_v1
+		_, err = fmt.Sscanf(currentIndex, "token_transactions_new_v%d", &currentVersion)
+		if err != nil {
+			return fmt.Errorf("解析生产环境当前索引版本号失败: %v", err)
+		}
+		// 创建新索引名，版本号+1
+		newIndex = fmt.Sprintf("token_transactions_new_v%d", currentVersion+1)
+	}
 
 	// 2. 创建新索引
 	err = es.CreateTokenTransactionIndex(newIndex)
@@ -41,7 +56,7 @@ func ExecuteReindexJob() error {
 	util.Log().Info("创建新索引成功: %s", newIndex)
 
 	// 3. 更新别名（原子操作：删除旧索引别名，添加新索引别名）
-	err = es.UpdateAlias(es.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS, currentIndex, newIndex)
+	err = es.UpdateAlias(conf.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS, currentIndex, newIndex)
 	if err != nil {
 		return fmt.Errorf("更新别名失败: %v", err)
 	}
@@ -53,7 +68,7 @@ func ExecuteReindexJob() error {
 		util.Log().Error("重建索引失败，开始清理和恢复操作")
 
 		// 1. 首先检查别名当前指向
-		actualIndex, checkErr := es.GetAliasActualIndex(es.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS)
+		actualIndex, checkErr := es.GetAliasActualIndex(conf.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS)
 		if checkErr != nil {
 			util.Log().Error("检查别名失败: %v", checkErr)
 		}
@@ -61,14 +76,14 @@ func ExecuteReindexJob() error {
 		// 2. 根据别名指向决定恢复操作
 		if actualIndex == newIndex {
 			// 只有当别名确实指向新索引时，才需要切回旧索引
-			if aliasErr := es.UpdateAlias(es.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS, newIndex, currentIndex); aliasErr != nil {
+			if aliasErr := es.UpdateAlias(conf.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS, newIndex, currentIndex); aliasErr != nil {
 				util.Log().Error("恢复别名到旧索引失败: %v", aliasErr)
 			} else {
 				util.Log().Info("成功将别名恢复到旧索引: %s", currentIndex)
 			}
 		} else if actualIndex == "" {
 			// 如果别名不存在，直接创建指向旧索引的别名
-			if aliasErr := es.CreateAlias(es.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS, currentIndex); aliasErr != nil {
+			if aliasErr := es.CreateAlias(conf.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS, currentIndex); aliasErr != nil {
 				util.Log().Error("创建指向旧索引的别名失败: %v", aliasErr)
 			} else {
 				util.Log().Info("成功创建指向旧索引的别名: %s", currentIndex)
@@ -99,7 +114,7 @@ func ExecuteReindexJob() error {
 
 func SyncTokenInfoJob() error {
 	// 偏移量根据es的文档数来
-	total, err := es.ESClient.Count(es.ES_INDEX_TOKEN_INFO).Do(context.Background())
+	total, err := es.ESClient.Count(conf.ES_INDEX_TOKEN_INFO).Do(context.Background())
 	if err != nil {
 		util.Log().Error("获取代币信息总数失败: %v", err)
 		return fmt.Errorf("failed to get total token infos: %w", err)

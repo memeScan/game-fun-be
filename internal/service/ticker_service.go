@@ -42,7 +42,7 @@ func (s *TickerServiceImpl) Tickers(req request.TickersRequest, chainType model.
 	if err != nil {
 		return response.Err(http.StatusInternalServerError, "Failed to generate TickersQuery", err)
 	}
-	result, err := es.SearchTokenTransactionsWithAggs(es.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS, TickersQuery, es.UNIQUE_TOKENS)
+	result, err := es.SearchTokenTransactionsWithAggs(conf.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS, TickersQuery, conf.UNIQUE_TOKENS)
 	if err != nil || result == nil {
 		status := http.StatusInternalServerError
 		msg := "Failed to get pump rank"
@@ -177,7 +177,7 @@ func (s *TickerServiceImpl) MarketTicker(tokenAddress string, chainType model.Ch
 		return response.Err(http.StatusInternalServerError, "Failed to get token creation info from API", err)
 	}
 
-	result, err := es.SearchTokenTransactionsWithAggs(es.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS, queryJSON, es.UNIQUE_TOKENS)
+	result, err := es.SearchTokenTransactionsWithAggs(conf.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS, queryJSON, conf.UNIQUE_TOKENS)
 	if result == nil {
 		return response.Success(analytics)
 	}

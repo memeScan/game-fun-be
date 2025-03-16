@@ -929,7 +929,7 @@ func processElasticsearchData(transactions []*model.TokenTransaction, tokenInfoM
 
 	// 2. 批量索引文档
 	indexStart := time.Now()
-	resp, err := es.BulkIndexDocuments(es.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS, esDocList)
+	resp, err := es.BulkIndexDocuments(conf.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS, esDocList)
 	if err != nil {
 		util.Log().Error("Failed to bulk index documents in Elasticsearch: %v", err)
 		return fmt.Errorf("failed to index to ES: %v", err)

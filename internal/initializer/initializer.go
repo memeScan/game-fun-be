@@ -19,6 +19,7 @@ import (
 func Setup(env string) sarama.SyncProducer {
 	// 设置环境变量
 	conf.SetEnv(env)
+	conf.InitGameConfig()
 
 	// 设置日志级别
 	util.BuildLogger(os.Getenv("LOG_LEVEL"))
