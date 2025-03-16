@@ -1384,8 +1384,8 @@ func gameOutTradeHandler(message []byte, topic string) error {
 		FeeQuoteAmount:       feeQuoteAmount,
 		FeeBaseAmount:        feeBaseAmount,
 		BuybackFeeBaseAmount: buybackFeeBaseAmount,
-		BlockTime:            time.Now(),
-		TransactionTime:      time.Now(),
+		BlockTime:            time.Unix(tradeMsg.Timestamp, 0),
+		TransactionTime:      time.Unix(tradeMsg.Timestamp, 0),
 		CreateTime:           time.Now(),
 	}
 
@@ -1394,10 +1394,10 @@ func gameOutTradeHandler(message []byte, topic string) error {
 		return fmt.Errorf("failed to insert proxy transaction: %v", err)
 	}
 
-	pointRecordsRepo := model.NewPointRecordsRepo()
-	userInfoRepo := model.NewUserInfoRepo()
-	PlatformTokenStatisticRepo := model.NewPlatformTokenStatisticRepo()
-	pointsService := service.NewPointsServiceImpl(userInfoRepo, pointRecordsRepo, PlatformTokenStatisticRepo)
+	// pointRecordsRepo := model.NewPointRecordsRepo()
+	// userInfoRepo := model.NewUserInfoRepo()
+	// platformTokenStatisticRepo := model.NewPlatformTokenStatisticRepo()
+	// pointsService := service.NewPointsServiceImpl(userInfoRepo, pointRecordsRepo, PlatformTokenStatisticRepo)
 
 	amounts := map[model.StatisticType]uint64{
 		model.FeeAmount:     feeBaseAmount,
@@ -1409,7 +1409,14 @@ func gameOutTradeHandler(message []byte, topic string) error {
 		amounts[model.BurnAmount] = feeQuoteAmount
 	}
 
-	err := pointsService.PointsSave(tradeMsg.User, uint64(point), tradeMsg.Signature, string(message), quoteAmount, baseAmount, tradeMsg.QuoteToken, amounts)
+	// err := pointsService.PointsSave(tradeMsg.User, uint64(point), tradeMsg.Signature, string(message), quoteAmount, baseAmount, tradeMsg.QuoteToken, amounts)
+	// if err != nil {
+	// 	util.Log().Error("Failed to save points: %v", err)
+	// 	return fmt.Errorf("failed to save points: %v", err)
+	// }
+
+	platformTokenStatisticRepo := model.NewPlatformTokenStatisticRepo()
+	err := platformTokenStatisticRepo.IncrementStatisticsAndUpdateTime(tradeMsg.QuoteToken, amounts)
 	if err != nil {
 		util.Log().Error("Failed to save points: %v", err)
 		return fmt.Errorf("failed to save points: %v", err)
@@ -1450,7 +1457,7 @@ func gameInTradeHandler(message []byte, topic string) error {
 		TransactionType:  uint8(model.TransactionTypeBuy), // 使用BuyG类型
 		PointsAmount:     pointsAmount,
 		FeeBaseAmount:    feeBaseAmount,
-		TransactionTime:  time.Now(),
+		TransactionTime:  time.Unix(tradeMsg.Timestamp, 0),
 		BlockTime:        time.Now(), // 如果tradeMsg中有区块时间应该使用那个
 	}
 

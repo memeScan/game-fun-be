@@ -3,20 +3,19 @@ package cron
 import (
 	"context"
 	"fmt"
-	"game-fun-be/internal/model"
-	"game-fun-be/internal/pkg/util"
-	"game-fun-be/internal/service"
 	"reflect"
 	"runtime"
 	"strings"
 	"time"
 
+	"game-fun-be/internal/model"
+	"game-fun-be/internal/pkg/util"
+	"game-fun-be/internal/service"
+
 	"github.com/robfig/cron/v3"
 )
 
-var (
-	cronJob *cron.Cron
-)
+var cronJob *cron.Cron
 
 // InitCronJobs 初始化并启动定时任务
 func InitCronJobs() {
@@ -57,7 +56,6 @@ func InitCronJobs() {
 
 // addJobs 添加所有定时任务
 func addJobs() {
-
 	// 每小时执行一次的任务
 	_, err := cronJob.AddFunc("0 0 * * * *", hourlyTask)
 	if err != nil {
@@ -77,7 +75,7 @@ func addJobs() {
 	}
 
 	// 每5分执行一次积分任务
-	_, err = cronJob.AddFunc("0 */5 * * * *", ExecutePointJob)
+	_, err = cronJob.AddFunc("0 */3 * * * *", ExecutePointJob)
 	if err != nil {
 		util.Log().Error("Failed to add ExecutePointJob: %v", err)
 	}
@@ -97,7 +95,6 @@ func addJobs() {
 	if err != nil {
 		util.Log().Error("Failed to add reindex task: %v", err)
 	}
-
 }
 
 // hourlyTask 每小时执行的任务
@@ -118,7 +115,6 @@ func dailyTask() {
 // every5MinuteTask 每5分钟执行的任务
 func every5MinuteTask() {
 	// 在这里添加每5分钟需要执行的逻辑
-
 }
 
 func createNextDayTable() {
