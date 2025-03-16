@@ -28,6 +28,7 @@ import (
 var (
 	// API 端点
 	ApiTokenBalanceBatch      string
+	ApiTokenBalance           string
 	ApiDexCheckBatch          string
 	ApiSafetyCheckBatch       string
 	ApiPriorityFee            string
@@ -72,6 +73,7 @@ func GetHTTPClient() *metrics.MetricsHTTPClient {
 }
 
 func InitAPI(endpoint *string) {
+	ApiTokenBalance = *endpoint + "/block/api/v1/token-balance"
 	ApiTokenBalanceBatch = *endpoint + "/block/api/v1/token-balance/batch"
 	ApiDexCheckBatch = *endpoint + "/block/api/v1/dex-check-batch"
 	ApiSafetyCheckBatch = *endpoint + "/block/api/v1/safety-check/authority"
@@ -234,7 +236,7 @@ func postRequest(url string, body interface{}, useMetrics bool) (*http.Response,
 	return resp, nil
 }
 
-func GetTokenBalance(accounts []string, mintTokenAddress string) (*[]httpRespone.SolBalanceResponseData, error) {
+func GetTokenBalanceBatch(accounts []string, mintTokenAddress string) (*[]httpRespone.SolBalanceBatchResponseData, error) {
 	url := ApiTokenBalanceBatch
 	body := map[string]interface{}{
 		"addresses": accounts,
@@ -248,12 +250,32 @@ func GetTokenBalance(accounts []string, mintTokenAddress string) (*[]httpRespone
 
 	bodyBytes, _ := io.ReadAll(resp.Body)
 
-	var balanceResponse httpRespone.SolBalanceResponse
+	var balanceResponse httpRespone.SolBalanceBatchResponse
 	if err := json.Unmarshal([]byte(bodyBytes), &balanceResponse); err != nil {
 		log.Fatalf("Failed to decode dex check response: %v", err)
 	}
 
 	return &balanceResponse.Data, nil
+}
+
+func GetTokenBalance(address string, mintTokenAddress string) (*httpRespone.SolBalanceResponse, error) {
+
+	url := ApiTokenBalance + "?address=" + address + "&mint=" + mintTokenAddress
+
+	resp, err := GetHTTPClient().Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get token balance: %w", err)
+	}
+	defer resp.Body.Close()
+
+	bodyBytes, _ := io.ReadAll(resp.Body)
+
+	var response httpRespone.SolBalanceResponse
+	if err := json.Unmarshal(bodyBytes, &response); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal token balance response: %w", err)
+	}
+
+	return &response, nil
 }
 
 func GetDexCheck(tokenAddresses []string) (*[]httpRespone.DexCheckData, error) {
