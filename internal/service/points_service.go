@@ -211,7 +211,7 @@ func (s *PointsServiceImpl) SavePointsEveryTimeBucket(transactionAmountDetailByT
 				StartTime:        transactionAmountDetailByTime.StartTime,
 				EndTime:          transactionAmountDetailByTime.EndTime,
 				TransactionTime:  detail.TransactionTime,
-				QuotaTotalAmount: detail.QuotaAmount,
+				QuotaTotalAmount: transactionAmountDetailByTime.QuotaTotalAmount,
 				VaultAmount:      transactionAmountDetailByTime.VaultAmount,
 				OnlineDayCount:   onlineDayCount,
 			}
