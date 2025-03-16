@@ -26,8 +26,9 @@ import (
 )
 
 type SwapServiceImpl struct {
-	userInfoRepo *model.UserInfoRepo
-	kafka        sarama.SyncProducer
+	userInfoRepo      *model.UserInfoRepo
+	pointsServiceImpl *PointsServiceImpl
+	kafka             sarama.SyncProducer
 }
 
 func NewSwapService(producer sarama.SyncProducer) *SwapServiceImpl {
@@ -68,6 +69,8 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 
 	isCanBuyflag := true
 	pointsString := ""
+	estimatedPoints := decimal.NewFromFloat(0.0)
+
 	if req.PlatformType == "g_external" {
 		isCanBuyflag = CheckBalanceSufficient(chainType, req.SwapType, req.PlatformType, req.InAmount, req.UserBalance, model.SOL_DECIMALS, req.PriorityFee)
 	} else if req.PlatformType == "g_points" {
@@ -83,16 +86,9 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 		// 计算需要多少 SOL（代币 USD 价值 / SOL 的 USD 价值）
 		req.InAmount = tokenUsd.Div(solPriceUSD)
 		req.InAmount = req.InAmount.Div(decimal.NewFromInt(2))
-		isCanBuyflag = CheckBalanceSufficient(chainType, req.SwapType, req.PlatformType, req.InAmount, req.UserBalance, model.SOL_DECIMALS, req.PriorityFee)
-	}
+		fmt.Println("req.InAmount:", req.InAmount)
 
-	if !isCanBuyflag {
-		return response.Response{
-			Code:  200,
-			Data:  "",
-			Msg:   "Insufficient reserved balance in the wallet. Transaction initiation is not possible.",
-			Error: "",
-		}
+		isCanBuyflag = CheckBalanceSufficient(chainType, req.SwapType, req.PlatformType, req.InAmount, req.UserBalance, model.SOL_DECIMALS, req.PriorityFee)
 	}
 
 	// Create map for platform-specific functions
@@ -111,9 +107,13 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 		},
 		"g_points": func() (*httpRespone.SwapTransactionResponse, error) {
 			swapStruct := s.buildBuyGWithPointsStruct(req, pointsString)
-			// 预计能获得多少积分
-
-			return s.getGetBuyGWithPointsInstruction(req.Points, swapStruct, startTime)
+			if isCanBuyflag {
+				return s.getGetBuyGWithPointsInstruction(req.Points, swapStruct, startTime)
+			}
+			return &httpRespone.SwapTransactionResponse{
+				Code:    2000,
+				Message: "Your custom message here",
+			}, nil
 		},
 	}
 
@@ -131,23 +131,38 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 		return response.Err(http.StatusInternalServerError, "Failed to send swap request", errors.New(swapTransaction.Message))
 	}
 
-	// Calculate amounts
-	platform := model.CreatedPlatformType(tokenDetail.CreatedPlatformType)
 	inDecimals := model.SOL_DECIMALS
-	outDecimals := platform.GetDecimals()
-
+	outDecimals := tokenDetail.Decimals
 	outAmount, inAmountUSD, outAmountUSD, errResp := s.calculateSwapAmounts(req, tokenDetail, solPriceUSD, inDecimals, outDecimals)
 	if errResp != nil {
 		return s.handleErrorResponse(errResp)
 	}
 
+	// if req.PlatformType == "g_points" {
+	// 	multiplier := decimal.NewFromFloat(math.Pow(10, float64(outDecimals)))
+	// 	result := outAmount.Mul(multiplier)
+	// 	uint64Result := result.IntPart()
+	// 	if uint64Result < 0 {
+	// 		uint64Result = 0
+	// 	}
+	// 	estimatedPointsUint, err := s.getVaultAndQuotaUsage(uint64(uint64Result))
+	// 	if err != nil {
+	// 	}
+	// 	estimatedPointsRsp := divideByDecimals(estimatedPointsUint, outDecimals)
+	// 	estimatedPoints = estimatedPointsRsp
+	// }
+
 	// Return the constructed response
-	return ConstructSwapRouteResponse(req, swapTransaction, uint8(inDecimals), uint8(outDecimals), outAmount, inAmountUSD, outAmountUSD, startTime, jitoOrderId)
+	return ConstructSwapRouteResponse(req, swapTransaction, uint8(inDecimals), uint8(outDecimals), outAmount, inAmountUSD, outAmountUSD, startTime, jitoOrderId, estimatedPoints)
 }
 
 // 添加余额检测接口
 func CheckBalanceSufficient(chainType uint8, swaType string, PlatformType string, tokneInAmount decimal.Decimal, tokneBalanceAmount decimal.Decimal, nativeTokenDecimals uint8, priorityFee float64) bool {
 	needPayAmount := decimal.NewFromInt(0)
+	multiplier := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(nativeTokenDecimals)))
+	result := tokneInAmount.Mul(multiplier)
+	fmt.Println("result:", result)
+
 	priorityFeeDecimal := decimal.NewFromFloat(priorityFee)
 	powerOfTen := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(nativeTokenDecimals)))
 	scaledPriorityFee := priorityFeeDecimal.Mul(powerOfTen)
@@ -155,7 +170,7 @@ func CheckBalanceSufficient(chainType uint8, swaType string, PlatformType string
 		if swaType == "buy" {
 			multiplier := decimal.NewFromFloat(0.005)
 			powerOfTen := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(nativeTokenDecimals)))
-			needPayAmount = multiplier.Mul(powerOfTen).Add(scaledPriorityFee).Add(tokneInAmount)
+			needPayAmount = multiplier.Mul(powerOfTen).Add(scaledPriorityFee).Add(result)
 		} else if swaType == "sell" {
 			multiplier := decimal.NewFromFloat(0.003)
 			nativeTokenDecimalsDecimal := decimal.NewFromInt(int64(nativeTokenDecimals))
@@ -164,13 +179,64 @@ func CheckBalanceSufficient(chainType uint8, swaType string, PlatformType string
 	} else if PlatformType == "g_points" {
 		multiplier := decimal.NewFromFloat(0.0025)
 		powerOfTen := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(nativeTokenDecimals)))
-		needPayAmount = multiplier.Mul(powerOfTen).Add(scaledPriorityFee).Add(tokneInAmount)
+		needPayAmount = multiplier.Mul(powerOfTen).Add(scaledPriorityFee).Add(result)
+		// 打印结果
+		fmt.Println("needPayAmount:", needPayAmount)
 	}
+	fmt.Println("tokneBalanceAmount:", tokneBalanceAmount)
+
 	if tokneBalanceAmount.LessThan(needPayAmount) {
 		return false
 	}
 	return true
 }
+
+// // GetVaultAndQuotaUsage 获取 Vault 余额和最近 10 分钟的额度使用量
+// func (s *SwapServiceImpl) getVaultAndQuotaUsage(quotaTotalAmount uint64) (uint64, error) {
+// 	var vaultBalance uint64        // 金库余额
+// 	var quotaUsageLast10Min uint64 // 过去 10 分钟的额度使用量
+
+// 	// 获取 Redis 中的 Vault 余额
+// 	vaultStr, err := redis.Get(constants.RedisKeyVaultAmount)
+// 	if err != nil {
+// 		util.Log().Error("Failed to get vault balance from Redis:", err)
+// 	} else {
+// 		parsedValue, err := strconv.ParseUint(vaultStr, 10, 64)
+// 		if err != nil {
+// 			util.Log().Error("Failed to parse vault balance:", err)
+// 		} else {
+// 			vaultBalance = parsedValue
+// 		}
+// 	}
+
+// 	// 获取 Redis 中最近 10 分钟的额度使用量
+// 	quotaStr, err := redis.Get(constants.RedisKeyQuotaAmountLast10Min)
+// 	if err != nil {
+// 		util.Log().Error("Failed to get quota usage from Redis:", err)
+// 	} else {
+// 		parsedValue, err := strconv.ParseUint(quotaStr, 10, 64)
+// 		if err != nil {
+// 			util.Log().Error("Failed to parse quota usage:", err)
+// 		} else {
+// 			quotaUsageLast10Min = parsedValue
+// 		}
+// 	}
+
+// 	// 计算积分
+// 	point, _, err := s.pointsServiceImpl.CalculatePoint(vaultBalance, quotaUsageLast10Min, quotaTotalAmount)
+// 	if err != nil {
+// 		return 0, err
+// 	}
+
+// 	return point, nil
+// }
+
+// func divideByDecimals(estimatedPointsUint uint64, outDecimals uint8) decimal.Decimal {
+// 	estimatedPointsDecimal := decimal.NewFromInt(int64(estimatedPointsUint))
+// 	divisor := decimal.New(10, 0).Pow(decimal.NewFromInt(int64(outDecimals)))
+// 	result := estimatedPointsDecimal.Div(divisor)
+// 	return result
+// }
 
 // Helper function to handle error responses
 func (s *SwapServiceImpl) handleErrorResponse(errResp *response.Response) response.Response {
@@ -412,7 +478,7 @@ func (s *SwapServiceImpl) calculateSwapAmounts(
 	return outAmount, inAmountUSD, outAmountUSD, nil
 }
 
-func ConstructSwapRouteResponse(req request.SwapRouteRequest, swapResponse *httpRespone.SwapTransactionResponse, inDecimals, outDecimals uint8, amountOut, amountInUSD, amountOutUSD decimal.Decimal, startTime int64, jitoOrderId string) response.Response {
+func ConstructSwapRouteResponse(req request.SwapRouteRequest, swapResponse *httpRespone.SwapTransactionResponse, inDecimals, outDecimals uint8, amountOut, amountInUSD, amountOutUSD decimal.Decimal, startTime int64, jitoOrderId string, estimatedPoints decimal.Decimal) response.Response {
 
 	swapRouteResponse := response.Response{
 		Code: http.StatusOK,
@@ -454,7 +520,7 @@ func ConstructSwapRouteResponse(req request.SwapRouteRequest, swapResponse *http
 			AmountInUSD:     amountInUSD,
 			AmountOutUSD:    amountOutUSD,
 			JitoOrderID:     jitoOrderId,
-			EstimatedPoints: decimal.NewFromInt(200),
+			EstimatedPoints: estimatedPoints,
 		},
 	}
 	return swapRouteResponse

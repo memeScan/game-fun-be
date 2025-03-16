@@ -1,8 +1,8 @@
 module game-fun-be
 
-go 1.22.0
+go 1.23.0
 
-toolchain go1.23.1
+toolchain go1.24.1
 
 require (
 	github.com/IBM/sarama v1.43.3
@@ -15,7 +15,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/stretchr/testify v1.10.0
 	gorm.io/driver/mysql v1.5.1
-	gorm.io/gorm v1.25.8
+	gorm.io/gorm v1.25.12
 )
 
 require (
@@ -37,7 +37,6 @@ require (
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	go.uber.org/ratelimit v0.3.1 // indirect
 	golang.org/x/crypto v0.28.0 // indirect
-	golang.org/x/sync v0.11.0 // indirect
 	golang.org/x/time v0.7.0 // indirect
 )
 
@@ -111,7 +110,7 @@ require (
 	golang.org/x/net v0.30.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/term v0.25.0 // indirect
-	golang.org/x/text v0.19.0
+	golang.org/x/text v0.23.0
 	golang.org/x/tools v0.26.0 // indirect
 	google.golang.org/protobuf v1.35.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
