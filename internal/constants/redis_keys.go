@@ -37,4 +37,7 @@ const (
 
 	// RedisKeyTokenTransactionID 代币交易记录的分布式ID生成器的Redis键
 	RedisKeyTokenTransactionID = "token:transaction:id"
+
+	RedisKeyVaultAmount          = "vault_amount"
+	RedisKeyQuotaAmountLast10Min = "quota_amount_last_10_min"
 )

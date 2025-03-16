@@ -1,7 +1,10 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
+	"math"
+	"os"
 	"time"
 
 	"game-fun-be/internal/model"
@@ -16,6 +19,31 @@ type PointsServiceImpl struct {
 	userInfoRepo               *model.UserInfoRepo
 	pointRecordsRecord         *model.PointRecordsRepo
 	platformTokenStatisticRepo *model.PlatformTokenStatisticRepo
+	//
+}
+
+type PointCalculate struct {
+	StartTime        time.Time `json:"start_time"`
+	EndTime          time.Time `json:"end_time"`
+	TransactionTime  time.Time `json:"transaction_time"`
+	QuotaTotalAmount uint64    `json:"quota_total_amount"`
+	VaultAmount      uint64    `json:"vault_amount"`
+	OnlineDayCount   int       `json:"online_day"`
+}
+
+type TransactionAmountDetail struct {
+	QuotaAmount     uint64
+	TransactionHash string
+	TransactionTime time.Time
+}
+
+type TransactionAmountDetailByTime struct {
+	UserAddress              string
+	QuotaTotalAmount         uint64
+	VaultAmount              uint64
+	TransactionAmountDetails []TransactionAmountDetail
+	StartTime                time.Time
+	EndTime                  time.Time
 }
 
 func NewPointsServiceImpl(userInfoRepo *model.UserInfoRepo, pointRecordsRecord *model.PointRecordsRepo, platformTokenStatisticRepo *model.PlatformTokenStatisticRepo) *PointsServiceImpl {
@@ -163,6 +191,180 @@ func (s *PointsServiceImpl) InvitedPointsDetail(userID uint64, cursor *uint, lim
 	return response.Success(pointsTotalResponse)
 }
 
+func (s *PointsServiceImpl) SavePointsEveryTimeBucket(transactionAmountDetailByTime TransactionAmountDetailByTime) error {
+	return model.DB.Transaction(func(tx *gorm.DB) error {
+		_, user, err := s.userInfoRepo.WithTx(tx).GetOrCreateUserByAddress(transactionAmountDetailByTime.UserAddress, 1, "")
+		if err != nil {
+			return err // 400 Bad Request
+		}
+
+		records := make([]*model.PointRecords, len(transactionAmountDetailByTime.TransactionAmountDetails))
+		userPoints := uint64(0)
+		for i, detail := range transactionAmountDetailByTime.TransactionAmountDetails {
+
+			point, onlineDayCount, err := s.CalculatePoint(transactionAmountDetailByTime.VaultAmount, detail.QuotaAmount, transactionAmountDetailByTime.QuotaTotalAmount)
+			if err != nil {
+				return err
+			}
+
+			pointCalculate := PointCalculate{
+				StartTime:        transactionAmountDetailByTime.StartTime,
+				EndTime:          transactionAmountDetailByTime.EndTime,
+				TransactionTime:  detail.TransactionTime,
+				QuotaTotalAmount: detail.QuotaAmount,
+				VaultAmount:      transactionAmountDetailByTime.VaultAmount,
+				OnlineDayCount:   onlineDayCount,
+			}
+			data, err := json.Marshal(pointCalculate)
+			if err != nil {
+				data = []byte{}
+			}
+
+			// point := math.Pow(0.995/1.003, float64(transactionAmountDetailByTime.onlineDayCountonlineDayCount)) * float64(detail.QuotaAmount) / float64(transactionAmountDetailByTime.QuotaTotalAmount*7220)
+			records[i] = &model.PointRecords{
+				UserID:            user.ID,
+				PointsChange:      uint64(point),
+				RecordType:        int8(model.Trading),
+				TransactionHash:   detail.TransactionHash,
+				TransactionDetail: string(data),
+				CreateTime:        time.Now(),
+				UpdateTime:        time.Now(),
+			}
+			userPoints += uint64(point)
+		}
+		// 创建积分记录
+		insertErr := s.pointRecordsRecord.WithTx(tx).CreatePointRecords(records)
+		if insertErr != nil {
+			return insertErr
+		}
+
+		userPointsMap := make(map[model.PointType]uint64)
+		userPointsMap[model.AvailablePoints] = userPoints
+		userPointsMap[model.TradingPoints] = userPoints
+
+		// 更新用户积分
+		if err := s.userInfoRepo.WithTx(tx).IncrementMultiplePointsAndUpdateTime(transactionAmountDetailByTime.UserAddress, userPointsMap); err != nil {
+			tx.Rollback()
+			return err
+		}
+
+		// // 更新统计数据
+		// if err := s.platformTokenStatisticRepo.WithTx(tx).IncrementStatisticsAndUpdateTime(transactionAmountDetailByTime.TokenAddress, transactionAmountDetailByTime.Amounts); err != nil {
+		// 	tx.Rollback()
+		// 	return err
+		// }
+
+		if user.InviterID != 0 {
+
+			inviter, err := s.userInfoRepo.WithTx(tx).GetUserByUserID(user.InviterID)
+			if inviter == nil || err != nil { // 用户不存在
+				tx.Rollback()
+				return err // 400 Bad Request
+			}
+
+			invitePoints := uint64(float64(userPoints) * 0.15)
+
+			// 创建积分记录
+			insertErr := s.pointRecordsRecord.WithTx(tx).CreatePointRecord(&model.PointRecords{
+				UserID:       inviter.ID,
+				PointsChange: invitePoints,       // 积分变动
+				RecordType:   int8(model.Invite), // 积分类型
+				InviteeID:    user.ID,
+				CreateTime:   time.Now(),
+				UpdateTime:   time.Now(),
+			})
+			if insertErr != nil {
+				tx.Rollback()
+
+				return insertErr
+			}
+
+			userPointsMap := make(map[model.PointType]uint64)
+			userPointsMap[model.AvailablePoints] = invitePoints
+			userPointsMap[model.InvitePoints] = invitePoints
+
+			// 更新用户积分
+			if err := s.userInfoRepo.WithTx(tx).IncrementMultiplePointsAndUpdateTime(inviter.Address, userPointsMap); err != nil {
+				tx.Rollback()
+				return err
+			}
+
+		}
+
+		if user.ParentInviteId != 0 {
+
+			parentInviter, err := s.userInfoRepo.WithTx(tx).GetUserByUserID(user.ParentInviteId)
+			if parentInviter == nil || err != nil { // 用户不存在
+				return err // 400 Bad Request
+			}
+
+			parentInviterPoints := uint64(float64(userPoints) * 0.05)
+
+			// 创建积分记录
+			insertErr := s.pointRecordsRecord.WithTx(tx).CreatePointRecord(&model.PointRecords{
+				UserID:       parentInviter.ID,
+				PointsChange: parentInviterPoints, // 积分变动
+				RecordType:   int8(model.Invite),  // 积分类型
+				InviteeID:    user.InviterID,
+				CreateTime:   time.Now(),
+				UpdateTime:   time.Now(),
+			})
+			if insertErr != nil {
+				return insertErr
+			}
+
+			userPointsMap := make(map[model.PointType]uint64)
+			userPointsMap[model.AvailablePoints] = parentInviterPoints
+			userPointsMap[model.InvitePoints] = parentInviterPoints
+
+			// 更新用户积分
+			if err := s.userInfoRepo.WithTx(tx).IncrementMultiplePointsAndUpdateTime(parentInviter.Address, userPointsMap); err != nil {
+				return err
+			}
+
+		}
+
+		return nil
+	})
+}
+
+func (s *PointsServiceImpl) CalculatePointByDay(vaultAmount uint64) (float64, int, error) {
+	onlineDate := os.Getenv("ONLINE_DATE")
+	// 计算上线天数
+	onlineDayCount := 1
+	if onlineDate != "" {
+		if onlineTime, err := time.Parse("20060102", onlineDate); err == nil {
+			onlineDayCount = int(time.Now().Sub(onlineTime).Hours()/24) + 1
+			if onlineDayCount < 1 {
+				onlineDayCount = 1
+			}
+		} else {
+			util.Log().Error("Failed to parse ONLINE_DATE: %v", err)
+		}
+	}
+	point := math.Pow(0.995/1.003, float64(onlineDayCount)) * float64(vaultAmount) / float64(7220)
+	return point, onlineDayCount, nil
+}
+
+func (s *PointsServiceImpl) CalculatePoint(vaultAmount uint64, quotaAmount uint64, quotaTotalAmount uint64) (uint64, int, error) {
+	onlineDate := os.Getenv("ONLINE_DATE")
+	// 计算上线天数
+	onlineDayCount := 1
+	if onlineDate != "" {
+		if onlineTime, err := time.Parse("20060102", onlineDate); err == nil {
+			onlineDayCount = int(time.Now().Sub(onlineTime).Hours()/24) + 1
+			if onlineDayCount < 1 {
+				onlineDayCount = 1
+			}
+		} else {
+			util.Log().Error("Failed to parse ONLINE_DATE: %v", err)
+		}
+	}
+	pointByDay, _, _ := s.CalculatePointByDay(vaultAmount)
+	point := pointByDay * float64(quotaAmount) / float64(quotaTotalAmount)
+	return uint64(point), onlineDayCount, nil
+}
+
 func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string, transactionDetail string, tokenAmount uint64, baseTokenAmount uint64, tokenAddress string, amounts map[model.StatisticType]uint64) error {
 	return model.DB.Transaction(func(tx *gorm.DB) error {
 		_, user, err := s.userInfoRepo.WithTx(tx).GetOrCreateUserByAddress(address, 1, "")
@@ -279,9 +481,10 @@ func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string
 	})
 }
 
-func (s *PointsServiceImpl) PointsEstimated(userID string, chainType model.ChainType) response.Response {
+func (s *PointsServiceImpl) PointsEstimated(userID string, vaultAmount uint64, chainType model.ChainType) response.Response {
+	points, _, _ := s.CalculatePointByDay(vaultAmount)
 	pointsEstimatedResponse := response.PointsEstimatedResponse{
-		EstimatedPoints: "12862.90277",
+		EstimatedPoints: formatPoints(uint64(points)),
 	}
 	return response.Success(pointsEstimatedResponse)
 }

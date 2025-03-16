@@ -3,6 +3,7 @@ package test
 import (
 	"os"
 
+	"game-fun-be/internal/clickhouse"
 	"game-fun-be/internal/model"
 	"game-fun-be/internal/pkg/httpUtil"
 	"game-fun-be/internal/pkg/util"
@@ -22,7 +23,7 @@ func init() {
 	// Load configurations
 	confInit()
 	// Initialize router
-	s = server.NewRouter()
+	s = server.NewRouter(nil)
 }
 
 // TestSetup initializes the test environment
@@ -75,10 +76,11 @@ func confInit() {
 
 	// Initialize Redis and Database connections
 	redis.Redis()
+	clickhouse.ClickHouse()
 	model.Database(os.Getenv("MYSQL_DSN"))
 	util.Log().Info("Test environment setup completed1")
 
-	endpoint := os.Getenv("API_ENDPOINT")
+	endpoint := os.Getenv("BLOCKCHAIN_API_ENDPOINT")
 	httpUtil.InitAPI(&endpoint)
 	httpUtil.InitMetrics(redis.RedisClient)
 }

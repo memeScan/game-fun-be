@@ -2,11 +2,13 @@ package services_test
 
 import (
 	"fmt"
+	"testing"
+
+	"game-fun-be/internal/cron"
 	"game-fun-be/internal/model"
 	"game-fun-be/internal/response"
 	"game-fun-be/internal/service"
 	"game-fun-be/test"
-	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -96,43 +98,18 @@ func TestPointsService_PointsDetail(t *testing.T) {
 }
 
 func TestPointsService_PointsSave(t *testing.T) {
-	// Create test repos
-	// userRepo := &model.UserInfoRepo{}
-	// pointsRepo := &model.PointRecordsRepo{}
+	// globalService := service.NewGlobalServiceImpl()
 
-	// // Create service
-	// platformTokenStatisticRepo := &model.PlatformTokenStatisticRepo{}
-
-	// // Create service
-	// pointsService := service.NewPointsServiceImpl(userRepo, pointsRepo, platformTokenStatisticRepo)
-
-	// t.Run("save points success", func(t *testing.T) {
-	// 	// Test input
-	// 	address := "SoLxyz987654321abc987654321abc987654321"
-	// 	point := uint64(1000000) // 1.0 points
-	// 	hash := "test_transaction_hash"
-	// 	transactionDetail := "test_transaction_detail"
-
-	// 	// Call service
-	// 	err := pointsService.PointsSave(address, point, hash, transactionDetail)
-
-	// 	// Assert response
-	// 	assert.Nil(t, err)
-	// })
-
-	// t.Run("save points with invalid address", func(t *testing.T) {
-	// 	// Test input with invalid address
-	// 	address := ""
-	// 	point := uint64(1000000)
-	// 	hash := "test_transaction_hash"
-	// 	transactionDetail := "test_transaction_detail"
-
-	// 	// Call service
-	// 	err := pointsService.PointsSave(address, point, hash, transactionDetail)
-
-	// 	// Assert response
-	// 	assert.NotNil(t, err)
-	// })
+	t.Run("save points success", func(t *testing.T) {
+		// Test input
+		// vaultAddress := os.Getenv("VAULT_ADDRESS")
+		// tokenAddress := os.Getenv("TOKEN_ADDRESS")
+		// resp := globalService.TickerBalance(vaultAddress, tokenAddress, model.ChainTypeSolana)
+		// t.Logf("resp: %v", resp)
+		// util.Log().Info("resp: %v", resp)
+		// fmt.Println(resp)
+		cron.ExecutePointJob()
+	})
 }
 
 func TestPointsService_PlatformTokenQuery(t *testing.T) {
