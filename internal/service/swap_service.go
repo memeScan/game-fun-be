@@ -69,7 +69,7 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 	isCanBuyflag := true
 	pointsString := ""
 	if req.PlatformType == "g_external" {
-		isCanBuyflag = CheckBalanceSufficient(chainType, req.SwapType, req.PlatformType, req.InAmount, req.UserBlance, model.SOL_DECIMALS, req.PriorityFee)
+		isCanBuyflag = CheckBalanceSufficient(chainType, req.SwapType, req.PlatformType, req.InAmount, req.UserBalance, model.SOL_DECIMALS, req.PriorityFee)
 	} else if req.PlatformType == "g_points" {
 		pointsDecimal := decimal.NewFromFloat(req.Points) // 用户输入的 Points（代币数量）
 		// 计算 10^decimals，确保计算精度
@@ -83,7 +83,7 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 		// 计算需要多少 SOL（代币 USD 价值 / SOL 的 USD 价值）
 		req.InAmount = tokenUsd.Div(solPriceUSD)
 		req.InAmount = req.InAmount.Div(decimal.NewFromInt(2))
-		isCanBuyflag = CheckBalanceSufficient(chainType, req.SwapType, req.PlatformType, req.InAmount, req.UserBlance, model.SOL_DECIMALS, req.PriorityFee)
+		isCanBuyflag = CheckBalanceSufficient(chainType, req.SwapType, req.PlatformType, req.InAmount, req.UserBalance, model.SOL_DECIMALS, req.PriorityFee)
 	}
 
 	if !isCanBuyflag {
@@ -146,7 +146,7 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 }
 
 // 添加余额检测接口
-func CheckBalanceSufficient(chainType uint8, swaType string, PlatformType string, tokneInAmount decimal.Decimal, tokneBlanceAmount decimal.Decimal, nativeTokenDecimals uint8, priorityFee float64) bool {
+func CheckBalanceSufficient(chainType uint8, swaType string, PlatformType string, tokneInAmount decimal.Decimal, tokneBalanceAmount decimal.Decimal, nativeTokenDecimals uint8, priorityFee float64) bool {
 	needPayAmount := decimal.NewFromInt(0)
 	priorityFeeDecimal := decimal.NewFromFloat(priorityFee)
 	powerOfTen := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(nativeTokenDecimals)))
@@ -166,7 +166,7 @@ func CheckBalanceSufficient(chainType uint8, swaType string, PlatformType string
 		powerOfTen := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(nativeTokenDecimals)))
 		needPayAmount = multiplier.Mul(powerOfTen).Add(scaledPriorityFee).Add(tokneInAmount)
 	}
-	if tokneBlanceAmount.LessThan(needPayAmount) {
+	if tokneBalanceAmount.LessThan(needPayAmount) {
 		return false
 	}
 	return true
