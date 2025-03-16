@@ -3,6 +3,7 @@ package test
 import (
 	"os"
 
+	"game-fun-be/internal/clickhouse"
 	"game-fun-be/internal/model"
 	"game-fun-be/internal/pkg/httpUtil"
 	"game-fun-be/internal/pkg/util"
@@ -75,6 +76,7 @@ func confInit() {
 
 	// Initialize Redis and Database connections
 	redis.Redis()
+	clickhouse.ClickHouse()
 	model.Database(os.Getenv("MYSQL_DSN"))
 	util.Log().Info("Test environment setup completed1")
 

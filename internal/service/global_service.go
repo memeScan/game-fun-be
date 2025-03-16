@@ -1,10 +1,11 @@
 package service
 
 import (
+	"net/http"
+
 	"game-fun-be/internal/model"
 	"game-fun-be/internal/pkg/httpUtil"
 	"game-fun-be/internal/response"
-	"net/http"
 )
 
 type GlobalServiceImpl struct{}
@@ -51,3 +52,17 @@ func (s *GlobalServiceImpl) TickerBalance(userAddress string, tokenAddress strin
 	}
 	return response.Success(balances)
 }
+
+// func (s *GlobalServiceImpl) TickerBalance(userAddress string, tokenAddress string, chainType model.ChainType) response.Response {
+// 	tokenBalances, err := httpUtil.GetTokenBalance([]string{userAddress}, tokenAddress)
+// 	if err != nil {
+// 		return response.Err(http.StatusInternalServerError, "Failed to get balance", err)
+// 	}
+// 	balances := response.TokenBalance{
+// 		Token:    tokenAddress,
+// 		Owner:    userAddress,
+// 		Balance:  (*tokenBalances)[0].Balance,
+// 		Decimals: (*tokenBalances)[0].Decimals,
+// 	}
+// 	return response.Success(balances)
+// }

@@ -19,6 +19,7 @@ type PointsServiceImpl struct {
 	userInfoRepo               *model.UserInfoRepo
 	pointRecordsRecord         *model.PointRecordsRepo
 	platformTokenStatisticRepo *model.PlatformTokenStatisticRepo
+	//
 }
 
 type PointCalculate struct {
@@ -201,7 +202,7 @@ func (s *PointsServiceImpl) SavePointsEveryTimeBucket(transactionAmountDetailByT
 		userPoints := uint64(0)
 		for i, detail := range transactionAmountDetailByTime.TransactionAmountDetails {
 
-			point, onlineDayCount, err := s.CalculatePont(detail.QuotaAmount, transactionAmountDetailByTime.QuotaTotalAmount)
+			point, onlineDayCount, err := s.CalculatePoint(transactionAmountDetailByTime.VaultAmount, detail.QuotaAmount, transactionAmountDetailByTime.QuotaTotalAmount)
 			if err != nil {
 				return err
 			}
@@ -327,7 +328,7 @@ func (s *PointsServiceImpl) SavePointsEveryTimeBucket(transactionAmountDetailByT
 	})
 }
 
-func (s *PointsServiceImpl) CalculatePont(quotaAmount uint64, quotaTotalAmount uint64) (uint64, int, error) {
+func (s *PointsServiceImpl) CalculatePointByDay(vaultAmount uint64) (float64, int, error) {
 	onlineDate := os.Getenv("ONLINE_DATE")
 	// 计算上线天数
 	onlineDayCount := 1
@@ -341,7 +342,26 @@ func (s *PointsServiceImpl) CalculatePont(quotaAmount uint64, quotaTotalAmount u
 			util.Log().Error("Failed to parse ONLINE_DATE: %v", err)
 		}
 	}
-	point := math.Pow(0.995/1.003, float64(onlineDayCount)) * float64(quotaAmount) / float64(quotaTotalAmount*7220)
+	point := math.Pow(0.995/1.003, float64(onlineDayCount)) * float64(vaultAmount) / float64(7220)
+	return point, onlineDayCount, nil
+}
+
+func (s *PointsServiceImpl) CalculatePoint(vaultAmount uint64, quotaAmount uint64, quotaTotalAmount uint64) (uint64, int, error) {
+	onlineDate := os.Getenv("ONLINE_DATE")
+	// 计算上线天数
+	onlineDayCount := 1
+	if onlineDate != "" {
+		if onlineTime, err := time.Parse("20060102", onlineDate); err == nil {
+			onlineDayCount = int(time.Now().Sub(onlineTime).Hours()/24) + 1
+			if onlineDayCount < 1 {
+				onlineDayCount = 1
+			}
+		} else {
+			util.Log().Error("Failed to parse ONLINE_DATE: %v", err)
+		}
+	}
+	pointByDay, _, _ := s.CalculatePointByDay(vaultAmount)
+	point := pointByDay * float64(quotaAmount) / float64(quotaTotalAmount)
 	return uint64(point), onlineDayCount, nil
 }
 
@@ -461,9 +481,10 @@ func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string
 	})
 }
 
-func (s *PointsServiceImpl) PointsEstimated(userID string, chainType model.ChainType) response.Response {
+func (s *PointsServiceImpl) PointsEstimated(userID string, vaultAmount uint64, chainType model.ChainType) response.Response {
+	points, _, _ := s.CalculatePointByDay(vaultAmount)
 	pointsEstimatedResponse := response.PointsEstimatedResponse{
-		EstimatedPoints: "12862.90277",
+		EstimatedPoints: formatPoints(uint64(points)),
 	}
 	return response.Success(pointsEstimatedResponse)
 }

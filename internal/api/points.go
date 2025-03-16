@@ -2,8 +2,10 @@ package api
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 
+	"game-fun-be/internal/pkg/util"
 	"game-fun-be/internal/service"
 
 	"github.com/gin-gonic/gin"
@@ -11,10 +13,11 @@ import (
 
 type PointsHandler struct {
 	pointsService *service.PointsServiceImpl
+	globalService *service.GlobalServiceImpl
 }
 
-func NewPointsHandler(pointsService *service.PointsServiceImpl) *PointsHandler {
-	return &PointsHandler{pointsService: pointsService}
+func NewPointsHandler(pointsService *service.PointsServiceImpl, globalService *service.GlobalServiceImpl) *PointsHandler {
+	return &PointsHandler{pointsService: pointsService, globalService: globalService}
 }
 
 // Points 获取用户积分数据
@@ -173,6 +176,27 @@ func (p *PointsHandler) PointsEstimated(c *gin.Context) {
 		c.JSON(errResp.Code, errResp)
 		return
 	}
-	res := p.pointsService.PointsEstimated(userID, chainType)
+
+	tokenAddress := os.Getenv("TOKEN_ADDRESS")
+	vaultAddress := os.Getenv("VAULT_ADDRESS")
+
+	resp := p.globalService.TickerBalance(vaultAddress, tokenAddress, chainType)
+
+	var balance float64
+	if resp.Data != nil {
+		// 使用类型断言将 resp.Data 转换为具体类型
+		if data, ok := resp.Data.(map[string]interface{}); ok {
+			if balanceVal, exists := data["Balance"]; exists {
+				if balanceFloat, ok := balanceVal.(float64); ok {
+					balance = balanceFloat
+				}
+			}
+		}
+	} else {
+		util.Log().Warning("Failed to get ticker balance or response structure is invalid")
+		balance = 0
+	}
+
+	res := p.pointsService.PointsEstimated(userID, uint64(balance), chainType)
 	c.JSON(res.Code, res)
 }

@@ -49,9 +49,9 @@ func InsertProxyTransaction(tx *ProxyTransaction) error {
             pool_address, base_token_amount, quote_token_amount, base_token_reserve_amount,
             quote_token_reserve_amount, decimals, base_token_price, quote_token_price,
             transaction_type, is_burn, points_amount, feeQuote_amount, feeBase_amount,
-            buybackFeeBase_amount, block_time, transaction_time
+            buybackFeeBase_amount, block_time, transaction_time,create_time
         ) VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?
         )
     `
 
@@ -77,6 +77,7 @@ func InsertProxyTransaction(tx *ProxyTransaction) error {
 		tx.BuybackFeeBaseAmount,
 		tx.BlockTime,
 		tx.TransactionTime,
+		tx.CreateTime,
 	)
 	if err != nil {
 		return fmt.Errorf("insert transaction failed: %w", err)
@@ -94,15 +95,15 @@ func QueryProxyTransactionsByTime(startTime, endTime time.Time, chainType uint8,
             transaction_type, is_burn, points_amount, feeQuote_amount, feeBase_amount,
             buybackFeeBase_amount, block_time, transaction_time, create_time
         FROM proxy_transaction_ck_all
-        WHERE transaction_time >= ? AND transaction_time <= ?
-		AND proxy_type = 2
+        WHERE transaction_time >= ? AND transaction_time < ?
+        AND proxy_type = 1
         AND chain_type = ?
         AND token_address = ?
         ORDER BY transaction_time DESC
     `
 
-	var result []ProxyTransaction
-	err := ClickHouseClient.Select(context.Background(), &result, query,
+	var transactions []ProxyTransaction
+	rows, err := ClickHouseClient.Query(context.Background(), query,
 		startTime,
 		endTime,
 		chainType,
@@ -111,6 +112,45 @@ func QueryProxyTransactionsByTime(startTime, endTime time.Time, chainType uint8,
 	if err != nil {
 		return nil, fmt.Errorf("query transactions by time failed: %w", err)
 	}
+	defer rows.Close()
 
-	return result, nil
+	for rows.Next() {
+		var tx ProxyTransaction
+
+		if err := rows.Scan(
+			&tx.TransactionHash,
+			&tx.ChainType,
+			&tx.ProxyType,
+			&tx.UserAddress,
+			&tx.TokenAddress,
+			&tx.PoolAddress,
+			&tx.BaseTokenAmount,
+			&tx.QuoteTokenAmount,
+			&tx.BaseTokenReserveAmount,
+			&tx.QuoteTokenReserveAmount,
+			&tx.Decimals,
+			&tx.BaseTokenPrice,
+			&tx.QuoteTokenPrice,
+			&tx.TransactionType,
+			&tx.IsBurn,
+			&tx.PointsAmount,
+			&tx.FeeQuoteAmount,
+			&tx.FeeBaseAmount,
+			&tx.BuybackFeeBaseAmount,
+			&tx.BlockTime,
+			&tx.TransactionTime,
+			&tx.CreateTime,
+		); err != nil {
+			return nil, fmt.Errorf("scan row failed: %w", err)
+		}
+
+		transactions = append(transactions, tx)
+	}
+
+	// Check for errors from iterating over rows
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("row iteration failed: %w", err)
+	}
+
+	return transactions, nil
 }
