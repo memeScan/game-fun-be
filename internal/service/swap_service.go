@@ -68,29 +68,27 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 	}
 
 	isCanBuyflag := true
-	pointsString := ""
+	// pointsString := ""
 	estimatedPoints := decimal.NewFromFloat(0.0)
 
 	if req.PlatformType == "g_external" {
-		//
-		isCanBuyflag = CheckBalanceSufficient(chainType, req.SwapType, req.PlatformType, req.InAmount, req.UserBalance, model.SOL_DECIMALS, req.PriorityFee)
-	} else if req.PlatformType == "g_points" {
-		pointsDecimal := decimal.NewFromFloat(req.Points) // 用户输入的 Points（代币数量）
-		// 计算 10^decimals，确保计算精度
-		pointsDecimalsFactor := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(tokenDetail.Decimals)))
-		// 去掉小数点部分，取整
-		pointsWithoutDecimal := pointsDecimal.Mul(pointsDecimalsFactor).Floor()
-		// 将去掉小数点后的结果转换为字符串
-		pointsString = pointsWithoutDecimal.String()
-		// 计算代币的 USD 价值（代币数量 * 代币单价 * 10^精度）
-		tokenUsd := pointsDecimal.Mul(tokenDetail.Price)
-		// 计算需要多少 SOL（代币 USD 价值 / SOL 的 USD 价值）
-		req.InAmount = tokenUsd.Div(solPriceUSD)
-		req.InAmount = req.InAmount.Div(decimal.NewFromInt(2))
-		fmt.Println("req.InAmount:", req.InAmount)
-
 		isCanBuyflag = CheckBalanceSufficient(chainType, req.SwapType, req.PlatformType, req.InAmount, req.UserBalance, model.SOL_DECIMALS, req.PriorityFee)
 	}
+	// else if req.PlatformType == "g_points" {
+	// 	pointsDecimal := decimal.NewFromFloat(req.Points) // 用户输入的 Points（代币数量）
+	// 	// 计算 10^decimals，确保计算精度
+	// 	pointsDecimalsFactor := decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(tokenDetail.Decimals)))
+	// 	// 去掉小数点部分，取整
+	// 	pointsWithoutDecimal := pointsDecimal.Mul(pointsDecimalsFactor).Floor()
+	// 	// 将去掉小数点后的结果转换为字符串
+	// 	// pointsString = pointsWithoutDecimal.String()
+	// 	// 计算代币的 USD 价值（代币数量 * 代币单价 * 10^精度）
+	// 	tokenUsd := pointsDecimal.Mul(tokenDetail.Price)
+	// 	// 计算需要多少 SOL（代币 USD 价值 / SOL 的 USD 价值）
+	// 	req.InAmount = tokenUsd.Div(solPriceUSD)
+	// 	req.InAmount = req.InAmount.Div(decimal.NewFromInt(2))
+	// 	isCanBuyflag = CheckBalanceSufficient(chainType, req.SwapType, req.PlatformType, req.InAmount, req.UserBalance, model.SOL_DECIMALS, req.PriorityFee)
+	// }
 
 	// Create map for platform-specific functions
 	platformHandlers := map[string]func() (*httpRespone.SwapTransactionResponse, error){
@@ -113,13 +111,13 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 			}, nil
 		},
 		"g_points": func() (*httpRespone.SwapTransactionResponse, error) {
-			swapStruct := s.buildBuyGWithPointsStruct(req, pointsString)
-			if isCanBuyflag {
-				return s.getGetBuyGWithPointsInstruction(req.Points, swapStruct, startTime)
-			}
+			// swapStruct := s.buildBuyGWithPointsStruct(req, pointsString)
+			// if isCanBuyflag {
+			// 	return s.getGetBuyGWithPointsInstruction(req.Points, swapStruct, startTime)
+			// }
 			return &httpRespone.SwapTransactionResponse{
 				Code:    2000,
-				Message: "Your custom message here",
+				Message: "Points rule is upgrading!",
 			}, nil
 		},
 	}

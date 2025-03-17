@@ -75,10 +75,10 @@ func addJobs() {
 	}
 
 	// 每5分执行一次积分任务
-	_, err = cronJob.AddFunc("0 */10 * * * *", ExecutePointJob)
-	if err != nil {
-		util.Log().Error("Failed to add ExecutePointJob: %v", err)
-	}
+	// _, err = cronJob.AddFunc("0 */10 * * * *", ExecutePointJob)
+	// if err != nil {
+	// 	util.Log().Error("Failed to add ExecutePointJob: %v", err)
+	// }
 
 	// 添加每分钟获取 SOL 价格的任务
 	_, err = cronJob.AddFunc("0 * * * * *", fetchSolPrice)
