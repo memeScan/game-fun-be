@@ -1,0 +1,113 @@
+{
+  "token": {
+    "name": "Trump 8-bit",
+    "symbol": "TRUMP8",
+    "mint": "DwEDC3qSZGqUfuWBtdCffzsmkA8uAGdrF1cm32ygpump",
+    "uri": "https://file.dexlab.space/file/f915e30cfe8c47fe9d26450afb4a972a",
+    "decimals": 6,
+    "description": "Trump 8-bit",
+    "extensions": {
+      "website": "https://www.trump8.xyz/",
+      "twitter": "https://twitter.com/TRUMP8bit_Sol",
+      "telegram": "https://t.me/TRUMP_8bit"
+    },
+    "image": "https://image.solanatracker.io/proxy?url=https%3A%2F%2Ffile.dexlab.space%2Ffile%2F53f570eb6a064e8fa50c488eb2bb0952",
+    "hasFileMetaData": true,
+    "strictSocials": {
+      "twitter": "https://twitter.com/TRUMP8bit_Sol",
+      "telegram": "https://t.me/TRUMP_8bit",
+      "website": "https://www.trump8.xyz/"
+    }
+  },
+  "pools": [
+    {
+      "poolId": "D4PPp2UWCrUnY6RzWFWDLBhFWqrAwj2D5fKGpQu867X7",
+      "liquidity": {
+        "quote": 3095.3228222556577,
+        "usd": 443266.794894473
+      },
+      "price": {
+        "quote": 7.583169538669884e-8,
+        "usd": 0.000010859504644811382
+      },
+      "tokenSupply": 999999974792.8191,
+      "lpBurn": 0,
+      "tokenAddress": "DwEDC3qSZGqUfuWBtdCffzsmkA8uAGdrF1cm32ygpump",
+      "marketCap": {
+        "quote": 75831.69347519559,
+        "usd": 10859504.371073885
+      },
+      "market": "raydium-clmm",
+      "quoteToken": "So11111111111111111111111111111111111111112",
+      "decimals": 6,
+      "security": {
+        "freezeAuthority": null,
+        "mintAuthority": null
+      },
+      "lastUpdated": 1742820611359,
+      "createdAt": 1742752350189,
+      "deployer": "92B5vagRzcumrr3h6wSyidBYSnVrvUQkGNQSVRh4vDV",
+      "txns": {
+        "buys": 160635,
+        "total": 299134,
+        "volume": 17388004,
+        "sells": 138499
+      }
+    }
+  ],
+  "events": {
+    "1m": {
+      "priceChangePercentage": 1.310152248635243
+    },
+    "5m": {
+      "priceChangePercentage": 1.310152248635243
+    },
+    "15m": {
+      "priceChangePercentage": 0.5733076929684378
+    },
+    "30m": {
+      "priceChangePercentage": 6.189680905640057
+    },
+    "1h": {
+      "priceChangePercentage": 12.13558795453201
+    },
+    "2h": {
+      "priceChangePercentage": 12.13558795453201
+    },
+    "3h": {
+      "priceChangePercentage": 6.7477220866618834
+    },
+    "4h": {
+      "priceChangePercentage": 31.671620627332643
+    },
+    "5h": {
+      "priceChangePercentage": 42.97189569090862
+    },
+    "6h": {
+      "priceChangePercentage": 51.69673909132524
+    },
+    "12h": {
+      "priceChangePercentage": 64.53122004070471
+    },
+    "24h": {
+      "priceChangePercentage": 33048.277788384155
+    }
+  },
+  "risk": {
+    "rugged": false,
+    "risks": [
+      {
+        "name": "LP Burned",
+        "description": "Allows the owner to remove liquidity at any time.",
+        "value": "0%",
+        "level": "danger",
+        "score": 4000
+      }
+    ],
+    "score": 3
+  },
+  "buys": 0,
+  "sells": 0,
+  "txns": 0,
+  "holders": 14010
+}
