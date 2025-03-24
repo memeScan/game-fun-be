@@ -53,12 +53,16 @@ definitions:
     type: object
   response.InvitedPointsDetail:
     properties:
+      fee_rebate:
+        type: string
       invite_time:
         type: integer
       invitee:
         type: string
       trading_points:
         type: string
+      update_time:
+        type: integer
     type: object
   response.InvitedPointsTotalResponse:
     properties:
@@ -116,9 +120,6 @@ definitions:
         description: 代币铸造地址
         example: 6
         type: integer
-      holders:
-        example: 4204
-        type: integer
       market:
         description: 市场地址
         example: B3o198GX45DZ9HeJZ56wuruyWWCfGVBSn5qC71q5AHZz
@@ -135,9 +136,6 @@ definitions:
         description: 当前价格
         example: 5.0417320729e-05
         type: number
-      rank:
-        example: 1
-        type: integer
       token_mint:
         description: 代币铸造地址
         example: suprkbfvwpFZXzWaoKjTzGkW1nkvvwK9n2E6g1zyLFo
@@ -215,9 +213,6 @@ definitions:
   response.MarketTicker:
     description: 市场的行情数据
     properties:
-      Sell_tx_count_24h:
-        example: 7566
-        type: integer
       buy_token_volume_1h:
         example: "379231.972430"
         type: string
@@ -254,12 +249,19 @@ definitions:
       buy_tx_count_30m:
         example: 25
         type: integer
+      holders:
+        example: 4204
+        type: integer
       last_swap_at:
         example: 1740887399
         type: integer
       market_cap:
         example: "50417.320729000000000"
         type: string
+      price:
+        description: 当前价格
+        example: 5.0417320729e-05
+        type: number
       price_change_1h:
         example: "0.005103"
         type: string
@@ -272,6 +274,9 @@ definitions:
       price_change_30m:
         example: "0.000836"
         type: string
+      rank:
+        example: 1
+        type: integer
       sell_token_volume_1h:
         example: "379231.972430"
         type: string
@@ -301,6 +306,9 @@ definitions:
         type: integer
       sell_tx_count_5m:
         example: 25
+        type: integer
+      sell_tx_count_24h:
+        example: 7566
         type: integer
       sell_tx_count_30m:
         example: 25
@@ -441,8 +449,16 @@ definitions:
         description: 邀请积分
         example: "0"
         type: string
+      invite_rebate:
+        description: 可提取返佣
+        example: "0.147938"
+        type: string
       trading_points:
         description: 交易积分
+        example: "0.147938"
+        type: string
+      withdrawable_rebate:
+        description: 可提取返佣
         example: "0.147938"
         type: string
     type: object
@@ -733,6 +749,8 @@ definitions:
         type: string
       twitter_username:
         type: string
+      type:
+        type: integer
       user_id:
         type: integer
     type: object
