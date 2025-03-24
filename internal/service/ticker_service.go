@@ -6,6 +6,7 @@ import (
 	"game-fun-be/internal/conf"
 	"game-fun-be/internal/constants"
 	"game-fun-be/internal/es"
+	"game-fun-be/internal/es/aggregation"
 	"game-fun-be/internal/es/query"
 	"game-fun-be/internal/model"
 	"game-fun-be/internal/pkg/httpRespone"
@@ -15,10 +16,12 @@ import (
 	"game-fun-be/internal/request"
 	"game-fun-be/internal/response"
 
+	"encoding/json"
 	"log"
 	"math"
 	"net/http"
 	"reflect"
+	"sort"
 	"strconv"
 	"time"
 
@@ -42,6 +45,9 @@ func (s *TickerServiceImpl) Tickers(req request.TickersRequest, chainType model.
 	if err != nil {
 		return response.Err(http.StatusInternalServerError, "Failed to generate TickersQuery", err)
 	}
+	// 打印 TickersQuery
+	fmt.Println("TickersQuery:", TickersQuery)
+
 	result, err := es.SearchTokenTransactionsWithAggs(conf.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS, TickersQuery, conf.UNIQUE_TOKENS)
 	if err != nil || result == nil {
 		status := http.StatusInternalServerError
@@ -537,8 +543,166 @@ func (s *TickerServiceImpl) TokenDistribution(tokenAddress string, chainType mod
 }
 
 func (s *TickerServiceImpl) SearchTickers(param, limit, cursor string, chainType model.ChainType) response.Response {
-	var sarchTickerResponse response.SearchTickerResponse
-	return response.Success(sarchTickerResponse)
+	// var sarchTickerResponse response.SearchTickerResponse
+	isTokenAddress := false
+	if len(param) >= 32 && isBase58(param) {
+		isTokenAddress = true
+	}
+
+	queryJSON, err := query.SearchTokenBySymbol(param, chainType.Uint8(), isTokenAddress)
+	if err != nil {
+		return response.Response{
+			Code: http.StatusInternalServerError,
+			Msg:  "Failed to get pump rank",
+		}
+	}
+
+	result, err := es.SearchDocuments(es.ES_INDEX_TOKEN_INFO, queryJSON)
+	if err != nil {
+		return response.Response{
+			Code: http.StatusInternalServerError,
+			Msg:  "Failed to get pump rank",
+		}
+	}
+	jsonResult, err := json.Marshal(result)
+	if err != nil {
+		return response.Response{
+			Code: http.StatusInternalServerError,
+			Msg:  "Failed to get pump rank",
+		}
+	}
+
+	// 吧jsonResult转换为string
+	jsonResultString := string(jsonResult)
+
+	// 把jsonResult转换为 es.SearchTokenResult
+	var tokens []aggregation.TokenInfo
+	err = json.Unmarshal([]byte(jsonResultString), &tokens)
+	if err != nil {
+		log.Println("err", err)
+		return response.Response{
+			Code: http.StatusInternalServerError,
+			Msg:  "Failed to get pump rank",
+		}
+	}
+
+	// 拿到代币的token_address列表
+	tokenAddresses := make([]string, len(tokens))
+	for i, tokenInfo := range tokens {
+		tokenAddresses[i] = tokenInfo.TokenAddress
+	}
+
+	// 根据token_address列表获取代币信息
+	tokenInfos := GetExistingTokenInfos(tokenAddresses, chainType.Uint8())
+	if len(tokenInfos) == 0 {
+		return response.Response{
+			Code: http.StatusNotFound,
+			Msg:  "Token not found",
+		}
+	}
+
+	var tokenInfoResponses []*response.TokenInfoResponse
+
+	for _, token := range tokenInfos {
+		if token.ExtInfo == "" && token.Liquidity.IsZero() {
+			delete(tokenInfos, token.TokenAddress)
+			continue
+		}
+
+		var extInfo model.ExtInfo
+		err = json.Unmarshal([]byte(token.ExtInfo), &extInfo)
+		if err != nil {
+			// 从tokenInfos删除这个token
+			delete(tokenInfos, token.TokenAddress)
+			continue
+		}
+
+		tokenInfoResponses = append(tokenInfoResponses, &response.TokenInfoResponse{
+			Name:                extInfo.Name,
+			Logo:                extInfo.Image,
+			Price:               token.Price.InexactFloat64(),
+			Symbol:              extInfo.Symbol,
+			Address:             token.TokenAddress,
+			Liquidity:           token.Liquidity,
+			Decimals:            int(token.Decimals),
+			MarketCap:           token.MarketCap.InexactFloat64(),
+			CreatedPlatformType: uint8(token.CreatedPlatformType),
+		})
+
+	}
+
+	// tokenInfos 大于0 则按流动性排序
+	if len(tokenInfoResponses) > 0 {
+		sort.Slice(tokenInfoResponses, func(i, j int) bool {
+			return tokenInfoResponses[i].Liquidity.GreaterThan(tokenInfoResponses[j].Liquidity)
+		})
+	}
+
+	// 如果 tokenInfos 大于10, 则只返回10个
+	if len(tokenInfoResponses) > 20 {
+		tokenInfoResponses = tokenInfoResponses[:20]
+	}
+
+	tokenAddressList := make([]string, len(tokenInfoResponses))
+	for i, tokenInfoResponse := range tokenInfoResponses {
+		tokenAddressList[i] = tokenInfoResponse.Address
+	}
+
+	// 用token_address列表，去es查询对应代币的24小时交易数据
+	queryJSON, err = query.SearchToken(tokenAddressList, chainType.Uint8())
+	if err != nil {
+		return response.Response{
+			Code: http.StatusInternalServerError,
+			Msg:  "Failed to get token info",
+		}
+	}
+
+	tokenTransactionsResult, err := es.SearchTokenTransactionsWithAggs(es.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS, queryJSON, es.UNIQUE_TOKENS)
+	if err != nil {
+		return response.Response{
+			Code: http.StatusInternalServerError,
+			Msg:  "Failed to get token info",
+		}
+	}
+
+	aggregationResult, err := es.UnmarshalAggregationResult(tokenTransactionsResult)
+	if err != nil {
+		return response.Response{
+			Code: http.StatusInternalServerError,
+			Msg:  "Failed to get pump rank",
+		}
+	}
+
+	if len(aggregationResult.Buckets) == 0 {
+		// 如果没查出来数据，表示懂没有交易 24小时交易了都为0
+		for _, tokenInfoResponse := range tokenInfoResponses {
+			tokenInfoResponse.Volume = 0
+		}
+	} else {
+		for _, bucket := range aggregationResult.Buckets {
+			if len(bucket.LatestTransaction.Hits.Hits) > 0 {
+				var tokenTransaction response.TokenTransaction
+				if err := json.Unmarshal(bucket.LatestTransaction.Hits.Hits[0].Source, &tokenTransaction); err != nil {
+					return response.Response{
+						Code: http.StatusInternalServerError,
+						Msg:  "Failed to get pump rank",
+					}
+				}
+				for _, tokenInfoResponse := range tokenInfoResponses {
+					if tokenInfoResponse.Address == tokenTransaction.TokenAddress {
+						// 除以decimals次方
+						tokenInfoResponse.Volume = bucket.Volume.Value * tokenTransaction.Price / math.Pow(10, float64(tokenInfoResponse.Decimals))
+					}
+				}
+			}
+		}
+	}
+
+	return response.Response{
+		Code: http.StatusOK,
+		Msg:  "Token search queried successfully",
+		Data: tokenInfoResponses,
+	}
 }
 
 func GetOrFetchTokenMarketData(tokenAddress string, chainType string) (*httpRespone.TokenMarketDataResponse, error) {
@@ -571,4 +735,50 @@ func GetOrFetchTokenMarketData(tokenAddress string, chainType string) (*httpResp
 	}
 
 	return tokenMarketDataRes, nil
+}
+
+// GetExistingTokenInfos 批量获取代币信息（优先从Redis获取，未命中则从数据库查询）
+func GetExistingTokenInfos(addresses []string, chainType uint8) map[string]*model.TokenInfo {
+	result := make(map[string]*model.TokenInfo)
+	var missedAddresses []string
+
+	// 构建 Redis keys
+	redisKeys := make([]string, len(addresses))
+	for i, address := range addresses {
+		redisKeys[i] = fmt.Sprintf("%s:%s", constants.RedisKeyPrefixTokenInfo, address)
+	}
+
+	// 批量从 Redis 获取
+	values, err := redis.MGet(redisKeys)
+	if err != nil {
+		util.Log().Error("Failed to batch get from Redis: %v", err)
+		missedAddresses = addresses
+	} else {
+		// 处理返回结果
+		for i, value := range values {
+			if value == "" {
+				missedAddresses = append(missedAddresses, addresses[i])
+				continue
+			}
+			var tokenInfo model.TokenInfo
+			if err := json.Unmarshal([]byte(value), &tokenInfo); err != nil {
+				util.Log().Error("Failed to unmarshal token info from Redis: %v", err)
+				missedAddresses = append(missedAddresses, addresses[i])
+				continue
+			}
+			result[addresses[i]] = &tokenInfo
+		}
+	}
+
+	// 对未命中的地址批量查询数据库
+	if len(missedAddresses) > 0 {
+		tokenInfos, err := model.GetTokenInfoByAddresses(missedAddresses, chainType)
+		if err == nil {
+			for _, info := range tokenInfos {
+				result[info.TokenAddress] = &info
+			}
+		}
+	}
+
+	return result
 }

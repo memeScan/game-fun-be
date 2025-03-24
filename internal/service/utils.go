@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gagliardetto/solana-go"
@@ -128,4 +129,14 @@ func calculatePriceChange(currentPrice, previousPrice float64) float64 {
 		return roundToTwoDecimalPlaces(change)
 	}
 	return 0
+}
+
+func isBase58(s string) bool {
+	base58Chars := "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+	for _, c := range s {
+		if !strings.ContainsRune(base58Chars, c) {
+			return false
+		}
+	}
+	return true
 }
