@@ -1692,6 +1692,9 @@ const docTemplate = `{
         "response.InvitedPointsDetail": {
             "type": "object",
             "properties": {
+                "fee_rebate": {
+                    "type": "string"
+                },
                 "invite_time": {
                     "type": "integer"
                 },
@@ -1700,6 +1703,9 @@ const docTemplate = `{
                 },
                 "trading_points": {
                     "type": "string"
+                },
+                "update_time": {
+                    "type": "integer"
                 }
             }
         },
@@ -1785,10 +1791,6 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 6
                 },
-                "holders": {
-                    "type": "integer",
-                    "example": 4204
-                },
                 "market": {
                     "description": "市场地址",
                     "type": "string",
@@ -1808,10 +1810,6 @@ const docTemplate = `{
                     "description": "当前价格",
                     "type": "number",
                     "example": 0.000050417320729
-                },
-                "rank": {
-                    "type": "integer",
-                    "example": 1
                 },
                 "token_mint": {
                     "description": "代币铸造地址",
@@ -1922,10 +1920,6 @@ const docTemplate = `{
             "description": "市场的行情数据",
             "type": "object",
             "properties": {
-                "Sell_tx_count_24h": {
-                    "type": "integer",
-                    "example": 7566
-                },
                 "buy_token_volume_1h": {
                     "type": "string",
                     "example": "379231.972430"
@@ -1974,6 +1968,10 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 25
                 },
+                "holders": {
+                    "type": "integer",
+                    "example": 4204
+                },
                 "last_swap_at": {
                     "type": "integer",
                     "example": 1740887399
@@ -1981,6 +1979,11 @@ const docTemplate = `{
                 "market_cap": {
                     "type": "string",
                     "example": "50417.320729000000000"
+                },
+                "price": {
+                    "description": "当前价格",
+                    "type": "number",
+                    "example": 0.000050417320729
                 },
                 "price_change_1h": {
                     "type": "string",
@@ -1997,6 +2000,10 @@ const docTemplate = `{
                 "price_change_5m": {
                     "type": "string",
                     "example": "0.000836"
+                },
+                "rank": {
+                    "type": "integer",
+                    "example": 1
                 },
                 "sell_token_volume_1h": {
                     "type": "string",
@@ -2033,6 +2040,10 @@ const docTemplate = `{
                 "sell_tx_count_1h": {
                     "type": "integer",
                     "example": 271
+                },
+                "sell_tx_count_24h": {
+                    "type": "integer",
+                    "example": 7566
                 },
                 "sell_tx_count_30m": {
                     "type": "integer",
@@ -2229,8 +2240,18 @@ const docTemplate = `{
                     "type": "string",
                     "example": "0"
                 },
+                "invite_rebate": {
+                    "description": "可提取返佣",
+                    "type": "string",
+                    "example": "0.147938"
+                },
                 "trading_points": {
                     "description": "交易积分",
+                    "type": "string",
+                    "example": "0.147938"
+                },
+                "withdrawable_rebate": {
+                    "description": "可提取返佣",
                     "type": "string",
                     "example": "0.147938"
                 }
@@ -2643,6 +2664,9 @@ const docTemplate = `{
                 },
                 "twitter_username": {
                     "type": "string"
+                },
+                "type": {
+                    "type": "integer"
                 },
                 "user_id": {
                     "type": "integer"

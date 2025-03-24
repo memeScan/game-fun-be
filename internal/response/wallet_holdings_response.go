@@ -1,7 +1,7 @@
 package response
 
-// TokenHolding 定义代币持仓数据结构
-type TokenHolding struct {
+// WalletHolding 定义代币持仓数据结构
+type WalletHolding struct {
 	TokenName       string `json:"token_name"`        // 代币名称
 	Symbol          string `json:"symbol"`            // 代币符号
 	Price           string `json:"price"`             // 当前价格
@@ -21,6 +21,6 @@ type TokenHolding struct {
 }
 
 // TokenHoldingsResponse 定义代币持仓响应数据结构
-type TokenHoldingsResponse struct {
-	TokenHoldings []TokenHolding `json:"token_holdings"` // 代币持仓列表
+type WalletHoldingsResponse struct {
+	TokenHoldings []WalletHolding `json:"token_holdings"` // 代币持仓列表
 }

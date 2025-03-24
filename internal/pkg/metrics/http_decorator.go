@@ -3,11 +3,12 @@ package metrics
 import (
 	"context"
 	"fmt"
-	"game-fun-be/internal/pkg/util"
 	"io"
 	"net/http"
 	"net/url"
 	"time"
+
+	"game-fun-be/internal/pkg/util"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -55,6 +56,17 @@ func (m *MetricsHTTPClient) Post(url string, contentType string, body io.Reader)
 		return nil, err
 	}
 	req.Header.Set("Content-Type", contentType)
+	return m.Do(req)
+}
+
+func (m *MetricsHTTPClient) GetWithHeaders(url string, headers map[string]string) (*http.Response, error) {
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
 	return m.Do(req)
 }
 
