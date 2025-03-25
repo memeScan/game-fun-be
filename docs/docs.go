@@ -1312,80 +1312,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/token_holdings/{chain_type}/histories/{account}": {
-            "get": {
-                "description": "根据链类型和用户账户获取代币持仓历史数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "代币持仓"
-                ],
-                "summary": "获取代币持仓历史数据",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "链类型（sol、eth、bsc）",
-                        "name": "chain_type",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "用户账户",
-                        "name": "account",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "default": "0",
-                        "description": "分页页码",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "default": "20",
-                        "description": "每页数量",
-                        "name": "limit",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "成功返回代币持仓历史数据",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/response.TokenHoldingHistoriesResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "500": {
-                        "description": "服务器内部错误",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
         "/token_holdings/{chain_type}/{account}": {
             "get": {
-                "description": "根据链类型、用户账户和目标账户获取代币持仓数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
+                "description": "根据链类型和用户账户获取代币持仓数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
                 "consumes": [
                     "application/json"
                 ],
@@ -1395,7 +1324,7 @@ const docTemplate = `{
                 "tags": [
                     "代币持仓"
                 ],
-                "summary": "获取代币持仓数据",
+                "summary": "获取代币持仓数据当前和历史",
                 "parameters": [
                     {
                         "type": "string",
@@ -1410,20 +1339,6 @@ const docTemplate = `{
                         "name": "account",
                         "in": "path",
                         "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "目标账户",
-                        "name": "account",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "default": "false",
-                        "description": "是否包含零余额",
-                        "name": "allow_zero_balance",
-                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -2456,10 +2371,6 @@ const docTemplate = `{
                     "description": "持仓数量",
                     "type": "string"
                 },
-                "filled_price": {
-                    "description": "成交价格",
-                    "type": "string"
-                },
                 "holders_count": {
                     "description": "持有者数量",
                     "type": "integer"
@@ -2472,20 +2383,16 @@ const docTemplate = `{
                     "description": "代币图片 URI",
                     "type": "string"
                 },
-                "market_address": {
-                    "description": "市场地址",
-                    "type": "string"
-                },
-                "market_id": {
-                    "description": "市场 ID",
-                    "type": "integer"
-                },
                 "price": {
                     "description": "当前价格",
                     "type": "string"
                 },
-                "realized_pnl": {
-                    "description": "已实现盈亏",
+                "profit": {
+                    "description": "收益",
+                    "type": "string"
+                },
+                "profit_rate": {
+                    "description": "收益率",
                     "type": "string"
                 },
                 "symbol": {
@@ -2494,107 +2401,6 @@ const docTemplate = `{
                 },
                 "token_name": {
                     "description": "代币名称",
-                    "type": "string"
-                },
-                "total_buy": {
-                    "description": "总买入数量",
-                    "type": "string"
-                },
-                "total_buy_native": {
-                    "description": "总买入原生代币数量",
-                    "type": "string"
-                },
-                "total_sell": {
-                    "description": "总卖出数量",
-                    "type": "string"
-                },
-                "total_sell_native": {
-                    "description": "总卖出原生代币数量",
-                    "type": "string"
-                },
-                "total_value": {
-                    "description": "持仓总价值",
-                    "type": "string"
-                }
-            }
-        },
-        "response.TokenHoldingHistoriesResponse": {
-            "type": "object",
-            "properties": {
-                "has_more": {
-                    "description": "是否有更多数据",
-                    "type": "boolean"
-                },
-                "token_holdings_histories": {
-                    "description": "代币持仓历史列表",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/response.TokenHoldingHistory"
-                    }
-                }
-            }
-        },
-        "response.TokenHoldingHistory": {
-            "type": "object",
-            "properties": {
-                "balance": {
-                    "description": "持仓数量",
-                    "type": "string"
-                },
-                "filled_price": {
-                    "description": "成交价格",
-                    "type": "string"
-                },
-                "holders_count": {
-                    "description": "持有者数量",
-                    "type": "integer"
-                },
-                "id": {
-                    "description": "记录 ID",
-                    "type": "integer"
-                },
-                "image_uri": {
-                    "description": "代币图片 URI",
-                    "type": "string"
-                },
-                "market_address": {
-                    "description": "市场地址",
-                    "type": "string"
-                },
-                "market_id": {
-                    "description": "市场 ID",
-                    "type": "integer"
-                },
-                "price": {
-                    "description": "当前价格",
-                    "type": "string"
-                },
-                "realized_pnl": {
-                    "description": "已实现盈亏",
-                    "type": "string"
-                },
-                "symbol": {
-                    "description": "代币符号",
-                    "type": "string"
-                },
-                "token_name": {
-                    "description": "代币名称",
-                    "type": "string"
-                },
-                "total_buy": {
-                    "description": "总买入数量",
-                    "type": "string"
-                },
-                "total_buy_native": {
-                    "description": "总买入原生代币数量",
-                    "type": "string"
-                },
-                "total_sell": {
-                    "description": "总卖出数量",
-                    "type": "string"
-                },
-                "total_sell_native": {
-                    "description": "总卖出原生代币数量",
                     "type": "string"
                 },
                 "total_value": {
@@ -2606,8 +2412,15 @@ const docTemplate = `{
         "response.TokenHoldingsResponse": {
             "type": "object",
             "properties": {
-                "token_holdings": {
-                    "description": "代币持仓列表",
+                "current_holding": {
+                    "description": "当前持仓",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.TokenHolding"
+                    }
+                },
+                "history_token_holdings": {
+                    "description": "历史持仓",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/response.TokenHolding"

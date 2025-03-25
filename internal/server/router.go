@@ -121,7 +121,6 @@ func NewRouter(producer sarama.SyncProducer) *gin.Engine {
 		auth.POST("swap/:chain_type/send_transaction", swapHandler.SendTransaction)
 		auth.GET("swap/:chain_type/transaction_status", swapHandler.TransactionStatus)
 		auth.GET("token_holdings/:chain_type/:account", tokenHoldingsHandler.TokenHoldings)
-		auth.GET("token_holdings/:chain_type/histories/:account", tokenHoldingsHandler.TokenHoldingsHistories)
 
 		// WebSocket 路由
 		v1.GET("ws/kline/:tokenAddress", ws.HandleKlineWS)
