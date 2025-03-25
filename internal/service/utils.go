@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"math"
 	"strconv"
 	"strings"
@@ -139,4 +140,17 @@ func isBase58(s string) bool {
 		}
 	}
 	return true
+}
+
+// 解析 ISO 8601 时间字符串为 Unix 时间戳（秒）
+func parseISOTimeToUnix(timestampStr string) int64 {
+	if timestampStr == "" {
+		return 0
+	}
+	parsedTime, err := time.Parse(time.RFC3339, timestampStr)
+	if err != nil {
+		log.Printf("Error parsing timestamp %s: %v\n", timestampStr, err)
+		return 0 // 出错时返回 0，保证程序继续运行
+	}
+	return parsedTime.Unix()
 }

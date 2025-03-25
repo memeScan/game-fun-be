@@ -101,13 +101,16 @@ type TokenTransaction struct {
 	SellCount24h  int64   `json:"sell_count_24h,omitempty" default:"0"`
 
 	// 市场变化
-	MarketCapTime        float64 `json:"market_cap_time,omitempty" default:"0"`
-	MarketCapChange1m    float64 `json:"market_cap_change_1m,omitempty" default:"0"`
-	MarketCapChange5m    float64 `json:"market_cap_change_5m,omitempty" default:"0"`
-	MarketCapChange1h    float64 `json:"market_cap_change_1h,omitempty" default:"0"`
-	PriceChangePercent1m float64 `json:"price_change_percent1m,omitempty" default:"0"`
-	PriceChangePercent5m float64 `json:"price_change_percent5m,omitempty" default:"0"`
-	PriceChangePercent1h float64 `json:"price_change_percent1h,omitempty" default:"0"`
+	MarketCapTime      float64 `json:"market_cap_time,omitempty" default:"0"`
+	MarketCapChange1m  float64 `json:"market_cap_change_1m,omitempty" default:"0"`
+	MarketCapChange5m  float64 `json:"market_cap_change_5m,omitempty" default:"0"`
+	MarketCapChange1h  float64 `json:"market_cap_change_1h,omitempty" default:"0"`
+	MarketCapChange24h float64 `json:"market_cap_change_24h,omitempty" default:"0"`
+
+	PriceChangePercent1m  float64 `json:"price_change_percent1m,omitempty" default:"0"`
+	PriceChangePercent5m  float64 `json:"price_change_percent5m,omitempty" default:"0"`
+	PriceChangePercent1h  float64 `json:"price_change_percent1h,omitempty" default:"0"`
+	PriceChangePercent24h float64 `json:"price_change_percent24h,omitempty" default:"0"`
 
 	// 总计数据
 	Swaps              int64   `json:"swaps,omitempty" default:"0"`
