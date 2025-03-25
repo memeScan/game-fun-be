@@ -406,7 +406,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
                 "description": "根据链类型和用户地址获取用户的钱包原生代币余额。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
@@ -514,7 +514,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
                 "description": "根据链类型和用户地址获取用户的钱包原生代币余额。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
@@ -689,7 +689,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
                 "description": "根据链类型和用户 ID 获取用户的交易积分、邀请积分和可用积分。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
@@ -744,7 +744,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
                 "description": "根据链类型和用户 ID 获取用户的积分明细数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
@@ -812,7 +812,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
                 "description": "根据链类型和用户 ID 获取用户的预估积分数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
@@ -867,7 +867,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
                 "description": "根据链类型和用户 ID 获取用户的积分统计数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
@@ -1682,7 +1682,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
                 "description": "根据链类型和用户 ID 获取用户的邀请码和邀请数量。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
@@ -1784,7 +1784,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
                 "description": "根据链类型和 JWT Token 获取当前用户的详细信息。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
@@ -2900,7 +2900,7 @@ const docTemplate = `{
     "securityDefinitions": {
         "ApiKeyAuth": {
             "type": "apiKey",
-            "name": "Authorization",
+            "name": "X-API-Key",
             "in": "header"
         },
         "BearerAuth": {

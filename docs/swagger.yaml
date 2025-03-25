@@ -1023,7 +1023,7 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: 获取链的原生代币钱包余额
       tags:
       - 全局数据
@@ -1093,7 +1093,7 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: 获取链的原生代币钱包余额
       tags:
       - 全局数据
@@ -1203,7 +1203,7 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: 获取用户积分数据
       tags:
       - 积分
@@ -1245,7 +1245,7 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: 获取用户积分明细
       tags:
       - 积分
@@ -1278,7 +1278,7 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: 获取用户预估积分数据
       tags:
       - 积分
@@ -1320,7 +1320,7 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: 获取用户邀请明细
       tags:
       - 用户
@@ -1852,7 +1852,7 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: 获取用户邀请码信息
       tags:
       - 用户
@@ -1917,14 +1917,14 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: 获取当前用户信息
       tags:
       - 用户
 securityDefinitions:
   ApiKeyAuth:
     in: header
-    name: Authorization
+    name: X-API-Key
     type: apiKey
   BearerAuth:
     in: header

@@ -53,7 +53,7 @@ func (u *UserHandler) Login(c *gin.Context) {
 // @Tags 用户
 // @Accept json
 // @Produce json
-// @Security ApiKeyAuth
+// @Security BearerAuth
 // @Param chain_type path string true "链类型（sol、eth、bsc）"
 // @Success 200 {object} response.Response{data=response.MyInfoResponse} "成功返回用户信息"
 // @Failure 401 {object} response.Response "未授权"
@@ -82,7 +82,7 @@ func (u *UserHandler) MyInfo(c *gin.Context) {
 // @Tags 用户
 // @Accept json
 // @Produce json
-// @Security ApiKeyAuth
+// @Security BearerAuth
 // @Param chain_type path string true "链类型（sol、eth、bsc）"
 // @Success 200 {object} response.Response{data=response.InviteCodeResponse} "成功返回用户邀请码信息"
 // @Failure 401 {object} response.Response "未授权"

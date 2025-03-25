@@ -111,7 +111,7 @@ func NewRouter(producer sarama.SyncProducer) *gin.Engine {
 
 		auth := v1.Group("")
 		// token登陆验证路由
-		auth.Use(interceptor.AuthRequired())
+		auth.Use(interceptor.BearerAuth())
 		auth.GET("users/:chain_type/my_info", userHandler.MyInfo)
 		auth.GET("users/:chain_type/invite/code", userHandler.InviteCode)
 		auth.GET("points/:chain_type", pointsHandler.Points)
@@ -139,7 +139,7 @@ func NewRouter(producer sarama.SyncProducer) *gin.Engine {
 	// 仅限管理员的API路由组，需要API Key认证
 	adminAPI := r.Group("/admin")
 	// 应用API Key认证中间件仅到admin路由组
-	adminAPI.Use(interceptor.APIKeyAuth())
+	adminAPI.Use(interceptor.ApiKeyAuth())
 	{
 		// 获取token列表
 		adminAPI.GET("/tokenconfigs/list", tokenConfigHandler.GetAdminTokenConfigList)

@@ -11,8 +11,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// AuthRequired 需要登录
-func AuthRequired() gin.HandlerFunc {
+// BearerAuth 验证JWT的中间件
+func BearerAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -54,8 +54,8 @@ func AuthRequired() gin.HandlerFunc {
 	}
 }
 
-// APIKeyAuth 验证API Key的中间件
-func APIKeyAuth() gin.HandlerFunc {
+// ApiKeyAuth 验证API Key的中间件
+func ApiKeyAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		apiKey := c.GetHeader("X-API-Key")
 

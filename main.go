@@ -72,7 +72,7 @@ func (e Environment) IsValid() bool {
 // @name Authorization
 // @securityDefinitions.apikey ApiKeyAuth
 // @in header
-// @name Authorization
+// @name X-API-Key
 func main() {
 	currentEnv := ParseEnvironment(os.Getenv("APP_ENV"))
 

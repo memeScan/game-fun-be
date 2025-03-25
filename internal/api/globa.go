@@ -47,7 +47,7 @@ func (g *GlobalHandler) NativeTokePrice(c *gin.Context) {
 // @Tags 全局数据
 // @Accept json
 // @Produce json
-// @Security ApiKeyAuth
+// @Security BearerAuth
 // @Param chain_type path string true "链类型（sol、eth、bsc）"
 // @Success 200 {object} response.Response{data=response.TokenBalance} "成功返回原生代币余额"
 // @Failure 500 {object} response.Response "服务器内部错误"
@@ -76,7 +76,7 @@ func (g *GlobalHandler) NativeBalance(c *gin.Context) {
 // @Tags 全局数据
 // @Accept json
 // @Produce json
-// @Security ApiKeyAuth
+// @Security BearerAuth
 // @Param chain_type path string true "链类型（sol、eth、bsc）"
 // @Param ticker_address path string true "代币地址"
 // @Success 200 {object} response.Response{data=response.TokenBalance} "成功返回原生代币余额"
