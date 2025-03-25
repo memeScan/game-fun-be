@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"game-fun-be/internal/api"
+	apiadmin "game-fun-be/internal/api/admin"
 	"game-fun-be/internal/api/ws"
 	"game-fun-be/internal/clickhouse"
 	"game-fun-be/internal/interceptor"
@@ -43,6 +44,8 @@ func NewRouter(producer sarama.SyncProducer) *gin.Engine {
 
 	swapService := service.NewSwapService(producer)
 	swapHandler := api.NewSwapHandler(swapService)
+	tokenConfigService := service.NewTokenConfigServiceImpl()
+	tokenConfigHandler := apiadmin.NewAdminTokenConfigHandler(tokenConfigService)
 
 	r := gin.New()
 
@@ -132,6 +135,23 @@ func NewRouter(producer sarama.SyncProducer) *gin.Engine {
 	// 工具路由
 	r.GET("/tools/execute_reindex_job", api.ExecuteReindexJob)
 	r.POST("/tools/reset_pool_info", api.ResetTokenPoolInfo)
+
+	// 仅限管理员的API路由组，需要API Key认证
+	adminAPI := r.Group("/admin")
+	// 应用API Key认证中间件仅到admin路由组
+	adminAPI.Use(interceptor.APIKeyAuth())
+	{
+		// 获取token列表
+		adminAPI.GET("/tokenconfigs/list", tokenConfigHandler.GetAdminTokenConfigList)
+		// 获取token详情
+		adminAPI.GET("/tokenconfigs/detail/:id", tokenConfigHandler.GetTokenConfig)
+		// 创建token
+		adminAPI.POST("/tokenconfigs/create", tokenConfigHandler.CreateTokenConfig)
+		// 更新token
+		adminAPI.POST("/tokenconfigs/update/:id", tokenConfigHandler.UpdateTokenConfig)
+		// 删除token
+		adminAPI.GET("/tokenconfigs/delete/:id", tokenConfigHandler.DeleteTokenConfig)
+	}
 
 	return r
 }

@@ -2,8 +2,10 @@ package interceptor
 
 import (
 	"game-fun-be/internal/auth"
+	"game-fun-be/internal/conf"
 	"game-fun-be/internal/redis"
 	"game-fun-be/internal/response"
+	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -48,6 +50,44 @@ func AuthRequired() gin.HandlerFunc {
 		c.Set("address", claims.Address)
 		c.Set("user_id", claims.UserID)
 
+		c.Next()
+	}
+}
+
+// APIKeyAuth 验证API Key的中间件
+func APIKeyAuth() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		apiKey := c.GetHeader("X-API-Key")
+
+		// 如果没有提供API Key
+		if apiKey == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"code":    401,
+				"message": "API Key is required",
+			})
+			c.Abort()
+			return
+		}
+
+		// 验证API Key是否有效
+		valid := false
+		for _, key := range conf.APIKeys {
+			if apiKey == key {
+				valid = true
+				break
+			}
+		}
+
+		if !valid {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"code":    401,
+				"message": "Invalid API Key",
+			})
+			c.Abort()
+			return
+		}
+
+		// API Key有效，继续处理请求
 		c.Next()
 	}
 }

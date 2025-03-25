@@ -1,5 +1,53 @@
 basePath: /api/v1
 definitions:
+  model.TokenConfig:
+    properties:
+      address:
+        type: string
+      create_time:
+        type: string
+      description:
+        type: string
+      enable_mining:
+        type: boolean
+      id:
+        type: integer
+      is_listed:
+        type: boolean
+      mining_end_time:
+        type: string
+      mining_start_time:
+        type: string
+      name:
+        type: string
+      symbol:
+        type: string
+      update_time:
+        type: string
+    type: object
+  request.CreateTokenConfigRequest:
+    properties:
+      address:
+        type: string
+      description:
+        type: string
+      enable_mining:
+        type: boolean
+      isListed:
+        type: boolean
+      mining_end_time:
+        type: string
+      mining_start_time:
+        type: string
+      name:
+        type: string
+      symbol:
+        type: string
+    required:
+    - address
+    - name
+    - symbol
+    type: object
   request.LoginRequest:
     description: 用户登录时提交的请求参数
     properties:
@@ -22,6 +70,25 @@ definitions:
       timestamp:
         description: 时间戳
         example: "1740885327"
+        type: string
+    type: object
+  request.UpdateTokenConfigRequest:
+    properties:
+      address:
+        type: string
+      description:
+        type: string
+      enable_mining:
+        type: boolean
+      isListed:
+        type: boolean
+      mining_end_time:
+        type: string
+      mining_start_time:
+        type: string
+      name:
+        type: string
+      symbol:
         type: string
     type: object
   response.GetTickerResponse:
@@ -686,6 +753,191 @@ info:
   title: Game API
   version: "1.0"
 paths:
+  /admin/tokenconfigs/create:
+    post:
+      consumes:
+      - application/json
+      description: 创建新的tokenconfig
+      parameters:
+      - description: TokenConfig信息
+        in: body
+        name: tokenconfig
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateTokenConfigRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功创建tokenconfig
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.TokenConfig'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 创建tokenconfig
+      tags:
+      - 管理员-令牌配置
+  /admin/tokenconfigs/delete/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 根据ID删除tokenconfig
+      parameters:
+      - description: TokenConfig ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功删除tokenconfig
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 未找到
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 删除tokenconfig
+      tags:
+      - 管理员-令牌配置
+  /admin/tokenconfigs/detail/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 根据ID获取tokenconfig的详细信息
+      parameters:
+      - description: TokenConfig ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回tokenconfig详情
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.TokenConfig'
+              type: object
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 未找到
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取tokenconfig详情
+      tags:
+      - 管理员-令牌配置
+  /admin/tokenconfigs/list:
+    get:
+      consumes:
+      - application/json
+      description: 获取系统中所有tokenconfig的列表
+      parameters:
+      - description: 页码
+        in: query
+        name: page
+        type: string
+      - description: 每页数量
+        in: query
+        name: limit
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回tokenconfig列表
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.TokenConfig'
+              type: object
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取tokenconfig列表
+      tags:
+      - 管理员-令牌配置
+  /admin/tokenconfigs/update/{id}:
+    post:
+      consumes:
+      - application/json
+      description: 根据ID更新tokenconfig的信息
+      parameters:
+      - description: TokenConfig ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: TokenConfig信息
+        in: body
+        name: tokenconfig
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdateTokenConfigRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功更新tokenconfig
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.TokenConfig'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 未找到
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 更新tokenconfig
+      tags:
+      - 管理员-令牌配置
   /api/v1/ws/kline/{tokenAddress}:
     get:
       consumes:
