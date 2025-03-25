@@ -148,3 +148,12 @@ func Test_GetTokenInfoByAddress(t *testing.T) {
 	}
 	fmt.Println(resp)
 }
+
+func Test_GetWalletPNL(t *testing.T) {
+	walletAddress := "5yqtkG71ohGcBE4i1Fy8HFSaCKxyujRSzzJaPtaY8zYT"
+	resp, err := httpUtil.GetWalletPNL(walletAddress)
+	if err != nil {
+		t.Fatalf("failed to get wallet pnl: %v", err)
+	}
+	fmt.Println(resp)
+}

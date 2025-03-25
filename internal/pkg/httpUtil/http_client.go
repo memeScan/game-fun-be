@@ -490,6 +490,34 @@ func GetTokenInfoByAddress(tokenAddress string) (*httpRespone.SolanaTrackerToken
 	return &tokenInfo, nil
 }
 
+func GetWalletPNL(walletAddress string) (*httpRespone.PNLResponse, error) {
+	BASE_URL := os.Getenv("BASE_URL")
+	SOLANA_TRACKER_API_KEY := os.Getenv("SOLANA_TRACKER_API_KEY")
+
+	url := BASE_URL + "/pnl/" + walletAddress
+
+	resp, err := GetHTTPClient().GetWithHeaders(url, map[string]string{
+		"x-api-key": SOLANA_TRACKER_API_KEY,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get token info by address: %w", err)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read token info by address response body: %w", err)
+	}
+
+	defer resp.Body.Close()
+
+	var tokenInfo httpRespone.PNLResponse
+	if err := json.Unmarshal(body, &tokenInfo); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal token info response: %w", err)
+	}
+
+	return &tokenInfo, nil
+}
+
 func GetSolPrice() (float64, error) {
 	solPriceID := "0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d"
 	url := fmt.Sprintf("https://hermes.pyth.network/v2/updates/price/latest?ids[]=%s", solPriceID)
