@@ -44,7 +44,7 @@ func NewRouter(producer sarama.SyncProducer) *gin.Engine {
 
 	swapService := service.NewSwapService(producer)
 	swapHandler := api.NewSwapHandler(swapService)
-	tokenConfigService := service.NewTokenConfigServiceImpl()
+	tokenConfigService := service.NewTokenConfigServiceImpl(tickerInfoRepo)
 	tokenConfigHandler := apiadmin.NewAdminTokenConfigHandler(tokenConfigService)
 
 	r := gin.New()

@@ -8,11 +8,15 @@ import (
 )
 
 // TokenConfigServiceImpl 代币配置服务实现
-type TokenConfigServiceImpl struct{}
+type TokenConfigServiceImpl struct {
+	tokenInfoRepo *model.TokenInfoRepo
+}
 
 // NewTokenConfigServiceImpl 创建代币配置服务实例
-func NewTokenConfigServiceImpl() *TokenConfigServiceImpl {
-	return &TokenConfigServiceImpl{}
+func NewTokenConfigServiceImpl(tokenInfoRepo *model.TokenInfoRepo) *TokenConfigServiceImpl {
+	return &TokenConfigServiceImpl{
+		tokenInfoRepo: tokenInfoRepo,
+	}
 }
 
 // GetTokenConfigs 获取代币配置列表
@@ -77,6 +81,19 @@ func (s *TokenConfigServiceImpl) CreateTokenConfig(name, symbol, address string,
 			Code:  http.StatusBadRequest,
 			Error: "Token config with this address already exists",
 		}
+	}
+
+	//检测代币是否在系统中存在（系统支持该代币）
+	tokenInfo, err := s.tokenInfoRepo.GetTokenInfoByAddress(address, model.ChainTypeSolana.Uint8())
+	if err != nil {
+		return response.Err(http.StatusInternalServerError, "Failed to get token info by address", err)
+	}
+	if tokenInfo == nil {
+		return response.Err(http.StatusNotFound, "Token info not found", nil)
+	}
+
+	if tokenInfo.Symbol != symbol {
+		return response.Err(http.StatusBadRequest, "Token info not found", nil)
 	}
 
 	config := &model.TokenConfig{
