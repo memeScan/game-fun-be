@@ -1820,6 +1820,8 @@ paths:
           description: 服务器内部错误
           schema:
             $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
       summary: 获取代币持仓数据当前和历史
       tags:
       - 代币持仓

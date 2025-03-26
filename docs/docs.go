@@ -1623,6 +1623,11 @@ const docTemplate = `{
         },
         "/token_holdings/{chain_type}/{account}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "根据链类型和用户账户获取代币持仓数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
                 "consumes": [
                     "application/json"
