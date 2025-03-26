@@ -19,21 +19,23 @@ func NewUserInfoRepo() *UserInfoRepo {
 }
 
 type UserInfo struct {
-	ID               uint       `gorm:"column:id;primaryKey;autoIncrement" json:"id"`
-	Address          string     `gorm:"column:address;type:varchar(64);uniqueIndex;not null" json:"address"`
-	TwitterID        string     `gorm:"column:twitter_id;type:varchar(64);omitempty" json:"twitter_id"`
-	TwitterUsername  string     `gorm:"column:twitter_username;type:varchar(64);omitempty" json:"twitter_username"`
-	InviterID        uint       `gorm:"column:inviter_id;type:bigint unsigned;omitempty" json:"inviter_id"`
-	ParentInviteId   uint       `gorm:"column:parent_inviter_id;type:bigint unsigned;omitempty" json:"parent_inviter_id"`
-	InvitationCode   string     `gorm:"column:invitation_code;type:varchar(32);uniqueIndex;not null" json:"invitation_code"`
-	TradingPoints    uint64     `gorm:"column:trading_points;type:bigint unsigned;default:0" json:"trading_points"`
-	InvitePoints     uint64     `gorm:"column:invite_points;type:bigint unsigned;default:0" json:"invite_points"`
-	AvailablePoints  uint64     `gorm:"column:available_points;type:bigint unsigned;default:0" json:"avaliable_points"`
-	Status           uint8      `gorm:"column:status;type:tinyint(4);not null" json:"status"`
-	FirstTradingTime *time.Time `gorm:"column:first_trading_time;type:datetime;omitempty" json:"first_trading_time"`
-	ChainType        uint8      `gorm:"column:chain_type;type:tinyint;omitempty" json:"chain_type"`
-	CreateTime       time.Time  `gorm:"column:create_time;type:datetime;omitempty" json:"create_time"`
-	UpdateTime       time.Time  `gorm:"column:update_time;type:datetime;omitempty" json:"update_time"`
+	ID                 uint       `gorm:"column:id;primaryKey;autoIncrement" json:"id"`
+	Address            string     `gorm:"column:address;type:varchar(64);uniqueIndex;not null" json:"address"`
+	TwitterID          string     `gorm:"column:twitter_id;type:varchar(64);omitempty" json:"twitter_id"`
+	TwitterUsername    string     `gorm:"column:twitter_username;type:varchar(64);omitempty" json:"twitter_username"`
+	InviterID          uint       `gorm:"column:inviter_id;type:bigint unsigned;omitempty" json:"inviter_id"`
+	ParentInviteId     uint       `gorm:"column:parent_inviter_id;type:bigint unsigned;omitempty" json:"parent_inviter_id"`
+	InvitationCode     string     `gorm:"column:invitation_code;type:varchar(32);uniqueIndex;not null" json:"invitation_code"`
+	TradingPoints      uint64     `gorm:"column:trading_points;type:bigint unsigned;default:0" json:"trading_points"`
+	InvitePoints       uint64     `gorm:"column:invite_points;type:bigint unsigned;default:0" json:"invite_points"`
+	AvailablePoints    uint64     `gorm:"column:available_points;type:bigint unsigned;default:0" json:"avaliable_points"`
+	InviteRebate       uint64     `gorm:"column:invite_rebate;type:bigint unsigned;default:0" json:"invite_rebate"`
+	WithdrawableRebate uint64     `gorm:"column:withdrawable_rebate;type:bigint unsigned;default:0" json:"withdrawable_rebate"`
+	Status             uint8      `gorm:"column:status;type:tinyint(4);not null" json:"status"`
+	FirstTradingTime   *time.Time `gorm:"column:first_trading_time;type:datetime;omitempty" json:"first_trading_time"`
+	ChainType          uint8      `gorm:"column:chain_type;type:tinyint;omitempty" json:"chain_type"`
+	CreateTime         time.Time  `gorm:"column:create_time;type:datetime;omitempty" json:"create_time"`
+	UpdateTime         time.Time  `gorm:"column:update_time;type:datetime;omitempty" json:"update_time"`
 }
 
 func (UserInfo) TableName() string {

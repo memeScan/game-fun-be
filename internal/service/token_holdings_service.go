@@ -35,7 +35,7 @@ func (s *TokenHoldingsServiceImpl) TokenHoldings(userAccount string, chainType m
 		return response.Err(http.StatusInternalServerError, "failed to get token info map", err)
 	}
 
-	fmt.Println(tokenInfoMap)
+	// fmt.Println(tokenInfoMap)
 
 	currentHolding := make([]response.TokenHolding, 0)
 	historyHolding := make([]response.TokenHolding, 0)

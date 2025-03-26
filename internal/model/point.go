@@ -21,6 +21,8 @@ type PointRecords struct {
 	PointsChange      uint64    `gorm:"column:points_change;type:bigint unsigned;default:0" json:"points_change"`
 	PointsBalance     uint64    `gorm:"column:points_balance;type:bigint unsigned;default:0" json:"points_balance"`
 	RecordType        int8      `gorm:"column:record_type;type:tinyint;not null" json:"record_type"`
+	RebateBalance     uint64    `gorm:"column:rebate_balance;type:bigint unsigned;default:0" json:"rebate_balance"`
+	RebateChange      uint64    `gorm:"column:rebate_change;type:bigint unsigned;default:0" json:"rebate_change"`
 	InviteeID         uint      `gorm:"column:invitee_id;default null" json:"invitee_id,omitempty"`
 	NativeTokenAmount uint64    `gorm:"column:native_token_amount;type:bigint unsigned;default:0" json:"native_token_amount"`
 	TokenAmount       uint64    `gorm:"column:token_amount;type:bigint unsigned;default:0" json:"token_amount"`
@@ -33,6 +35,7 @@ type PointRecords struct {
 type InvitedPointsDetail struct {
 	UserID uint   `json:"user_id"`
 	Points uint64 `json:"points"`
+	Rebate uint64 `json:"rebate"`
 }
 
 // TableName 返回表名
@@ -79,7 +82,7 @@ func (r *PointRecordsRepo) GetPointRecordsByUserIDWithCursor(userID uint64, curs
 }
 
 func (t *PointRecordsRepo) InvitedPointsDetail(userIDs []uint) ([]*InvitedPointsDetail, error) {
-	query := DB.Table("point_records").Where("user_id in ? and record_type = 1", userIDs).Group("user_id").Select("user_id, sum(points_change) as points")
+	query := DB.Table("point_records").Where("user_id in ? and record_type = 1", userIDs).Group("user_id").Select("user_id, sum(points_change) as points, sum(rebate_change) as rebate")
 	var records []*InvitedPointsDetail
 	if err := query.Find(&records).Error; err != nil {
 		return nil, err
