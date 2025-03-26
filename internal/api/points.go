@@ -29,7 +29,7 @@ func NewPointsHandler(pointsService *service.PointsServiceImpl, globalService *s
 // @Tags 积分
 // @Accept json
 // @Produce json
-// @Security ApiKeyAuth
+// @Security BearerAuth
 // @Param chain_type path string true "链类型（sol、eth、bsc）"
 // @Success 200 {object} response.Response{data=response.PointsResponse} "成功返回用户积分数据"
 // @Failure 401 {object} response.Response "未授权"
@@ -63,7 +63,7 @@ func (p *PointsHandler) Points(c *gin.Context) {
 // @Tags 积分
 // @Accept json
 // @Produce json
-// @Security ApiKeyAuth
+// @Security BearerAuth
 // @Param chain_type path string true "链类型（sol、eth、bsc）"
 // @Param cursor query string false "游标"
 // @Param limit query string true "每页数量"
@@ -110,7 +110,7 @@ func (p *PointsHandler) PointsDetail(c *gin.Context) {
 // @Tags 用户
 // @Accept json
 // @Produce json
-// @Security ApiKeyAuth
+// @Security BearerAuth
 // @Param chain_type path string true "链类型（sol、eth、bsc）"
 // @Param cursor query string false "游标"
 // @Param limit query string true "每页数量"
@@ -160,7 +160,7 @@ func (p *PointsHandler) InvitedPointsDetail(c *gin.Context) {
 // @Tags 积分
 // @Accept json
 // @Produce json
-// @Security ApiKeyAuth
+// @Security BearerAuth
 // @Param chain_type path string true "链类型（sol、eth、bsc）"
 // @Success 200 {object} response.Response{data=response.PointsEstimatedResponse} "成功返回用户预估积分数据"
 // @Failure 401 {object} response.Response "未授权"

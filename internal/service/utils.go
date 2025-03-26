@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"math"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gagliardetto/solana-go"
@@ -128,4 +130,27 @@ func calculatePriceChange(currentPrice, previousPrice float64) float64 {
 		return roundToTwoDecimalPlaces(change)
 	}
 	return 0
+}
+
+func isBase58(s string) bool {
+	base58Chars := "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+	for _, c := range s {
+		if !strings.ContainsRune(base58Chars, c) {
+			return false
+		}
+	}
+	return true
+}
+
+// 解析 ISO 8601 时间字符串为 Unix 时间戳（秒）
+func parseISOTimeToUnix(timestampStr string) int64 {
+	if timestampStr == "" {
+		return 0
+	}
+	parsedTime, err := time.Parse(time.RFC3339, timestampStr)
+	if err != nil {
+		log.Printf("Error parsing timestamp %s: %v\n", timestampStr, err)
+		return 0 // 出错时返回 0，保证程序继续运行
+	}
+	return parsedTime.Unix()
 }

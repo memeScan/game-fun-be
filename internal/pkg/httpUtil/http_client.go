@@ -5,18 +5,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"game-fun-be/internal/pkg/httpRequest"
-	"game-fun-be/internal/pkg/httpRespone"
-	"game-fun-be/internal/pkg/util"
 	"io"
 	"log"
 	"math"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
-
 	"unicode/utf8"
+
+	"game-fun-be/internal/pkg/httpRequest"
+	"game-fun-be/internal/pkg/httpRespone"
+	"game-fun-be/internal/pkg/util"
 
 	"game-fun-be/internal/pkg/metrics"
 
@@ -259,7 +260,6 @@ func GetTokenBalanceBatch(accounts []string, mintTokenAddress string) (*[]httpRe
 }
 
 func GetTokenBalance(address string, mintTokenAddress string) (*httpRespone.SolBalanceResponse, error) {
-
 	url := ApiTokenBalance + "?address=" + address + "&mint=" + mintTokenAddress
 
 	resp, err := GetHTTPClient().Get(url)
@@ -298,7 +298,6 @@ func GetDexCheck(tokenAddresses []string) (*[]httpRespone.DexCheckData, error) {
 }
 
 func GetSafetyCheckData(tokenAddresses []string) (*[]httpRespone.SafetyData, error) {
-
 	url := ApiSafetyCheckBatch
 
 	body := map[string]interface{}{
@@ -386,7 +385,6 @@ func SendTransaction(swapTransaction string, isJito bool) (*http.Response, error
 }
 
 func SendGameFunTransaction(swapTransaction string, isJito bool, isUsePoint bool) (*httpRespone.SendResponse, error) {
-
 	log.Print(swapTransaction)
 
 	url := ApiGameFunTransactionSend
@@ -462,6 +460,62 @@ func GetTokenInfoDefi(tokenAddresses []string, chainType uint8) ([]httpRespone.T
 		return nil, fmt.Errorf("failed to unmarshal token info defi response: %w", err)
 	}
 	return tokenInfoDefiResponse.Data, nil
+}
+
+func GetTokenInfoByAddress(tokenAddress string) (*httpRespone.SolanaTrackerToken, error) {
+	BASE_URL := os.Getenv("BASE_URL")
+	SOLANA_TRACKER_API_KEY := os.Getenv("SOLANA_TRACKER_API_KEY")
+
+	url := BASE_URL + "/tokens/" + tokenAddress
+
+	resp, err := GetHTTPClient().GetWithHeaders(url, map[string]string{
+		"x-api-key": SOLANA_TRACKER_API_KEY,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get token info by address: %w", err)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read token info by address response body: %w", err)
+	}
+
+	defer resp.Body.Close()
+
+	var tokenInfo httpRespone.SolanaTrackerToken
+	if err := json.Unmarshal(body, &tokenInfo); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal token info response: %w", err)
+	}
+
+	return &tokenInfo, nil
+}
+
+func GetWalletPNL(walletAddress string) (*httpRespone.PNLResponse, error) {
+	BASE_URL := os.Getenv("BASE_URL")
+	SOLANA_TRACKER_API_KEY := os.Getenv("SOLANA_TRACKER_API_KEY")
+
+	url := BASE_URL + "/pnl/" + walletAddress
+
+	resp, err := GetHTTPClient().GetWithHeaders(url, map[string]string{
+		"x-api-key": SOLANA_TRACKER_API_KEY,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get token info by address: %w", err)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read token info by address response body: %w", err)
+	}
+
+	defer resp.Body.Close()
+
+	var tokenInfo httpRespone.PNLResponse
+	if err := json.Unmarshal(body, &tokenInfo); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal token info response: %w", err)
+	}
+
+	return &tokenInfo, nil
 }
 
 func GetSolPrice() (float64, error) {
@@ -545,7 +599,6 @@ func GetTipFloor(tokenAddress string) (*httpRespone.TipFloorResponse, error) {
 }
 
 func GetPoolInfo(tokenAddresses []string) (*[]httpRespone.MintData, error) {
-
 	url := ApiPoolInfo + "?mints=" + strings.Join(tokenAddresses, ",")
 
 	resp, err := GetHTTPClient().Get(url)
@@ -563,8 +616,8 @@ func GetPoolInfo(tokenAddresses []string) (*[]httpRespone.MintData, error) {
 
 	return &poolInfoResponse.Data, nil
 }
-func GetPoolInfoByPoolAddress(poolAddresses []string) (*[]httpRespone.PoolItem2, error) {
 
+func GetPoolInfoByPoolAddress(poolAddresses []string) (*[]httpRespone.PoolItem2, error) {
 	url := ApiPoolInfo + "/address?address=" + strings.Join(poolAddresses, ",")
 
 	resp, err := GetHTTPClient().Get(url)

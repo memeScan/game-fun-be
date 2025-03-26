@@ -6,6 +6,7 @@ import (
 
 	"game-fun-be/internal/cron"
 	"game-fun-be/internal/model"
+	"game-fun-be/internal/pkg/httpUtil"
 	"game-fun-be/internal/response"
 	"game-fun-be/internal/service"
 	"game-fun-be/test"
@@ -137,4 +138,22 @@ func TestPointsService_PlatformTokenQuery(t *testing.T) {
 		assert.True(t, ok)
 		assert.NotEmpty(t, data.EstimatedPoints)
 	})
+}
+
+func Test_GetTokenInfoByAddress(t *testing.T) {
+	tokenAddress := "8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump"
+	resp, err := httpUtil.GetTokenInfoByAddress(tokenAddress)
+	if err != nil {
+		t.Fatalf("failed to get token info by address: %v", err)
+	}
+	fmt.Println(resp)
+}
+
+func Test_GetWalletPNL(t *testing.T) {
+	walletAddress := "5yqtkG71ohGcBE4i1Fy8HFSaCKxyujRSzzJaPtaY8zYT"
+	resp, err := httpUtil.GetWalletPNL(walletAddress)
+	if err != nil {
+		t.Fatalf("failed to get wallet pnl: %v", err)
+	}
+	fmt.Println(resp)
 }

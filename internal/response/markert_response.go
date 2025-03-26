@@ -39,9 +39,9 @@ type MarketMetadata struct {
 // @Description 市场的行情数据
 type MarketTicker struct {
 	PriceChange24H       string          `json:"price_change_24h" example:"0.224965"`
-	TxCount24H           int             `json:"tx_count_24h" example:"7590"`
-	BuyTxCount24H        int             `json:"buy_tx_count_24h" example:"7566"`
-	SellTxCount24H       int             `json:"sell_tx_count_24h" example:"7566"`
+	TxCount24H           int64           `json:"tx_count_24h" example:"7590"`
+	BuyTxCount24H        int64           `json:"buy_tx_count_24h" example:"7566"`
+	SellTxCount24H       int64           `json:"sell_tx_count_24h" example:"7566"`
 	TokenVolume24H       string          `json:"token_volume_24h" example:"15450301.872331"`
 	TokenVolume24HUsd    string          `json:"token_volume_24h_usd" example:"15450301.872331"`
 	BuyTokenVolume24H    string          `json:"buy_token_volume_24h" example:"15435782.918031"`
@@ -49,9 +49,9 @@ type MarketTicker struct {
 	SellTokenVolume24H   string          `json:"sell_token_volume_24h" example:"15435782.918031"`
 	SellTokenVolume24Usd string          `json:"sell_token_volume_24h_usd" example:"15435782.918031"`
 	PriceChange1H        string          `json:"price_change_1h" example:"0.005103"`
-	TxCount1H            int             `json:"tx_count_1h" example:"271"`
-	BuyTxCount1H         int             `json:"buy_tx_count_1h" example:"271"`
-	SellTxCount1H        int             `json:"sell_tx_count_1h" example:"271"`
+	TxCount1H            int64           `json:"tx_count_1h" example:"271"`
+	BuyTxCount1H         int64           `json:"buy_tx_count_1h" example:"271"`
+	SellTxCount1H        int64           `json:"sell_tx_count_1h" example:"271"`
 	TokenVolume1H        string          `json:"token_volume_1h" example:"379231.972430"`
 	TokenVolume1HUsd     string          `json:"token_volume_1h_usd" example:"379231.972430"`
 	BuyTokenVolume1H     string          `json:"buy_token_volume_1h" example:"379231.972430"`
@@ -59,9 +59,9 @@ type MarketTicker struct {
 	SellTokenVolume1H    string          `json:"sell_token_volume_1h" example:"379231.972430"`
 	SellTokenVolume1Usd  string          `json:"sell_token_volume_1h_usd" example:"379231.972430"`
 	PriceChange30M       string          `json:"price_change_30m" example:"0.000836"`
-	TxCount30M           int             `json:"tx_count_30m" example:"25"`
-	BuyTxCount30M        int             `json:"buy_tx_count_30m" example:"25"`
-	SellTxCount30M       int             `json:"sell_tx_count_30m" example:"25"`
+	TxCount30M           int64           `json:"tx_count_30m" example:"25"`
+	BuyTxCount30M        int64           `json:"buy_tx_count_30m" example:"25"`
+	SellTxCount30M       int64           `json:"sell_tx_count_30m" example:"25"`
 	TokenVolume30M       string          `json:"token_volume_30m" example:"62269.324250"`
 	TokenVolume30MUsd    string          `json:"token_volume_30m_usd" example:"62269.324250"`
 	BuyTokenVolume30M    string          `json:"buy_token_volume_30m" example:"62269.324250"`
@@ -69,9 +69,9 @@ type MarketTicker struct {
 	SellTokenVolume30M   string          `json:"sell_token_volume_30m" example:"62269.324250"`
 	SellTokenVolume30Usd string          `json:"sell_token_volume_30m_usd" example:"62269.324250"`
 	PriceChange5M        string          `json:"price_change_5m" example:"0.000836"`
-	TxCount5M            int             `json:"tx_count_5m" example:"25"`
-	BuyTxCount5M         int             `json:"buy_tx_count_5m" example:"25"`
-	SellTxCount5M        int             `json:"sell_tx_count_5m" example:"25"`
+	TxCount5M            int64           `json:"tx_count_5m" example:"25"`
+	BuyTxCount5M         int64           `json:"buy_tx_count_5m" example:"25"`
+	SellTxCount5M        int64           `json:"sell_tx_count_5m" example:"25"`
 	TokenVolume5M        string          `json:"token_volume_5m" example:"62269.324250"`
 	TokenVolume5MUsd     string          `json:"token_volume_5m_usd" example:"62269.324250"`
 	BuyTokenVolume5M     string          `json:"buy_token_volume_5m" example:"62269.324250"`

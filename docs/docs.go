@@ -15,6 +15,315 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/admin/tokenconfigs/create": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "创建新的tokenconfig",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "管理员-令牌配置"
+                ],
+                "summary": "创建tokenconfig",
+                "parameters": [
+                    {
+                        "description": "TokenConfig信息",
+                        "name": "tokenconfig",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CreateTokenConfigRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功创建tokenconfig",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/model.TokenConfig"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "未授权",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/tokenconfigs/delete/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据ID删除tokenconfig",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "管理员-令牌配置"
+                ],
+                "summary": "删除tokenconfig",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "TokenConfig ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功删除tokenconfig",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "未授权",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "未找到",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/tokenconfigs/detail/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据ID获取tokenconfig的详细信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "管理员-令牌配置"
+                ],
+                "summary": "获取tokenconfig详情",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "TokenConfig ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回tokenconfig详情",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/model.TokenConfig"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "未授权",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "未找到",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/tokenconfigs/list": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "获取系统中所有tokenconfig的列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "管理员-令牌配置"
+                ],
+                "summary": "获取tokenconfig列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "页码",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "每页数量",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回tokenconfig列表",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/model.TokenConfig"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "未授权",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/tokenconfigs/update/{id}": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据ID更新tokenconfig的信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "管理员-令牌配置"
+                ],
+                "summary": "更新tokenconfig",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "TokenConfig ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "TokenConfig信息",
+                        "name": "tokenconfig",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.UpdateTokenConfigRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功更新tokenconfig",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/model.TokenConfig"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "未授权",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "未找到",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/ws/kline/{tokenAddress}": {
             "get": {
                 "description": "通过 WebSocket 实时推送 K 线数据。连接成功后，服务器将每秒推送最新的K线数据。\n连接格式: ws://host/api/v1/ws/kline/{tokenAddress}?resolution={resolution}\n示例(Solana): ws://localhost:4881/api/v1/ws/kline/8iFREvVdmLKxVeibpC5VLRr1S6X5dm7gYR3VCU1wpump?resolution=1S\n连接成功后，可以发送 \"subscribe\" 消息来开始接收数据",
@@ -97,7 +406,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
                 "description": "根据链类型和用户地址获取用户的钱包原生代币余额。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
@@ -205,7 +514,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
                 "description": "根据链类型和用户地址获取用户的钱包原生代币余额。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
@@ -380,7 +689,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
                 "description": "根据链类型和用户 ID 获取用户的交易积分、邀请积分和可用积分。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
@@ -435,7 +744,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
                 "description": "根据链类型和用户 ID 获取用户的积分明细数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
@@ -503,7 +812,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
                 "description": "根据链类型和用户 ID 获取用户的预估积分数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
@@ -558,7 +867,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
                 "description": "根据链类型和用户 ID 获取用户的积分统计数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
@@ -1312,80 +1621,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/token_holdings/{chain_type}/histories/{account}": {
-            "get": {
-                "description": "根据链类型和用户账户获取代币持仓历史数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "代币持仓"
-                ],
-                "summary": "获取代币持仓历史数据",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "链类型（sol、eth、bsc）",
-                        "name": "chain_type",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "用户账户",
-                        "name": "account",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "default": "0",
-                        "description": "分页页码",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "default": "20",
-                        "description": "每页数量",
-                        "name": "limit",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "成功返回代币持仓历史数据",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/response.TokenHoldingHistoriesResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "500": {
-                        "description": "服务器内部错误",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
         "/token_holdings/{chain_type}/{account}": {
             "get": {
-                "description": "根据链类型、用户账户和目标账户获取代币持仓数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "根据链类型和用户账户获取代币持仓数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
                 "consumes": [
                     "application/json"
                 ],
@@ -1395,7 +1638,7 @@ const docTemplate = `{
                 "tags": [
                     "代币持仓"
                 ],
-                "summary": "获取代币持仓数据",
+                "summary": "获取代币持仓数据当前和历史",
                 "parameters": [
                     {
                         "type": "string",
@@ -1410,20 +1653,6 @@ const docTemplate = `{
                         "name": "account",
                         "in": "path",
                         "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "目标账户",
-                        "name": "account",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "default": "false",
-                        "description": "是否包含零余额",
-                        "name": "allow_zero_balance",
-                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1458,7 +1687,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
                 "description": "根据链类型和用户 ID 获取用户的邀请码和邀请数量。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
@@ -1560,7 +1789,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
                 "description": "根据链类型和 JWT Token 获取当前用户的详细信息。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。",
@@ -1613,6 +1842,78 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "model.TokenConfig": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "create_time": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "enable_mining": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_listed": {
+                    "type": "boolean"
+                },
+                "mining_end_time": {
+                    "type": "string"
+                },
+                "mining_start_time": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "symbol": {
+                    "type": "string"
+                },
+                "update_time": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.CreateTokenConfigRequest": {
+            "type": "object",
+            "required": [
+                "address",
+                "name",
+                "symbol"
+            ],
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "enable_mining": {
+                    "type": "boolean"
+                },
+                "isListed": {
+                    "type": "boolean"
+                },
+                "mining_end_time": {
+                    "type": "string"
+                },
+                "mining_start_time": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "symbol": {
+                    "type": "string"
+                }
+            }
+        },
         "request.LoginRequest": {
             "description": "用户登录时提交的请求参数",
             "type": "object",
@@ -1641,6 +1942,35 @@ const docTemplate = `{
                     "description": "时间戳",
                     "type": "string",
                     "example": "1740885327"
+                }
+            }
+        },
+        "request.UpdateTokenConfigRequest": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "enable_mining": {
+                    "type": "boolean"
+                },
+                "isListed": {
+                    "type": "boolean"
+                },
+                "mining_end_time": {
+                    "type": "string"
+                },
+                "mining_start_time": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "symbol": {
+                    "type": "string"
                 }
             }
         },
@@ -1692,6 +2022,9 @@ const docTemplate = `{
         "response.InvitedPointsDetail": {
             "type": "object",
             "properties": {
+                "fee_rebate": {
+                    "type": "string"
+                },
                 "invite_time": {
                     "type": "integer"
                 },
@@ -1700,6 +2033,9 @@ const docTemplate = `{
                 },
                 "trading_points": {
                     "type": "string"
+                },
+                "update_time": {
+                    "type": "integer"
                 }
             }
         },
@@ -1785,10 +2121,6 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 6
                 },
-                "holders": {
-                    "type": "integer",
-                    "example": 4204
-                },
                 "market": {
                     "description": "市场地址",
                     "type": "string",
@@ -1808,10 +2140,6 @@ const docTemplate = `{
                     "description": "当前价格",
                     "type": "number",
                     "example": 0.000050417320729
-                },
-                "rank": {
-                    "type": "integer",
-                    "example": 1
                 },
                 "token_mint": {
                     "description": "代币铸造地址",
@@ -1922,10 +2250,6 @@ const docTemplate = `{
             "description": "市场的行情数据",
             "type": "object",
             "properties": {
-                "Sell_tx_count_24h": {
-                    "type": "integer",
-                    "example": 7566
-                },
                 "buy_token_volume_1h": {
                     "type": "string",
                     "example": "379231.972430"
@@ -1974,6 +2298,10 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 25
                 },
+                "holders": {
+                    "type": "integer",
+                    "example": 4204
+                },
                 "last_swap_at": {
                     "type": "integer",
                     "example": 1740887399
@@ -1981,6 +2309,11 @@ const docTemplate = `{
                 "market_cap": {
                     "type": "string",
                     "example": "50417.320729000000000"
+                },
+                "price": {
+                    "description": "当前价格",
+                    "type": "number",
+                    "example": 0.000050417320729
                 },
                 "price_change_1h": {
                     "type": "string",
@@ -1997,6 +2330,10 @@ const docTemplate = `{
                 "price_change_5m": {
                     "type": "string",
                     "example": "0.000836"
+                },
+                "rank": {
+                    "type": "integer",
+                    "example": 1
                 },
                 "sell_token_volume_1h": {
                     "type": "string",
@@ -2033,6 +2370,10 @@ const docTemplate = `{
                 "sell_tx_count_1h": {
                     "type": "integer",
                     "example": 271
+                },
+                "sell_tx_count_24h": {
+                    "type": "integer",
+                    "example": 7566
                 },
                 "sell_tx_count_30m": {
                     "type": "integer",
@@ -2229,8 +2570,18 @@ const docTemplate = `{
                     "type": "string",
                     "example": "0"
                 },
+                "invite_rebate": {
+                    "description": "可提取返佣",
+                    "type": "string",
+                    "example": "0.147938"
+                },
                 "trading_points": {
                     "description": "交易积分",
+                    "type": "string",
+                    "example": "0.147938"
+                },
+                "withdrawable_rebate": {
+                    "description": "可提取返佣",
                     "type": "string",
                     "example": "0.147938"
                 }
@@ -2435,10 +2786,6 @@ const docTemplate = `{
                     "description": "持仓数量",
                     "type": "string"
                 },
-                "filled_price": {
-                    "description": "成交价格",
-                    "type": "string"
-                },
                 "holders_count": {
                     "description": "持有者数量",
                     "type": "integer"
@@ -2451,20 +2798,16 @@ const docTemplate = `{
                     "description": "代币图片 URI",
                     "type": "string"
                 },
-                "market_address": {
-                    "description": "市场地址",
-                    "type": "string"
-                },
-                "market_id": {
-                    "description": "市场 ID",
-                    "type": "integer"
-                },
                 "price": {
                     "description": "当前价格",
                     "type": "string"
                 },
-                "realized_pnl": {
-                    "description": "已实现盈亏",
+                "profit": {
+                    "description": "收益",
+                    "type": "string"
+                },
+                "profit_rate": {
+                    "description": "收益率",
                     "type": "string"
                 },
                 "symbol": {
@@ -2473,107 +2816,6 @@ const docTemplate = `{
                 },
                 "token_name": {
                     "description": "代币名称",
-                    "type": "string"
-                },
-                "total_buy": {
-                    "description": "总买入数量",
-                    "type": "string"
-                },
-                "total_buy_native": {
-                    "description": "总买入原生代币数量",
-                    "type": "string"
-                },
-                "total_sell": {
-                    "description": "总卖出数量",
-                    "type": "string"
-                },
-                "total_sell_native": {
-                    "description": "总卖出原生代币数量",
-                    "type": "string"
-                },
-                "total_value": {
-                    "description": "持仓总价值",
-                    "type": "string"
-                }
-            }
-        },
-        "response.TokenHoldingHistoriesResponse": {
-            "type": "object",
-            "properties": {
-                "has_more": {
-                    "description": "是否有更多数据",
-                    "type": "boolean"
-                },
-                "token_holdings_histories": {
-                    "description": "代币持仓历史列表",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/response.TokenHoldingHistory"
-                    }
-                }
-            }
-        },
-        "response.TokenHoldingHistory": {
-            "type": "object",
-            "properties": {
-                "balance": {
-                    "description": "持仓数量",
-                    "type": "string"
-                },
-                "filled_price": {
-                    "description": "成交价格",
-                    "type": "string"
-                },
-                "holders_count": {
-                    "description": "持有者数量",
-                    "type": "integer"
-                },
-                "id": {
-                    "description": "记录 ID",
-                    "type": "integer"
-                },
-                "image_uri": {
-                    "description": "代币图片 URI",
-                    "type": "string"
-                },
-                "market_address": {
-                    "description": "市场地址",
-                    "type": "string"
-                },
-                "market_id": {
-                    "description": "市场 ID",
-                    "type": "integer"
-                },
-                "price": {
-                    "description": "当前价格",
-                    "type": "string"
-                },
-                "realized_pnl": {
-                    "description": "已实现盈亏",
-                    "type": "string"
-                },
-                "symbol": {
-                    "description": "代币符号",
-                    "type": "string"
-                },
-                "token_name": {
-                    "description": "代币名称",
-                    "type": "string"
-                },
-                "total_buy": {
-                    "description": "总买入数量",
-                    "type": "string"
-                },
-                "total_buy_native": {
-                    "description": "总买入原生代币数量",
-                    "type": "string"
-                },
-                "total_sell": {
-                    "description": "总卖出数量",
-                    "type": "string"
-                },
-                "total_sell_native": {
-                    "description": "总卖出原生代币数量",
                     "type": "string"
                 },
                 "total_value": {
@@ -2585,8 +2827,15 @@ const docTemplate = `{
         "response.TokenHoldingsResponse": {
             "type": "object",
             "properties": {
-                "token_holdings": {
-                    "description": "代币持仓列表",
+                "current_holding": {
+                    "description": "当前持仓",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.TokenHolding"
+                    }
+                },
+                "history_token_holdings": {
+                    "description": "历史持仓",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/response.TokenHolding"
@@ -2644,6 +2893,9 @@ const docTemplate = `{
                 "twitter_username": {
                     "type": "string"
                 },
+                "type": {
+                    "type": "integer"
+                },
                 "user_id": {
                     "type": "integer"
                 }
@@ -2653,7 +2905,7 @@ const docTemplate = `{
     "securityDefinitions": {
         "ApiKeyAuth": {
             "type": "apiKey",
-            "name": "Authorization",
+            "name": "X-API-Key",
             "in": "header"
         },
         "BearerAuth": {

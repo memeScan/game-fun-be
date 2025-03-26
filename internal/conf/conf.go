@@ -2,6 +2,7 @@ package conf
 
 import (
 	"os"
+	"strings"
 )
 
 // 环境变量配置
@@ -27,6 +28,9 @@ var (
 	// ES_INDEX_TOKEN_INFO 代表代币信息的索引名称
 	// 用于存储代币的基本信息数据
 	ES_INDEX_TOKEN_INFO string
+
+	// APIKeys 代表 API Key 列表
+	APIKeys []string
 )
 
 // 常量定义
@@ -71,5 +75,7 @@ func InitGameConfig() {
 	ES_INDEX_TOKEN_TRANSACTIONS_ALIAS = os.Getenv("ES_INDEX_TOKEN_TRANSACTIONS_ALIAS")
 	ES_INDEX_TOKEN_TRANSACTIONS = os.Getenv("ES_INDEX_TOKEN_TRANSACTIONS")
 	ES_INDEX_TOKEN_INFO = os.Getenv("ES_INDEX_TOKEN_INFO")
+
+	APIKeys = strings.Split(os.Getenv("API_KEYS"), ",")
 
 }

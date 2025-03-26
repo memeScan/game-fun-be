@@ -1,5 +1,53 @@
 basePath: /api/v1
 definitions:
+  model.TokenConfig:
+    properties:
+      address:
+        type: string
+      create_time:
+        type: string
+      description:
+        type: string
+      enable_mining:
+        type: boolean
+      id:
+        type: integer
+      is_listed:
+        type: boolean
+      mining_end_time:
+        type: string
+      mining_start_time:
+        type: string
+      name:
+        type: string
+      symbol:
+        type: string
+      update_time:
+        type: string
+    type: object
+  request.CreateTokenConfigRequest:
+    properties:
+      address:
+        type: string
+      description:
+        type: string
+      enable_mining:
+        type: boolean
+      isListed:
+        type: boolean
+      mining_end_time:
+        type: string
+      mining_start_time:
+        type: string
+      name:
+        type: string
+      symbol:
+        type: string
+    required:
+    - address
+    - name
+    - symbol
+    type: object
   request.LoginRequest:
     description: 用户登录时提交的请求参数
     properties:
@@ -22,6 +70,25 @@ definitions:
       timestamp:
         description: 时间戳
         example: "1740885327"
+        type: string
+    type: object
+  request.UpdateTokenConfigRequest:
+    properties:
+      address:
+        type: string
+      description:
+        type: string
+      enable_mining:
+        type: boolean
+      isListed:
+        type: boolean
+      mining_end_time:
+        type: string
+      mining_start_time:
+        type: string
+      name:
+        type: string
+      symbol:
         type: string
     type: object
   response.GetTickerResponse:
@@ -53,12 +120,16 @@ definitions:
     type: object
   response.InvitedPointsDetail:
     properties:
+      fee_rebate:
+        type: string
       invite_time:
         type: integer
       invitee:
         type: string
       trading_points:
         type: string
+      update_time:
+        type: integer
     type: object
   response.InvitedPointsTotalResponse:
     properties:
@@ -116,9 +187,6 @@ definitions:
         description: 代币铸造地址
         example: 6
         type: integer
-      holders:
-        example: 4204
-        type: integer
       market:
         description: 市场地址
         example: B3o198GX45DZ9HeJZ56wuruyWWCfGVBSn5qC71q5AHZz
@@ -135,9 +203,6 @@ definitions:
         description: 当前价格
         example: 5.0417320729e-05
         type: number
-      rank:
-        example: 1
-        type: integer
       token_mint:
         description: 代币铸造地址
         example: suprkbfvwpFZXzWaoKjTzGkW1nkvvwK9n2E6g1zyLFo
@@ -215,9 +280,6 @@ definitions:
   response.MarketTicker:
     description: 市场的行情数据
     properties:
-      Sell_tx_count_24h:
-        example: 7566
-        type: integer
       buy_token_volume_1h:
         example: "379231.972430"
         type: string
@@ -254,12 +316,19 @@ definitions:
       buy_tx_count_30m:
         example: 25
         type: integer
+      holders:
+        example: 4204
+        type: integer
       last_swap_at:
         example: 1740887399
         type: integer
       market_cap:
         example: "50417.320729000000000"
         type: string
+      price:
+        description: 当前价格
+        example: 5.0417320729e-05
+        type: number
       price_change_1h:
         example: "0.005103"
         type: string
@@ -272,6 +341,9 @@ definitions:
       price_change_30m:
         example: "0.000836"
         type: string
+      rank:
+        example: 1
+        type: integer
       sell_token_volume_1h:
         example: "379231.972430"
         type: string
@@ -301,6 +373,9 @@ definitions:
         type: integer
       sell_tx_count_5m:
         example: 25
+        type: integer
+      sell_tx_count_24h:
+        example: 7566
         type: integer
       sell_tx_count_30m:
         example: 25
@@ -441,8 +516,16 @@ definitions:
         description: 邀请积分
         example: "0"
         type: string
+      invite_rebate:
+        description: 可提取返佣
+        example: "0.147938"
+        type: string
       trading_points:
         description: 交易积分
+        example: "0.147938"
+        type: string
+      withdrawable_rebate:
+        description: 可提取返佣
         example: "0.147938"
         type: string
     type: object
@@ -581,9 +664,6 @@ definitions:
       balance:
         description: 持仓数量
         type: string
-      filled_price:
-        description: 成交价格
-        type: string
       holders_count:
         description: 持有者数量
         type: integer
@@ -593,97 +673,20 @@ definitions:
       image_uri:
         description: 代币图片 URI
         type: string
-      market_address:
-        description: 市场地址
-        type: string
-      market_id:
-        description: 市场 ID
-        type: integer
       price:
         description: 当前价格
         type: string
-      realized_pnl:
-        description: 已实现盈亏
+      profit:
+        description: 收益
+        type: string
+      profit_rate:
+        description: 收益率
         type: string
       symbol:
         description: 代币符号
         type: string
       token_name:
         description: 代币名称
-        type: string
-      total_buy:
-        description: 总买入数量
-        type: string
-      total_buy_native:
-        description: 总买入原生代币数量
-        type: string
-      total_sell:
-        description: 总卖出数量
-        type: string
-      total_sell_native:
-        description: 总卖出原生代币数量
-        type: string
-      total_value:
-        description: 持仓总价值
-        type: string
-    type: object
-  response.TokenHoldingHistoriesResponse:
-    properties:
-      has_more:
-        description: 是否有更多数据
-        type: boolean
-      token_holdings_histories:
-        description: 代币持仓历史列表
-        items:
-          $ref: '#/definitions/response.TokenHoldingHistory'
-        type: array
-    type: object
-  response.TokenHoldingHistory:
-    properties:
-      balance:
-        description: 持仓数量
-        type: string
-      filled_price:
-        description: 成交价格
-        type: string
-      holders_count:
-        description: 持有者数量
-        type: integer
-      id:
-        description: 记录 ID
-        type: integer
-      image_uri:
-        description: 代币图片 URI
-        type: string
-      market_address:
-        description: 市场地址
-        type: string
-      market_id:
-        description: 市场 ID
-        type: integer
-      price:
-        description: 当前价格
-        type: string
-      realized_pnl:
-        description: 已实现盈亏
-        type: string
-      symbol:
-        description: 代币符号
-        type: string
-      token_name:
-        description: 代币名称
-        type: string
-      total_buy:
-        description: 总买入数量
-        type: string
-      total_buy_native:
-        description: 总买入原生代币数量
-        type: string
-      total_sell:
-        description: 总卖出数量
-        type: string
-      total_sell_native:
-        description: 总卖出原生代币数量
         type: string
       total_value:
         description: 持仓总价值
@@ -691,8 +694,13 @@ definitions:
     type: object
   response.TokenHoldingsResponse:
     properties:
-      token_holdings:
-        description: 代币持仓列表
+      current_holding:
+        description: 当前持仓
+        items:
+          $ref: '#/definitions/response.TokenHolding'
+        type: array
+      history_token_holdings:
+        description: 历史持仓
         items:
           $ref: '#/definitions/response.TokenHolding'
         type: array
@@ -733,6 +741,8 @@ definitions:
         type: string
       twitter_username:
         type: string
+      type:
+        type: integer
       user_id:
         type: integer
     type: object
@@ -743,6 +753,191 @@ info:
   title: Game API
   version: "1.0"
 paths:
+  /admin/tokenconfigs/create:
+    post:
+      consumes:
+      - application/json
+      description: 创建新的tokenconfig
+      parameters:
+      - description: TokenConfig信息
+        in: body
+        name: tokenconfig
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateTokenConfigRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功创建tokenconfig
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.TokenConfig'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 创建tokenconfig
+      tags:
+      - 管理员-令牌配置
+  /admin/tokenconfigs/delete/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 根据ID删除tokenconfig
+      parameters:
+      - description: TokenConfig ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功删除tokenconfig
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 未找到
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 删除tokenconfig
+      tags:
+      - 管理员-令牌配置
+  /admin/tokenconfigs/detail/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 根据ID获取tokenconfig的详细信息
+      parameters:
+      - description: TokenConfig ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回tokenconfig详情
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.TokenConfig'
+              type: object
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 未找到
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取tokenconfig详情
+      tags:
+      - 管理员-令牌配置
+  /admin/tokenconfigs/list:
+    get:
+      consumes:
+      - application/json
+      description: 获取系统中所有tokenconfig的列表
+      parameters:
+      - description: 页码
+        in: query
+        name: page
+        type: string
+      - description: 每页数量
+        in: query
+        name: limit
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回tokenconfig列表
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.TokenConfig'
+              type: object
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取tokenconfig列表
+      tags:
+      - 管理员-令牌配置
+  /admin/tokenconfigs/update/{id}:
+    post:
+      consumes:
+      - application/json
+      description: 根据ID更新tokenconfig的信息
+      parameters:
+      - description: TokenConfig ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: TokenConfig信息
+        in: body
+        name: tokenconfig
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdateTokenConfigRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功更新tokenconfig
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.TokenConfig'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 未找到
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 更新tokenconfig
+      tags:
+      - 管理员-令牌配置
   /api/v1/ws/kline/{tokenAddress}:
     get:
       consumes:
@@ -828,7 +1023,7 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: 获取链的原生代币钱包余额
       tags:
       - 全局数据
@@ -898,7 +1093,7 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: 获取链的原生代币钱包余额
       tags:
       - 全局数据
@@ -1008,7 +1203,7 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: 获取用户积分数据
       tags:
       - 积分
@@ -1050,7 +1245,7 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: 获取用户积分明细
       tags:
       - 积分
@@ -1083,7 +1278,7 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: 获取用户预估积分数据
       tags:
       - 积分
@@ -1125,7 +1320,7 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: 获取用户邀请明细
       tags:
       - 用户
@@ -1596,7 +1791,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: 根据链类型、用户账户和目标账户获取代币持仓数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance
+      description: 根据链类型和用户账户获取代币持仓数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance
         Smart Chain）。
       parameters:
       - description: 链类型（sol、eth、bsc）
@@ -1608,16 +1803,6 @@ paths:
         in: path
         name: account
         required: true
-        type: string
-      - description: 目标账户
-        in: query
-        name: account
-        required: true
-        type: string
-      - default: "false"
-        description: 是否包含零余额
-        in: query
-        name: allow_zero_balance
         type: string
       produces:
       - application/json
@@ -1635,53 +1820,9 @@ paths:
           description: 服务器内部错误
           schema:
             $ref: '#/definitions/response.Response'
-      summary: 获取代币持仓数据
-      tags:
-      - 代币持仓
-  /token_holdings/{chain_type}/histories/{account}:
-    get:
-      consumes:
-      - application/json
-      description: 根据链类型和用户账户获取代币持仓历史数据。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance
-        Smart Chain）。
-      parameters:
-      - description: 链类型（sol、eth、bsc）
-        in: path
-        name: chain_type
-        required: true
-        type: string
-      - description: 用户账户
-        in: path
-        name: account
-        required: true
-        type: string
-      - default: "0"
-        description: 分页页码
-        in: query
-        name: page
-        type: string
-      - default: "20"
-        description: 每页数量
-        in: query
-        name: limit
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 成功返回代币持仓历史数据
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/response.TokenHoldingHistoriesResponse'
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: 获取代币持仓历史数据
+      security:
+      - BearerAuth: []
+      summary: 获取代币持仓数据当前和历史
       tags:
       - 代币持仓
   /users/{chain_type}/invite/code:
@@ -1713,7 +1854,7 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: 获取用户邀请码信息
       tags:
       - 用户
@@ -1778,14 +1919,14 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: 获取当前用户信息
       tags:
       - 用户
 securityDefinitions:
   ApiKeyAuth:
     in: header
-    name: Authorization
+    name: X-API-Key
     type: apiKey
   BearerAuth:
     in: header

@@ -100,6 +100,7 @@ func Err(errCode int, msg string, err error) Response {
 		Code:  errCode,
 		Msg:   msg,
 		Error: "",
+		Data:  "",
 	}
 	// 如果 err 不为空，将其转换为字符串
 	if err != nil {
