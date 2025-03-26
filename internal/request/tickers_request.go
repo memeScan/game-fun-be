@@ -14,13 +14,13 @@ type TickersRequest struct {
 	// - HOLDERS：持有者数量
 	// - INITIALIZE_AT：初始化时间
 	// - Links：链接
-	SortedBy string `form:"sorted_by" example:"INITIALIZE_AT" validate:"oneof=MARKET_CAP PRICE_CHANGE_5M PRICE_CHANGE_1H PRICE_CHANGE_24H NATIVE_VOLUME_1H NATIVE_VOLUME_24H TX_COUNT_24H HOLDERS INITIALIZE_AT Links"`
+	SortedBy string `form:"sorted_by" example:"INITIALIZE_AT" validate:"oneof=MARKET_CAP PRICE_CHANGE_5M PRICE_CHANGE_1H PRICE_CHANGE_24H NATIVE_VOLUME_1H NATIVE_VOLUME_24H TX_COUNT_24H HOLDERS INITIALIZE_AT"`
 	// 排序方向，支持以下值：
 	// - DESC：降序
 	// - ASC：升序
 	SortDirection string `form:"sort_direction" example:"DESC" validate:"oneof=DESC ASC"`
-	// 分页游标，用于分页查询
-	PageCursor string `form:"page_cursor" example:""`
+	// // 分页游标，用于分页查询
+	// PageCursor string `form:"page_cursor" example:""`
 	// 每页返回的数据条数
 	Limit int `form:"limit" example:"50"`
 	// 搜索关键字，用于筛选数据

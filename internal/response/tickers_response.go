@@ -2,9 +2,9 @@ package response
 
 // TickerResponse 市场行情数据
 type TickersResponse struct {
-	List    []TickerItem `json:"list"`                                              // 市场列表
-	HasMore bool         `json:"has_more" example:"true"`                           // 是否有更多数据
-	Cursor  string       `json:"cursor" example:"NTA0MTcuMzIwNzI5MDAwMDAwMDAwOjE="` // 分页游标
+	List []TickerItem `json:"list"` // 市场列表
+	// HasMore bool         `json:"has_more" example:"true"`                           // 是否有更多数据
+	// Cursor  string       `json:"cursor" example:"NTA0MTcuMzIwNzI5MDAwMDAwMDAwOjE="` // 分页游标
 }
 
 // TickerItem 单个市场行情数据

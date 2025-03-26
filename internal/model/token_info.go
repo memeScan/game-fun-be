@@ -78,14 +78,15 @@ type ExtInfo struct {
 	Symbol      string `json:"symbol"`
 	Description string `json:"description"`
 	Image       string `json:"image"`
-	CreatedOn   string `json:"createdOn"`
+	CreatedOn   string `json:"created_on"`
 	Twitter     string `json:"twitter"`
+	Github      string `json:"github"`
 	Website     string `json:"website"`
 	Telegram    string `json:"telegram"`
 	Banner      string `json:"banner"`
 	Rules       string `json:"rules"`
 	Sort        uint   `json:"sort"`
-	ShowName    bool   `json:"showName"`
+	ShowName    bool   `json:"show_name"`
 }
 
 func (t *TokenInfo) SetFlag(flag int) {

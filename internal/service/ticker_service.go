@@ -41,29 +41,238 @@ func NewTickerServiceImpl(tokenInfoRepo *model.TokenInfoRepo, tokenMarketAnalyti
 }
 
 func (s *TickerServiceImpl) Tickers(req request.TickersRequest, chainType model.ChainType) response.Response {
-	TickersQuery, err := query.TickersQuery(&req)
-	if err != nil {
-		return response.Err(http.StatusInternalServerError, "Failed to generate TickersQuery", err)
+	req.Limit = req.Limit + 10
+	queryJSON := "{}"
+	if req.NewPairsResolution != "" {
+		var err error
+		queryJSON, err = query.NewPairQuery(&req)
+		if err != nil {
+			return response.Err(http.StatusInternalServerError, "Failed to generate TickersQuery", err)
+		}
+	} else {
+		var err error
+		queryJSON, err = query.MarketQuery(&req)
+		if err != nil {
+			return response.Err(http.StatusInternalServerError, "Failed to generate TickersQuery", err)
+		}
 	}
-	// 打印 TickersQuery
-	fmt.Println("TickersQuery:", TickersQuery)
 
-	result, err := es.SearchTokenTransactionsWithAggs(conf.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS, TickersQuery, conf.UNIQUE_TOKENS)
+	result, err := es.SearchTokenTransactionsWithAggs(conf.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS, queryJSON, conf.UNIQUE_TOKENS)
 	if err != nil || result == nil {
 		status := http.StatusInternalServerError
 		msg := "Failed to get pump rank"
-		data := []response.TickersResponse{}
+		if err != nil {
+			return response.Err(status, msg, err)
+		}
 		if result == nil {
 			status = http.StatusOK
 			msg = "No data found"
 			data := []response.TickersResponse{}
 			return response.BuildResponse(data, status, msg, nil)
 		}
-		return response.BuildResponse(data, status, msg, err)
+	}
+
+	aggregationResult, err := es.UnmarshalAggregationResult([]byte(result))
+	if err != nil {
+		return response.Err(http.StatusInternalServerError, "Failed to fetch token data", err)
+	}
+
+	if len(aggregationResult.Buckets) == 0 {
+		return response.BuildResponse([]response.TickersResponse{}, http.StatusOK, "No data found", nil)
+	}
+
+	solPrice, err := getSolPrice()
+	if err != nil {
+		log.Printf("Warning: Failed to fetch SOL price: %v", err)
+		solPrice = decimal.NewFromInt(130)
+	}
+	solPriceFloat, _ := solPrice.Float64()
+
+	solDecimals := response.SolDecimals
+
+	var tickers []response.TickerItem
+	for _, bucket := range aggregationResult.Buckets {
+
+		var ticker response.TickerItem
+		var market response.Market
+		var marketMetadata response.MarketMetadata
+		var marketTicker response.MarketTicker
+
+		var tx response.TokenTransaction
+		if err := json.Unmarshal(bucket.LatestTransaction.Hits.Hits[0].Source, &tx); err != nil {
+			return response.Err(http.StatusInternalServerError, "Failed to fetch token data", err)
+		}
+
+		var extInfo model.ExtInfo
+		if err := json.Unmarshal([]byte(tx.ExtInfo), &extInfo); err != nil {
+			log.Printf("Error unmarshaling ExtInfo: %v\n", err)
+			extInfo = model.ExtInfo{}
+		}
+
+		if extInfo.Name == "" || extInfo.Symbol == "" || extInfo.Image == "" {
+			continue
+		}
+
+		openTimestamp := parseISOTimeToUnix(tx.OpenTimestamp)
+
+		latestTransactionTimestamp := parseISOTimeToUnix(tx.LatestTransactionTime)
+
+		market.Market = tx.PoolAddress
+		market.Decimals = uint8(tx.Decimals)
+		market.Creator = tx.Creator
+		market.Price = decimal.NewFromFloat(tx.Price)
+		market.NativeVault = tx.VirtualNativeReserves
+		market.TokenVault = tx.VirtualTokenReserves
+		market.TokenName = extInfo.Name
+		market.TokenSymbol = extInfo.Symbol
+		market.URI = extInfo.Image
+		market.TokenMint = tx.TokenAddress
+		market.CreateTimestamp = openTimestamp
+
+		marketMetadata.ImageURL = &extInfo.Image
+		marketMetadata.Description = &extInfo.Description
+		marketMetadata.Github = &extInfo.Github
+		marketMetadata.Banner = &extInfo.Banner
+		marketMetadata.Telegram = &extInfo.Telegram
+		marketMetadata.Twitter = &extInfo.Twitter
+		marketMetadata.Website = &extInfo.Website
+
+		marketTicker.Price = decimal.NewFromFloat(tx.Price)
+		marketTicker.Holders = tx.Holder
+		marketTicker.MarketCap = strconv.FormatFloat(tx.MarketCap, 'f', -1, 64)
+		marketTicker.LastSwapAt = latestTransactionTimestamp
+		// 排名
+		// marketTicker.Rank =
+
+		price5m := float64(0)
+		price1h := float64(0)
+		price24h := float64(0)
+
+		if len(bucket.LastTransaction5mPrice.Latest.Hits.Hits) > 0 {
+			price5m = bucket.LastTransaction5mPrice.Latest.Hits.Hits[0].Source.Price
+		}
+		if len(bucket.LastTransaction1hPrice.Latest.Hits.Hits) > 0 {
+			price1h = bucket.LastTransaction1hPrice.Latest.Hits.Hits[0].Source.Price
+		}
+		if len(bucket.LastTransaction24hPrice.Latest.Hits.Hits) > 0 {
+			price24h = bucket.LastTransaction24hPrice.Latest.Hits.Hits[0].Source.Price
+		}
+
+		priceChange5m := calculatePriceChange(tx.Price, price5m)
+		priceChange1h := calculatePriceChange(tx.Price, price1h)
+		priceChange24h := calculatePriceChange(tx.Price, price24h)
+
+		marketTicker.PriceChange5M = FormatPercent(priceChange5m)
+		marketTicker.BuyTokenVolume1H = FormatPercent(priceChange1h)
+		marketTicker.BuyTokenVolume24H = FormatPercent(priceChange24h)
+
+		marketTicker.TxCount24H = bucket.Swaps24h.TransactionCount.Value
+		marketTicker.SellTxCount24H = bucket.SellCount24h.SellVolume.Value
+		marketTicker.BuyTxCount24H = marketTicker.TxCount24H - marketTicker.SellTxCount24H
+
+		volume1h := decimal.NewFromInt(0)
+		volume24h := decimal.NewFromInt(0)
+
+		if bucket.Volume1h.TotalVolume.Value > 0 {
+			volume1h, _ = processVolume(bucket.Volume1h.TotalVolume.Value, solPriceFloat, solDecimals)
+		}
+		if bucket.SellVolume24h.TotalVolume.Value > 0 {
+			volume24h, _ = processVolume(bucket.Volume24h.TotalVolume.Value, solPriceFloat, solDecimals)
+		}
+		marketTicker.TokenVolume1HUsd = volume1h.String()
+		marketTicker.TokenVolume24HUsd = volume24h.String()
+
+		ticker.Market = market
+		ticker.MarketMetadata = marketMetadata
+		ticker.MarketTicker = marketTicker
+		tickers = append(tickers, ticker)
+	}
+
+	if req.SortedBy != "" {
+		sort.Slice(tickers, func(i, j int) bool {
+			switch req.SortedBy {
+			case "MARKET_CAP":
+				marketCapI, _ := strconv.ParseFloat(tickers[i].MarketTicker.MarketCap, 64)
+				marketCapJ, _ := strconv.ParseFloat(tickers[j].MarketTicker.MarketCap, 64)
+				if req.SortDirection == "DESC" {
+					return marketCapI > marketCapJ // 降序
+				}
+				return marketCapI < marketCapJ // 升序
+
+			case "PRICE_CHANGE_5M":
+				priceChangeI, _ := strconv.ParseFloat(tickers[i].MarketTicker.PriceChange5M, 64)
+				priceChangeJ, _ := strconv.ParseFloat(tickers[j].MarketTicker.PriceChange5M, 64)
+				if req.SortDirection == "DESC" {
+					return priceChangeI > priceChangeJ
+				}
+				return priceChangeI < priceChangeJ
+
+			case "PRICE_CHANGE_1H":
+				priceChangeI, _ := strconv.ParseFloat(tickers[i].MarketTicker.PriceChange1H, 64)
+				priceChangeJ, _ := strconv.ParseFloat(tickers[j].MarketTicker.PriceChange1H, 64)
+				if req.SortDirection == "DESC" {
+					return priceChangeI > priceChangeJ
+				}
+				return priceChangeI < priceChangeJ
+
+			case "PRICE_CHANGE_24H":
+				priceChangeI, _ := strconv.ParseFloat(tickers[i].MarketTicker.PriceChange24H, 64)
+				priceChangeJ, _ := strconv.ParseFloat(tickers[j].MarketTicker.PriceChange24H, 64)
+				if req.SortDirection == "DESC" {
+					return priceChangeI > priceChangeJ
+				}
+				return priceChangeI < priceChangeJ
+
+			case "NATIVE_VOLUME_1H":
+				volumeI, _ := strconv.ParseFloat(tickers[i].MarketTicker.TokenVolume1HUsd, 64)
+				volumeJ, _ := strconv.ParseFloat(tickers[j].MarketTicker.TokenVolume1HUsd, 64)
+				if req.SortDirection == "DESC" {
+					return volumeI > volumeJ
+				}
+				return volumeI < volumeJ
+
+			case "NATIVE_VOLUME_24H":
+				volumeI, _ := strconv.ParseFloat(tickers[i].MarketTicker.TokenVolume24HUsd, 64)
+				volumeJ, _ := strconv.ParseFloat(tickers[j].MarketTicker.TokenVolume24HUsd, 64)
+				if req.SortDirection == "DESC" {
+					return volumeI > volumeJ
+				}
+				return volumeI < volumeJ
+
+			case "TX_COUNT_24H":
+				txcountI := tickers[i].MarketTicker.TxCount24H
+				txcountJ := tickers[j].MarketTicker.TxCount24H
+				if req.SortDirection == "DESC" {
+					return txcountI > txcountJ
+				}
+				return txcountI < txcountJ
+
+			case "HOLDERS":
+				holdersI := tickers[i].MarketTicker.Holders
+				holdersJ := tickers[j].MarketTicker.Holders
+				if req.SortDirection == "DESC" {
+					return holdersI > holdersJ
+				}
+				return holdersI < holdersJ
+
+			case "INITIALIZE_AT":
+				createTimestampI := tickers[i].Market.CreateTimestamp
+				createTimestampJ := tickers[j].Market.CreateTimestamp
+				if req.SortDirection == "DESC" {
+					return createTimestampI > createTimestampJ
+				}
+				return createTimestampI < createTimestampJ
+			}
+			return false
+		})
+	}
+
+	if len(tickers) > 20 {
+		tickers = tickers[:20]
 	}
 
 	var tickersResponse response.TickersResponse
-
+	tickersResponse.List = tickers
 	return response.Success(tickersResponse)
 }
 
@@ -377,15 +586,15 @@ func populateMarketTicker(analytics response.TokenMarketAnalyticsResponse) respo
 	priceChange24hPercentStr := FormatPercent(analytics.PriceChange24h)
 	priceChange1hPercentStr := FormatPercent(analytics.PriceChange1h)
 	priceChange5mPercentStr := FormatPercent(analytics.PriceChange5m)
-	txCount24H := ConvertDecimalToInt(analytics.TotalCount24h, false)
-	buyCount24h := ConvertDecimalToInt(analytics.BuyCount24h, false)
-	sellCount24h := ConvertDecimalToInt(analytics.SellCount24h, false)
-	txCount1H := ConvertDecimalToInt(analytics.TotalCount1h, false)
-	buyCount1h := ConvertDecimalToInt(analytics.BuyCount1h, false)
-	sellCount1h := ConvertDecimalToInt(analytics.SellCount1h, false)
-	txCount5m := ConvertDecimalToInt(analytics.TotalCount5m, false)
-	buyCount5m := ConvertDecimalToInt(analytics.BuyCount5m, false)
-	sellCount5m := ConvertDecimalToInt(analytics.SellCount5m, false)
+	txCount24H := int64(ConvertDecimalToInt(analytics.TotalCount24h, false))
+	buyCount24h := int64(ConvertDecimalToInt(analytics.BuyCount24h, false))
+	sellCount24h := int64(ConvertDecimalToInt(analytics.SellCount24h, false))
+	txCount1H := int64(ConvertDecimalToInt(analytics.TotalCount1h, false))
+	buyCount1h := int64(ConvertDecimalToInt(analytics.BuyCount1h, false))
+	sellCount1h := int64(ConvertDecimalToInt(analytics.SellCount1h, false))
+	txCount5m := int64(ConvertDecimalToInt(analytics.TotalCount5m, false))
+	buyCount5m := int64(ConvertDecimalToInt(analytics.BuyCount5m, false))
+	sellCount5m := int64(ConvertDecimalToInt(analytics.SellCount5m, false))
 	currentPrice := decimal.NewFromFloat(analytics.CurrentPrice)
 	roundTo9 := func(d decimal.Decimal) decimal.Decimal {
 		return d.Round(9)
@@ -557,7 +766,7 @@ func (s *TickerServiceImpl) SearchTickers(param, limit, cursor string, chainType
 		}
 	}
 
-	result, err := es.SearchDocuments(es.ES_INDEX_TOKEN_INFO, queryJSON)
+	result, err := es.SearchDocuments(conf.ES_INDEX_TOKEN_INFO, queryJSON)
 	if err != nil {
 		return response.Response{
 			Code: http.StatusInternalServerError,
