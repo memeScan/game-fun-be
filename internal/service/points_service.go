@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"net/http"
 	"os"
 	"strconv"
 	"time"
@@ -62,10 +63,18 @@ func (s *PointsServiceImpl) Points(userID uint, chainType model.ChainType) respo
 		return response.DBErr("", err)
 	}
 
+	solPriceUSD, priceErr := getSolPrice()
+	if priceErr != nil {
+		return response.Err(http.StatusBadRequest, "price query failed", priceErr)
+	}
+
 	var pointsResponse response.PointsResponse = response.PointsResponse{
-		TradingPoints:   formatPoints(userInfo.TradingPoints),
-		InvitePoints:    formatPoints(userInfo.InvitePoints),
-		AvailablePoints: formatPoints(userInfo.AvailablePoints),
+		TradingPoints:      formatPoints(userInfo.TradingPoints),
+		InvitePoints:       formatPoints(userInfo.InvitePoints),
+		AvailablePoints:    formatPoints(userInfo.AvailablePoints),
+		AccumulatedPoints:  formatPoints(userInfo.TradingPoints + userInfo.InvitePoints),
+		InviteRebate:       formatSolUsd(solPriceUSD.Mul(decimal.NewFromInt(int64(userInfo.InviteRebate)))),
+		WithdrawableRebate: formatSolUsd(solPriceUSD.Mul(decimal.NewFromInt(int64(userInfo.WithdrawableRebate)))),
 	}
 	return response.Success(pointsResponse)
 }
@@ -170,7 +179,10 @@ func (s *PointsServiceImpl) InvitedPointsDetail(userID uint64, cursor *uint, lim
 		return response.DBErr("获取邀请积分记录失败", err)
 	}
 
-	fmt.Println(records)
+	solPriceUSD, priceErr := getSolPrice()
+	if priceErr != nil {
+		return response.Err(http.StatusBadRequest, "price query failed", priceErr)
+	}
 
 	// 构建响应数据
 	details := make([]response.InvitedPointsDetail, len(records))
@@ -180,6 +192,8 @@ func (s *PointsServiceImpl) InvitedPointsDetail(userID uint64, cursor *uint, lim
 			Invitee:       userInfoMap[record.UserID].Address,
 			InviteTime:    userInfoMap[record.UserID].CreateTime.Unix(),
 			TradingPoints: formatPoints(record.Points),
+			FeeRebate:     formatSolUsd(solPriceUSD.Mul(decimal.NewFromInt(int64(record.Rebate)))),
+			UpdateTime:    time.Now().Unix(),
 		}
 	}
 
