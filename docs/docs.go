@@ -2560,6 +2560,11 @@ const docTemplate = `{
         "response.PointsResponse": {
             "type": "object",
             "properties": {
+                "accumulated_points": {
+                    "description": "累计积分",
+                    "type": "string",
+                    "example": "0.147938"
+                },
                 "available_points": {
                     "description": "可用积分",
                     "type": "string",
@@ -2680,16 +2685,6 @@ const docTemplate = `{
         "response.TickersResponse": {
             "type": "object",
             "properties": {
-                "cursor": {
-                    "description": "分页游标",
-                    "type": "string",
-                    "example": "NTA0MTcuMzIwNzI5MDAwMDAwMDAwOjE="
-                },
-                "has_more": {
-                    "description": "是否有更多数据",
-                    "type": "boolean",
-                    "example": true
-                },
                 "list": {
                     "description": "市场列表",
                     "type": "array",
