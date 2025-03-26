@@ -103,14 +103,14 @@ func (s *TickerServiceImpl) Tickers(req request.TickersRequest, chainType model.
 			return response.Err(http.StatusInternalServerError, "Failed to fetch token data", err)
 		}
 
+		if tx.ExtInfo == "" {
+			continue
+		}
+
 		var extInfo model.ExtInfo
 		if err := json.Unmarshal([]byte(tx.ExtInfo), &extInfo); err != nil {
 			log.Printf("Error unmarshaling ExtInfo: %v\n", err)
 			extInfo = model.ExtInfo{}
-		}
-
-		if extInfo.Name == "" || extInfo.Symbol == "" || extInfo.Image == "" {
-			continue
 		}
 
 		openTimestamp := parseISOTimeToUnix(tx.OpenTimestamp)
@@ -141,8 +141,6 @@ func (s *TickerServiceImpl) Tickers(req request.TickersRequest, chainType model.
 		marketTicker.Holders = tx.Holder
 		marketTicker.MarketCap = strconv.FormatFloat(tx.MarketCap, 'f', -1, 64)
 		marketTicker.LastSwapAt = latestTransactionTimestamp
-		// 排名
-		// marketTicker.Rank =
 
 		price5m := float64(0)
 		price1h := float64(0)
@@ -176,7 +174,7 @@ func (s *TickerServiceImpl) Tickers(req request.TickersRequest, chainType model.
 		if bucket.Volume1h.TotalVolume.Value > 0 {
 			volume1h, _ = processVolume(bucket.Volume1h.TotalVolume.Value, solPriceFloat, solDecimals)
 		}
-		if bucket.SellVolume24h.TotalVolume.Value > 0 {
+		if bucket.Volume24h.TotalVolume.Value > 0 {
 			volume24h, _ = processVolume(bucket.Volume24h.TotalVolume.Value, solPriceFloat, solDecimals)
 		}
 		marketTicker.TokenVolume1HUsd = volume1h.String()
@@ -262,6 +260,15 @@ func (s *TickerServiceImpl) Tickers(req request.TickersRequest, chainType model.
 					return createTimestampI > createTimestampJ
 				}
 				return createTimestampI < createTimestampJ
+
+			case "PRICE":
+				priceI := tickers[i].MarketTicker.Price
+				priceJ := tickers[j].MarketTicker.Price
+				if req.SortDirection == "DESC" {
+					return priceI.Cmp(priceJ) > 0
+				}
+				return priceI.Cmp(priceJ) < 0
+
 			}
 			return false
 		})

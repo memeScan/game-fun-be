@@ -882,7 +882,8 @@
                             "TX_COUNT_24H",
                             "HOLDERS",
                             "INITIALIZE_AT",
-                            "Links"
+                            "Links",
+                            "PRICE"
                         ],
                         "type": "string",
                         "example": "\"INITIALIZE_AT\"",
@@ -2344,16 +2345,6 @@
         "response.TickersResponse": {
             "type": "object",
             "properties": {
-                "cursor": {
-                    "description": "分页游标",
-                    "type": "string",
-                    "example": "NTA0MTcuMzIwNzI5MDAwMDAwMDAwOjE="
-                },
-                "has_more": {
-                    "description": "是否有更多数据",
-                    "type": "boolean",
-                    "example": true
-                },
                 "list": {
                     "description": "市场列表",
                     "type": "array",
