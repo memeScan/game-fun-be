@@ -41,14 +41,23 @@ func NewTickerServiceImpl(tokenInfoRepo *model.TokenInfoRepo, tokenMarketAnalyti
 }
 
 func (s *TickerServiceImpl) Tickers(req request.TickersRequest, chainType model.ChainType) response.Response {
-	TickersQuery, err := query.TickersQuery(&req)
-	if err != nil {
-		return response.Err(http.StatusInternalServerError, "Failed to generate TickersQuery", err)
+	req.Limit = req.Limit + 10
+	queryJSON := "{}"
+	if req.NewPairsResolution != "" {
+		var err error
+		queryJSON, err = query.NewPairQuery(&req)
+		if err != nil {
+			return response.Err(http.StatusInternalServerError, "Failed to generate TickersQuery", err)
+		}
+	} else {
+		var err error
+		queryJSON, err = query.MarketQuery(&req)
+		if err != nil {
+			return response.Err(http.StatusInternalServerError, "Failed to generate TickersQuery", err)
+		}
 	}
-	// 打印 TickersQuery
-	fmt.Println("TickersQuery:", TickersQuery)
 
-	result, err := es.SearchTokenTransactionsWithAggs(conf.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS, TickersQuery, conf.UNIQUE_TOKENS)
+	result, err := es.SearchTokenTransactionsWithAggs(conf.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS, queryJSON, conf.UNIQUE_TOKENS)
 	if err != nil || result == nil {
 		status := http.StatusInternalServerError
 		msg := "Failed to get pump rank"
@@ -83,6 +92,7 @@ func (s *TickerServiceImpl) Tickers(req request.TickersRequest, chainType model.
 
 	var tickers []response.TickerItem
 	for _, bucket := range aggregationResult.Buckets {
+
 		var ticker response.TickerItem
 		var market response.Market
 		var marketMetadata response.MarketMetadata
@@ -99,10 +109,12 @@ func (s *TickerServiceImpl) Tickers(req request.TickersRequest, chainType model.
 			extInfo = model.ExtInfo{}
 		}
 
-		// 解析 tx.OpenTimestamp
+		if extInfo.Name == "" || extInfo.Symbol == "" || extInfo.Image == "" {
+			continue
+		}
+
 		openTimestamp := parseISOTimeToUnix(tx.OpenTimestamp)
 
-		// 解析 tx.LatestTransactionTime
 		latestTransactionTimestamp := parseISOTimeToUnix(tx.LatestTransactionTime)
 
 		market.Market = tx.PoolAddress
@@ -174,6 +186,89 @@ func (s *TickerServiceImpl) Tickers(req request.TickersRequest, chainType model.
 		ticker.MarketMetadata = marketMetadata
 		ticker.MarketTicker = marketTicker
 		tickers = append(tickers, ticker)
+	}
+
+	if req.SortedBy != "" {
+		sort.Slice(tickers, func(i, j int) bool {
+			switch req.SortedBy {
+			case "MARKET_CAP":
+				marketCapI, _ := strconv.ParseFloat(tickers[i].MarketTicker.MarketCap, 64)
+				marketCapJ, _ := strconv.ParseFloat(tickers[j].MarketTicker.MarketCap, 64)
+				if req.SortDirection == "DESC" {
+					return marketCapI > marketCapJ // 降序
+				}
+				return marketCapI < marketCapJ // 升序
+
+			case "PRICE_CHANGE_5M":
+				priceChangeI, _ := strconv.ParseFloat(tickers[i].MarketTicker.PriceChange5M, 64)
+				priceChangeJ, _ := strconv.ParseFloat(tickers[j].MarketTicker.PriceChange5M, 64)
+				if req.SortDirection == "DESC" {
+					return priceChangeI > priceChangeJ
+				}
+				return priceChangeI < priceChangeJ
+
+			case "PRICE_CHANGE_1H":
+				priceChangeI, _ := strconv.ParseFloat(tickers[i].MarketTicker.PriceChange1H, 64)
+				priceChangeJ, _ := strconv.ParseFloat(tickers[j].MarketTicker.PriceChange1H, 64)
+				if req.SortDirection == "DESC" {
+					return priceChangeI > priceChangeJ
+				}
+				return priceChangeI < priceChangeJ
+
+			case "PRICE_CHANGE_24H":
+				priceChangeI, _ := strconv.ParseFloat(tickers[i].MarketTicker.PriceChange24H, 64)
+				priceChangeJ, _ := strconv.ParseFloat(tickers[j].MarketTicker.PriceChange24H, 64)
+				if req.SortDirection == "DESC" {
+					return priceChangeI > priceChangeJ
+				}
+				return priceChangeI < priceChangeJ
+
+			case "NATIVE_VOLUME_1H":
+				volumeI, _ := strconv.ParseFloat(tickers[i].MarketTicker.TokenVolume1HUsd, 64)
+				volumeJ, _ := strconv.ParseFloat(tickers[j].MarketTicker.TokenVolume1HUsd, 64)
+				if req.SortDirection == "DESC" {
+					return volumeI > volumeJ
+				}
+				return volumeI < volumeJ
+
+			case "NATIVE_VOLUME_24H":
+				volumeI, _ := strconv.ParseFloat(tickers[i].MarketTicker.TokenVolume24HUsd, 64)
+				volumeJ, _ := strconv.ParseFloat(tickers[j].MarketTicker.TokenVolume24HUsd, 64)
+				if req.SortDirection == "DESC" {
+					return volumeI > volumeJ
+				}
+				return volumeI < volumeJ
+
+			case "TX_COUNT_24H":
+				txcountI := tickers[i].MarketTicker.TxCount24H
+				txcountJ := tickers[j].MarketTicker.TxCount24H
+				if req.SortDirection == "DESC" {
+					return txcountI > txcountJ
+				}
+				return txcountI < txcountJ
+
+			case "HOLDERS":
+				holdersI := tickers[i].MarketTicker.Holders
+				holdersJ := tickers[j].MarketTicker.Holders
+				if req.SortDirection == "DESC" {
+					return holdersI > holdersJ
+				}
+				return holdersI < holdersJ
+
+			case "INITIALIZE_AT":
+				createTimestampI := tickers[i].Market.CreateTimestamp
+				createTimestampJ := tickers[j].Market.CreateTimestamp
+				if req.SortDirection == "DESC" {
+					return createTimestampI > createTimestampJ
+				}
+				return createTimestampI < createTimestampJ
+			}
+			return false
+		})
+	}
+
+	if len(tickers) > 20 {
+		tickers = tickers[:20]
 	}
 
 	var tickersResponse response.TickersResponse
@@ -671,7 +766,7 @@ func (s *TickerServiceImpl) SearchTickers(param, limit, cursor string, chainType
 		}
 	}
 
-	result, err := es.SearchDocuments(es.ES_INDEX_TOKEN_INFO, queryJSON)
+	result, err := es.SearchDocuments(conf.ES_INDEX_TOKEN_INFO, queryJSON)
 	if err != nil {
 		return response.Response{
 			Code: http.StatusInternalServerError,
