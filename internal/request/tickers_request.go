@@ -11,10 +11,11 @@ type TickersRequest struct {
 	// - NATIVE_VOLUME_1H：1 小时原生交易量
 	// - NATIVE_VOLUME_24H：24 小时原生交易量
 	// - TX_COUNT_24H：24 小时交易次数
+	// - PRICE 小时交易次数
 	// - HOLDERS：持有者数量
 	// - INITIALIZE_AT：初始化时间
 	// - Links：链接
-	SortedBy string `form:"sorted_by" example:"INITIALIZE_AT" validate:"oneof=MARKET_CAP PRICE_CHANGE_5M PRICE_CHANGE_1H PRICE_CHANGE_24H NATIVE_VOLUME_1H NATIVE_VOLUME_24H TX_COUNT_24H HOLDERS INITIALIZE_AT"`
+	SortedBy string `form:"sorted_by" example:"INITIALIZE_AT" validate:"oneof=MARKET_CAP PRICE_CHANGE_5M PRICE_CHANGE_1H PRICE_CHANGE_24H NATIVE_VOLUME_1H NATIVE_VOLUME_24H TX_COUNT_24H HOLDERS INITIALIZE_AT PRICE"`
 	// 排序方向，支持以下值：
 	// - DESC：降序
 	// - ASC：升序

@@ -1197,7 +1197,8 @@ const docTemplate = `{
                             "TX_COUNT_24H",
                             "HOLDERS",
                             "INITIALIZE_AT",
-                            "Links"
+                            "Links",
+                            "PRICE"
                         ],
                         "type": "string",
                         "example": "\"INITIALIZE_AT\"",

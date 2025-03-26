@@ -1508,6 +1508,7 @@ paths:
         - HOLDERS
         - INITIALIZE_AT
         - Links
+        - PRICE
         example: '"INITIALIZE_AT"'
         in: query
         name: sorted_by
