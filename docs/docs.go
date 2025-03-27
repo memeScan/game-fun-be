@@ -1197,7 +1197,11 @@ const docTemplate = `{
                             "TX_COUNT_24H",
                             "HOLDERS",
                             "INITIALIZE_AT",
+<<<<<<< HEAD
                             "Links",
+=======
+                            "LINKS",
+>>>>>>> anyi
                             "PRICE"
                         ],
                         "type": "string",
