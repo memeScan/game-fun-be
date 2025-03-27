@@ -1326,7 +1326,7 @@ paths:
         - TX_COUNT_24H
         - HOLDERS
         - INITIALIZE_AT
-        - Links
+        - LINKS
         - PRICE
         example: '"INITIALIZE_AT"'
         in: query

@@ -888,7 +888,7 @@ const docTemplate = `{
                             "TX_COUNT_24H",
                             "HOLDERS",
                             "INITIALIZE_AT",
-                            "Links",
+                            "LINKS",
                             "PRICE"
                         ],
                         "type": "string",
