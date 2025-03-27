@@ -51,6 +51,8 @@ type SwapGInstructionStruct struct {
 	Market          string `json:"market"`
 	GAmm            string `json:"gAmm"`
 	GMarket         string `json:"gMarket"`
+	Mev             bool   `json:"mev"`
+	Jitotip         string `json:"jitotip"`
 }
 
 type BuyGWithPointsStruct struct {

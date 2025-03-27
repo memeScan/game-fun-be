@@ -7,7 +7,6 @@ import (
 	"game-fun-be/internal/es"
 	"game-fun-be/internal/es/query"
 	"game-fun-be/internal/model"
-	"game-fun-be/internal/pkg/httpRespone"
 	"game-fun-be/internal/pkg/httpUtil"
 	"game-fun-be/internal/pkg/util"
 	"game-fun-be/internal/redis"
@@ -15,17 +14,15 @@ import (
 	"game-fun-be/internal/response"
 	"game-fun-be/internal/service"
 	"log"
-	"math"
-	"sync"
 	"time"
 )
 
 var tokenInfoService = service.TokenInfoService{}
 var redisKey = constants.RedisKeyHotTokens
 
-func CompletedTokenDataRefreshTaskQuery() {
+func RefreshHotTokensHolderJob() {
 	var req request.TickersRequest
-	req.Limit = 20
+	req.Limit = 30
 	req.SortDirection = "DESC"
 	req.SortedBy = "NATIVE_VOLUME_24H"
 
@@ -195,90 +192,106 @@ func RefreshHotTokensJob(taskName string, lockKey string, queryJSON string, redi
 			}
 		}
 
-		var wg sync.WaitGroup
+		for _, tokenAddress := range batch {
+			solanaTrackerToken, err := httpUtil.GetTokenInfoByAddress(tokenAddress)
+			if err != nil {
+				log.Printf("Failed to get token info for %s: %v", tokenAddress, err)
+				continue
+			}
+
+			// 仅当 tokenInfoMap 中已存在该 tokenAddress 时，才更新数据
+			if tokenInfo, exists := tokenInfoMap[tokenAddress]; exists {
+				tokenInfo.Holder = solanaTrackerToken.Holders
+				log.Printf("Updated Token Info for %s: %+v", tokenAddress, tokenInfo)
+			} else {
+				log.Printf("Token %s not found in tokenInfoMap, skipping update", tokenAddress)
+			}
+		}
+
+		// var wg sync.WaitGroup
 
 		// 用于存储结果
-		var safetyCheckData *[]httpRespone.SafetyCheckPoolData
-		var dexCheckData *[]httpRespone.DexCheckData
-		var safetyCheckErr error
-		var dexCheckErr error
+		// var safetyCheckData *[]httpRespone.SafetyCheckPoolData
+		// var dexCheckData *[]httpRespone.DexCheckData
+		// var safetyCheckErr error
+		// var dexCheckErr error
 
 		// 启动 goroutine 获取安全检查数据
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			safetyCheckData, safetyCheckErr = httpUtil.GetSafetyCheckPool(needCheckTokenAddressPoolAddresses)
-			if safetyCheckErr != nil {
-				util.Log().Error("Error getting safety check data: %v", safetyCheckErr)
-			}
-		}()
+		// wg.Add(1)
+		// go func() {
+		// 	defer wg.Done()
+		// 	safetyCheckData, safetyCheckErr = httpUtil.GetSafetyCheckPool(needCheckTokenAddressPoolAddresses)
+		// 	if safetyCheckErr != nil {
+		// 		util.Log().Error("Error getting safety check data: %v", safetyCheckErr)
+		// 	}
+		// }()
 
-		// 启动 goroutine 获取 DEX 检查数据
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			dexCheckData, dexCheckErr = httpUtil.GetDexCheck(batch)
-			if dexCheckErr != nil {
-				util.Log().Error("Error getting dex check data: %v", dexCheckErr)
-			}
-		}()
+		// // 启动 goroutine 获取 DEX 检查数据
+		// wg.Add(1)
+		// go func() {
+		// 	defer wg.Done()
+		// 	dexCheckData, dexCheckErr = httpUtil.GetDexCheck(batch)
+		// 	if dexCheckErr != nil {
+		// 		util.Log().Error("Error getting dex check data: %v", dexCheckErr)
+		// 	}
+		// }()
 
-		wg.Wait()
+		// wg.Wait()
 
-		// 在处理 safetyCheckData 之前添加空指针检查
-		if safetyCheckData != nil {
-			for _, safetyData := range *safetyCheckData {
-				tokenInfo := &model.TokenInfo{}
-				tokenInfo.TokenAddress = safetyData.Mint
-				if _, ok := tokenInfoMap[safetyData.Mint]; !ok {
-					util.Log().Error("Token info not found for mint: %s", safetyData.Mint)
-					continue
-				}
-				tokenInfo.ChainType = tokenInfoMap[safetyData.Mint].ChainType
-				tokenInfo.TotalSupply = tokenInfoMap[safetyData.Mint].TotalSupply
-				decimals := tokenInfoMap[safetyData.Mint].Decimals
-				actualTotalSupply := float64(tokenInfo.TotalSupply) / math.Pow(10, float64(decimals))
+		// // 在处理 safetyCheckData 之前添加空指针检查
+		// if safetyCheckData != nil {
+		// 	for _, safetyData := range *safetyCheckData {
+		// 		tokenInfo := &model.TokenInfo{}
+		// 		tokenInfo.TokenAddress = safetyData.Mint
+		// 		if _, ok := tokenInfoMap[safetyData.Mint]; !ok {
+		// 			util.Log().Error("Token info not found for mint: %s", safetyData.Mint)
+		// 			continue
+		// 		}
+		// 		tokenInfo.ChainType = tokenInfoMap[safetyData.Mint].ChainType
+		// 		tokenInfo.TotalSupply = tokenInfoMap[safetyData.Mint].TotalSupply
+		// 		decimals := tokenInfoMap[safetyData.Mint].Decimals
+		// 		actualTotalSupply := float64(tokenInfo.TotalSupply) / math.Pow(10, float64(decimals))
 
-				// 设置Top10持仓百分比
-				if safetyData.Top10Holdings > 0 {
-					percentage := float64(safetyData.Top10Holdings) / actualTotalSupply
-					tokenInfo.Top10Percentage = percentage
-					safetyData.Top10Holdings = percentage
-				} else {
-					tokenInfo.Top10Percentage = 0
-				}
-				if safetyData.LpBurnedPercentage > 0 {
-					tokenInfo.BurnPercentage = safetyData.LpBurnedPercentage
-					if safetyData.LpBurnedPercentage > 0.5 {
-						tokenInfo.SetFlag(model.FLAG_BURNED_LP)
-					}
-				} else {
-					tokenInfo.BurnPercentage = 0
-				}
-				if safetyData.Holders > 0 {
-					tokenInfo.Holder = safetyData.Holders
-					tokenInfos = append(tokenInfos, tokenInfo)
-				}
-				key := constants.RedisKeySafetyCheck + safetyData.Mint
-				redis.Set(key, safetyData, 60*time.Minute)
-			}
-		}
+		// 		// 设置Top10持仓百分比
+		// 		if safetyData.Top10Holdings > 0 {
+		// 			percentage := float64(safetyData.Top10Holdings) / actualTotalSupply
+		// 			tokenInfo.Top10Percentage = percentage
+		// 			safetyData.Top10Holdings = percentage
+		// 		} else {
+		// 			tokenInfo.Top10Percentage = 0
+		// 		}
+		// 		if safetyData.LpBurnedPercentage > 0 {
+		// 			tokenInfo.BurnPercentage = safetyData.LpBurnedPercentage
+		// 			if safetyData.LpBurnedPercentage > 0.5 {
+		// 				tokenInfo.SetFlag(model.FLAG_BURNED_LP)
+		// 			}
+		// 		} else {
+		// 			tokenInfo.BurnPercentage = 0
+		// 		}
+		// 		if safetyData.Holders > 0 {
+		// 			tokenInfo.Holder = safetyData.Holders
+		// 			tokenInfos = append(tokenInfos, tokenInfo)
+		// 		}
+		// 		key := constants.RedisKeySafetyCheck + safetyData.Mint
+		// 		redis.Set(key, safetyData, 60*time.Minute)
+		// 	}
+		// }
 
-		// 1. 检查 dexCheckData
-		if dexCheckData != nil {
-			for _, dexCheck := range *dexCheckData {
-				for i, tokenInfo := range tokenInfos {
-					if tokenInfo.TokenAddress == dexCheck.Address {
-						if dexCheck.Websites != nil || dexCheck.Socials != nil {
-							tokenInfos[i].SetFlag(model.FLAG_DEXSCR_UPDATE)
-						}
-						if dexCheck.Boosts != nil && dexCheck.Boosts.Active > 0 {
-							tokenInfos[i].SetFlag(model.FLAG_DXSCR_AD)
-						}
-					}
-				}
-			}
-		}
+		// // 1. 检查 dexCheckData
+		// if dexCheckData != nil {
+		// 	for _, dexCheck := range *dexCheckData {
+		// 		for i, tokenInfo := range tokenInfos {
+		// 			if tokenInfo.TokenAddress == dexCheck.Address {
+		// 				if dexCheck.Websites != nil || dexCheck.Socials != nil {
+		// 					tokenInfos[i].SetFlag(model.FLAG_DEXSCR_UPDATE)
+		// 				}
+		// 				if dexCheck.Boosts != nil && dexCheck.Boosts.Active > 0 {
+		// 					tokenInfos[i].SetFlag(model.FLAG_DXSCR_AD)
+		// 				}
+		// 			}
+		// 		}
+		// 	}
+		// }
 
 		batchUpdateResp := tokenInfoService.BatchUpdateTokenInfo(tokenInfos)
 
@@ -295,7 +308,7 @@ func RefreshHotTokensJob(taskName string, lockKey string, queryJSON string, redi
 		}
 		updatedTokensString := make(map[string]int64)
 		for _, token := range updatedTokens {
-			if token != nil { // 检查 token 是否为 nil
+			if token != nil {
 				updatedTokensString[token.TokenAddress] = int64(tokenTTL)
 			}
 		}

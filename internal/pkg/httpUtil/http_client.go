@@ -390,8 +390,8 @@ func SendGameFunTransaction(swapTransaction string, isJito bool, isUsePoint bool
 	url := ApiGameFunTransactionSend
 	body := map[string]interface{}{
 		"signedTransaction": swapTransaction,
-		// "mev":               isJito,
-		"usePoint": isUsePoint,
+		"mev":               isJito,
+		"usePoint":          isUsePoint,
 	}
 
 	resp, err := postRequest(url, body, false)

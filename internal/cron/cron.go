@@ -86,6 +86,11 @@ func addJobs() {
 		util.Log().Error("Failed to add SOL price fetching task: %v", err)
 	}
 
+	_, err = cronJob.AddFunc("0 */10 * * * *", refreshHolderTaskJobs)
+	if err != nil {
+		util.Log().Error("Failed to add ExecutePointJob: %v", err)
+	}
+
 	// 添加每天早上7点执行重新索引的任务
 	_, err = cronJob.AddFunc("0 0 7 * * *", func() {
 		if err := ExecuteReindexJob(); err != nil {
@@ -151,4 +156,9 @@ func StopCronJobs() {
 		cronJob.Stop()
 		util.Log().Info("Cron jobs stopped\n")
 	}
+}
+
+// StopCronJobs 停止所有定时任务
+func refreshHolderTaskJobs() {
+	RefreshHotTokensHolderJob()
 }
