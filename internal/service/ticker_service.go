@@ -908,6 +908,12 @@ func (s *TickerServiceImpl) SearchTickers(param, limit, cursor string, chainType
 					if tokenInfoResponse.Address == tokenTransaction.TokenAddress {
 						// 除以decimals次方
 						tokenInfoResponse.Volume = bucket.Volume.Value * tokenTransaction.Price / math.Pow(10, float64(tokenInfoResponse.Decimals))
+						price24h := float64(0)
+						if len(bucket.LastTransaction24hPrice.Latest.Hits.Hits) > 0 {
+							price24h = bucket.LastTransaction24hPrice.Latest.Hits.Hits[0].Source.Price
+						}
+						priceChange24h := calculatePriceChange(tokenInfoResponse.Price, price24h)
+						tokenInfoResponse.PriceChange = priceChange24h
 					}
 				}
 			}

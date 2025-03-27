@@ -33,7 +33,7 @@ func CompletedTokenDataRefreshTaskQuery() {
 	if err != nil {
 		log.Printf("Error searching documents: %v", err)
 	}
-	taskName := "RefreshCompletedTokenDataJob"
+	taskName := "RefresHoldersJob"
 	lockKey := "lock:" + taskName
 	ttl := time.Now().Add(2 * time.Hour).Unix()
 	RefreshHotTokensJob(taskName, lockKey, queryJSON, redisKey, ttl)
