@@ -108,11 +108,15 @@ func (s *TokenConfigServiceImpl) CreateTokenConfig(name, symbol, address string,
 	if enableMining {
 		config.EnableMining = true
 
+		if miningStartTime == "" || miningEndTime == "" {
+			return response.Err(http.StatusBadRequest, "Mining start time and end time are required", nil)
+		}
+
 		// 解析挖矿开始时间
 		if miningStartTime != "" {
 			startTime, err := time.Parse("2006-01-02 15:04:05", miningStartTime)
 			if err == nil {
-				config.MiningStartTime = startTime
+				config.MiningStartTime = &startTime
 			}
 		}
 
@@ -120,7 +124,7 @@ func (s *TokenConfigServiceImpl) CreateTokenConfig(name, symbol, address string,
 		if miningEndTime != "" {
 			endTime, err := time.Parse("2006-01-02 15:04:05", miningEndTime)
 			if err == nil {
-				config.MiningEndTime = endTime
+				config.MiningEndTime = &endTime
 			}
 		}
 	}
@@ -179,7 +183,7 @@ func (s *TokenConfigServiceImpl) UpdateTokenConfig(id uint, name, symbol, addres
 		if miningStartTime != "" {
 			startTime, err := time.Parse("2006-01-02 15:04:05", miningStartTime)
 			if err == nil {
-				config.MiningStartTime = startTime
+				config.MiningStartTime = &startTime
 			}
 		}
 
@@ -187,7 +191,7 @@ func (s *TokenConfigServiceImpl) UpdateTokenConfig(id uint, name, symbol, addres
 		if miningEndTime != "" {
 			endTime, err := time.Parse("2006-01-02 15:04:05", miningEndTime)
 			if err == nil {
-				config.MiningEndTime = endTime
+				config.MiningEndTime = &endTime
 			}
 		}
 	}

@@ -9,17 +9,17 @@ import (
 
 // TokenConfig 代币配置模型
 type TokenConfig struct {
-	ID              uint      `gorm:"primaryKey" json:"id"`
-	Name            string    `gorm:"column:token_name;type:varchar(255)" json:"name"`
-	Symbol          string    `gorm:"column:symbol;type:varchar(64)" json:"symbol"`
-	Address         string    `gorm:"column:token_address;type:varchar(64);uniqueIndex" json:"address"`
-	EnableMining    bool      `gorm:"column:enable_mining;type:boolean;default:false" json:"enable_mining"`
-	MiningStartTime time.Time `gorm:"column:mining_start_time;type:datetime" json:"mining_start_time"`
-	MiningEndTime   time.Time `gorm:"column:mining_end_time;type:datetime" json:"mining_end_time"`
-	IsListed        bool      `gorm:"column:is_listed;type:boolean;default:false" json:"is_listed"`
-	Description     string    `gorm:"column:description;type:text" json:"description"`
-	CreateTime      time.Time `gorm:"column:create_time;type:datetime;autoCreateTime" json:"create_time"`
-	UpdateTime      time.Time `gorm:"column:update_time;type:datetime;autoUpdateTime" json:"update_time"`
+	ID              uint       `gorm:"primaryKey" json:"id"`
+	Name            string     `gorm:"column:token_name;type:varchar(255)" json:"name"`
+	Symbol          string     `gorm:"column:symbol;type:varchar(64)" json:"symbol"`
+	Address         string     `gorm:"column:token_address;type:varchar(64);uniqueIndex" json:"address"`
+	EnableMining    bool       `gorm:"column:enable_mining;type:boolean;default:false" json:"enable_mining"`
+	MiningStartTime *time.Time `gorm:"column:mining_start_time;type:datetime;null" json:"mining_start_time"`
+	MiningEndTime   *time.Time `gorm:"column:mining_end_time;type:datetime;null" json:"mining_end_time"`
+	IsListed        bool       `gorm:"column:is_listed;type:boolean;default:false" json:"is_listed"`
+	Description     string     `gorm:"column:description;type:text" json:"description"`
+	CreateTime      time.Time  `gorm:"column:create_time;type:datetime;autoCreateTime" json:"create_time"`
+	UpdateTime      time.Time  `gorm:"column:update_time;type:datetime;autoUpdateTime" json:"update_time"`
 }
 
 // TableName 返回表名
