@@ -26,7 +26,7 @@ type TokenInfoResponse struct {
 	Liquidity            decimal.Decimal `json:"liquidity"`               // The liquidity of the token in the market
 	Progress             decimal.Decimal `json:"progress"`                // The progress of the token
 	Price                float64         `json:"price"`                   // The price of the token
-	PriceChange          decimal.Decimal `json:"price_change"`            // The price change of the token
+	PriceChange          float64         `json:"price_change"`            // The price change of the token
 	Volume               float64         `json:"volume"`                  // The volume of the tokenv
 	IsComplete           bool            `json:"is_complete"`             // Flag indicating if the token is a common token
 	// Security check data

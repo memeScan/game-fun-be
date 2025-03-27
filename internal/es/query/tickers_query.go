@@ -407,7 +407,7 @@ func NewPairQuery(req *request.TickersRequest) (string, error) {
 							},
 						},
 					},
-					"last_transaction_24_price": map[string]interface{}{
+					"last_transaction_24h_price": map[string]interface{}{
 						"filter": map[string]interface{}{
 							"range": map[string]interface{}{
 								"transaction_time": map[string]interface{}{
@@ -507,6 +507,32 @@ func SearchToken(tokenAddresses []string, chainType uint8) (string, error) {
 						"sum": map[string]interface{}{
 							"script": map[string]interface{}{
 								"source": "doc['token_amount'].size() > 0 ? Double.parseDouble(doc['token_amount'].value) : 0",
+							},
+						},
+					},
+					"last_transaction_24h_price": map[string]interface{}{
+						"filter": map[string]interface{}{
+							"range": map[string]interface{}{
+								"transaction_time": map[string]interface{}{
+									"gte": "now-1d",
+								},
+							},
+						},
+						"aggs": map[string]interface{}{
+							"latest": map[string]interface{}{
+								"top_hits": map[string]interface{}{
+									"size": 1,
+									"sort": []map[string]interface{}{
+										{
+											"transaction_time": map[string]interface{}{
+												"order": "asc",
+											},
+										},
+									},
+									"_source": map[string]interface{}{
+										"includes": []string{"price"}, // 只返回价格字段
+									},
+								},
 							},
 						},
 					},

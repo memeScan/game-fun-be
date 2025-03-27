@@ -1197,12 +1197,16 @@ const docTemplate = `{
                             "TX_COUNT_24H",
                             "HOLDERS",
                             "INITIALIZE_AT",
+<<<<<<< HEAD
                             "Links",
+=======
+                            "LINKS",
+>>>>>>> anyi
                             "PRICE"
                         ],
                         "type": "string",
                         "example": "\"INITIALIZE_AT\"",
-                        "description": "排序字段，支持以下值：MARKET_CAP, PRICE_CHANGE_5M, PRICE_CHANGE_1H, PRICE_CHANGE_24H, NATIVE_VOLUME_1H, NATIVE_VOLUME_24H, TX_COUNT_24H, HOLDERS, INITIALIZE_AT, Links",
+                        "description": "排序字段，支持以下值：MARKET_CAP, PRICE_CHANGE_5M, PRICE_CHANGE_1H, PRICE_CHANGE_24H, NATIVE_VOLUME_1H, NATIVE_VOLUME_24H, TX_COUNT_24H, HOLDERS, INITIALIZE_AT, LINKS",
                         "name": "sorted_by",
                         "in": "query"
                     },
@@ -1418,7 +1422,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "搜索参数（如代币名称或地址）",
                         "name": "param",
-                        "in": "path",
+                        "in": "query",
                         "required": true
                     },
                     {
