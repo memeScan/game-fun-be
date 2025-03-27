@@ -1274,8 +1274,7 @@ func gameOutTradeHandler(message []byte, topic string) error {
 		return fmt.Errorf("failed to unmarshal game-out-trade message: %v", err)
 	}
 
-	discount, _ := strconv.ParseUint(os.Getenv("DISCOUNT"), 10, 64)
-	coefficient, _ := strconv.ParseUint(os.Getenv("COEFFICIENT"), 10, 64)
+	pointsMultiplier, _ := strconv.ParseUint(os.Getenv("POINTS_MULTIPLIER"), 10, 64)
 
 	poolQuoteReserve, _ := strconv.ParseUint(tradeMsg.PoolQuoteReserve, 10, 64)
 	poolBaseReserve, _ := strconv.ParseUint(tradeMsg.PoolBaseReserve, 10, 64)
@@ -1285,19 +1284,8 @@ func gameOutTradeHandler(message []byte, topic string) error {
 	quoteAmount, _ := strconv.ParseUint(tradeMsg.QuoteAmount, 10, 64)
 	baseAmount, _ := strconv.ParseUint(tradeMsg.BaseAmount, 10, 64)
 
-	adjustedQuoteReserves := decimal.NewFromInt(int64(poolQuoteReserve)).Shift(-int32(tradeMsg.Decimals))
-	adjustedNativeReserves := decimal.NewFromInt(int64(poolBaseReserve)).Shift(-9)
-	// adjustedNativeReserves := decimal.NewFromInt(int64(PoolBaseReserve)).Shift(-9)
+	point := feeBaseAmount * pointsMultiplier * 1e3
 
-	discount_decimal := decimal.NewFromInt(int64(100 - discount)).Div(decimal.NewFromInt(100))
-	coef_decimal := decimal.NewFromInt(int64(coefficient))
-	fee_decimal := decimal.NewFromInt(int64(feeBaseAmount)).Shift(6)
-	result := coef_decimal.Mul(fee_decimal).Div(adjustedQuoteReserves.Mul(discount_decimal).Div(adjustedNativeReserves))
-	point := result.IntPart()
-
-	util.Log().Info("tradeMsg: %v", tradeMsg)
-	// fmt.Println("point: %d", point)
-	// util.Log().Info("poolQuotaRe: %d", point)
 	util.Log().Info("Trade variables: "+
 		"poolQuoteReserve: %d"+
 		"poolBaseReserve: %d"+
@@ -1306,7 +1294,8 @@ func gameOutTradeHandler(message []byte, topic string) error {
 		"buybackFeeBaseAmount: %d"+
 		"quoteAmount: %d"+
 		"baseAmount: %d"+
-		"point: %d",
+		"point: %d"+
+		"pointsMultiplier: %d",
 		poolQuoteReserve,
 		poolBaseReserve,
 		feeBaseAmount,
@@ -1314,7 +1303,8 @@ func gameOutTradeHandler(message []byte, topic string) error {
 		buybackFeeBaseAmount,
 		quoteAmount,
 		baseAmount,
-		point)
+		point,
+		pointsMultiplier)
 
 	proxyTx := &clickhouse.ProxyTransaction{
 		TransactionHash:         tradeMsg.Signature,
@@ -1369,18 +1359,17 @@ func gameOutTradeHandler(message []byte, topic string) error {
 		amounts[model.BurnAmount] = feeQuoteAmount
 	}
 
-	// err := pointsService.PointsSave(tradeMsg.User, uint64(point), tradeMsg.Signature, string(message), quoteAmount, baseAmount, tradeMsg.QuoteToken, amounts)
-	// if err != nil {
-	// 	util.Log().Error("Failed to save points: %v", err)
-	// 	return fmt.Errorf("failed to save points: %v", err)
-	// }
-
-	// platformTokenStatisticRepo := model.NewPlatformTokenStatisticRepo()
-	err := pointsService.IncrementStatisticsAndUpdateTime(tradeMsg.QuoteToken, amounts)
+	err := pointsService.PointsSave(tradeMsg.User, uint64(point), tradeMsg.Signature, string(message), quoteAmount, baseAmount, tradeMsg.QuoteToken, amounts)
 	if err != nil {
 		util.Log().Error("Failed to save points: %v", err)
 		return fmt.Errorf("failed to save points: %v", err)
 	}
+
+	// err = pointsService.IncrementStatisticsAndUpdateTime(tradeMsg.QuoteToken, amounts)
+	// if err != nil {
+	// 	util.Log().Error("Failed to save points: %v", err)
+	// 	return fmt.Errorf("failed to save points: %v", err)
+	// }
 
 	return nil
 }

@@ -391,6 +391,8 @@ func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string
 			return err // 400 Bad Request
 		}
 
+		baseFee := amounts[model.FeeAmount]
+
 		// 创建积分记录
 		insertErr := s.pointRecordsRecord.WithTx(tx).CreatePointRecord(&model.PointRecords{
 			UserID:            user.ID,
@@ -433,6 +435,7 @@ func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string
 			}
 
 			invitePoints := uint64(float64(point) * 0.15)
+			inviteRebate := uint64(float64(baseFee) * 0.15)
 
 			// 创建积分记录
 			insertErr := s.pointRecordsRecord.WithTx(tx).CreatePointRecord(&model.PointRecords{
@@ -440,6 +443,8 @@ func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string
 				PointsChange:  invitePoints, // 积分变动
 				PointsBalance: inviter.AvailablePoints + invitePoints,
 				RecordType:    int8(model.Invite), // 积分类型
+				RebateChange:  inviteRebate,
+				RebateBalance: inviter.WithdrawableRebate + inviteRebate,
 				InviteeID:     user.ID,
 				CreateTime:    time.Now(),
 				UpdateTime:    time.Now(),
@@ -453,7 +458,8 @@ func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string
 			userPoints := make(map[model.PointType]uint64)
 			userPoints[model.AvailablePoints] = invitePoints
 			userPoints[model.InvitePoints] = invitePoints
-
+			userPoints[model.InviteRebate] = inviteRebate
+			userPoints[model.WithdrawableRebate] = inviteRebate
 			// 更新用户积分
 			if err := s.userInfoRepo.WithTx(tx).IncrementMultiplePointsAndUpdateTime(inviter.Address, userPoints); err != nil {
 				tx.Rollback()
@@ -470,13 +476,15 @@ func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string
 			}
 
 			parentInviterPoints := uint64(float64(point) * 0.05)
-
+			parentInviterRebate := uint64(float64(baseFee) * 0.05)
 			// 创建积分记录
 			insertErr := s.pointRecordsRecord.WithTx(tx).CreatePointRecord(&model.PointRecords{
 				UserID:        parentInviter.ID,
 				PointsChange:  parentInviterPoints, // 积分变动
 				PointsBalance: parentInviter.AvailablePoints + parentInviterPoints,
 				RecordType:    int8(model.Invite), // 积分类型
+				RebateChange:  parentInviterRebate,
+				RebateBalance: parentInviter.WithdrawableRebate + parentInviterRebate,
 				InviteeID:     user.InviterID,
 				CreateTime:    time.Now(),
 				UpdateTime:    time.Now(),
@@ -488,6 +496,8 @@ func (s *PointsServiceImpl) PointsSave(address string, point uint64, hash string
 			userPoints := make(map[model.PointType]uint64)
 			userPoints[model.AvailablePoints] = parentInviterPoints
 			userPoints[model.InvitePoints] = parentInviterPoints
+			userPoints[model.InviteRebate] = parentInviterRebate
+			userPoints[model.WithdrawableRebate] = parentInviterRebate
 
 			// 更新用户积分
 			if err := s.userInfoRepo.WithTx(tx).IncrementMultiplePointsAndUpdateTime(parentInviter.Address, userPoints); err != nil {

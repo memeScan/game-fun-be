@@ -205,9 +205,11 @@ const GameProxyAddress = "GameUoe5CTRtakryJjFWdzixbgqPCycwdFHhdEiwvHsE"
 type PointType string
 
 const (
-	AvailablePoints PointType = "available_points"
-	TradingPoints   PointType = "trading_points"
-	InvitePoints    PointType = "invite_points"
+	AvailablePoints    PointType = "available_points"
+	TradingPoints      PointType = "trading_points"
+	InvitePoints       PointType = "invite_points"
+	InviteRebate       PointType = "invite_rebate"
+	WithdrawableRebate PointType = "withdrawable_rebate"
 )
 
 type RecordType int8
