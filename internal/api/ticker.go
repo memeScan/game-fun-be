@@ -30,7 +30,7 @@ func NewTickersHandler(tickerService *service.TickerServiceImpl, platformTokenSt
 // @Accept json
 // @Produce json
 // @Param chain_type path string true "链类型（sol、eth、bsc）"
-// @Param sorted_by query string false "排序字段，支持以下值：MARKET_CAP, PRICE_CHANGE_5M, PRICE_CHANGE_1H, PRICE_CHANGE_24H, NATIVE_VOLUME_1H, NATIVE_VOLUME_24H, TX_COUNT_24H, HOLDERS, INITIALIZE_AT, Links" Enums(MARKET_CAP, PRICE_CHANGE_5M, PRICE_CHANGE_1H, PRICE_CHANGE_24H, NATIVE_VOLUME_1H, NATIVE_VOLUME_24H, TX_COUNT_24H, HOLDERS, INITIALIZE_AT, Links, PRICE) example("INITIALIZE_AT")
+// @Param sorted_by query string false "排序字段，支持以下值：MARKET_CAP, PRICE_CHANGE_5M, PRICE_CHANGE_1H, PRICE_CHANGE_24H, NATIVE_VOLUME_1H, NATIVE_VOLUME_24H, TX_COUNT_24H, HOLDERS, INITIALIZE_AT, LINKS" Enums(MARKET_CAP, PRICE_CHANGE_5M, PRICE_CHANGE_1H, PRICE_CHANGE_24H, NATIVE_VOLUME_1H, NATIVE_VOLUME_24H, TX_COUNT_24H, HOLDERS, INITIALIZE_AT, Links, PRICE) example("INITIALIZE_AT")
 // @Param sort_direction query string false "排序方向，支持以下值：DESC, ASC" Enums(DESC, ASC) example("DESC")
 // @Param page_cursor query string false "分页游标，用于分页查询" example("")
 // @Param limit query int false "每页返回的数据条数" example(50)
@@ -192,16 +192,16 @@ func (t *TickersHandler) TokenDistribution(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param chain_type path string true "链类型（sol、eth、bsc）"
-// @Param param path string true "搜索参数（如代币名称或地址）"
+// @Param param query string true "搜索参数（如代币名称或地址）"
 // @Param limit query string true "分页大小"
 // @Param cursor query string false "分页游标"
 // @Success 200 {object} response.SearchTickerResponse "成功返回 Tickers 列表"
 // @Failure 500 {object} response.Response "服务器内部错误"
 // @Router /tickers/{chain_type}/search [get]
 func (t *TickersHandler) SearchTickers(c *gin.Context) {
-	param := c.Param("param")
+	param := c.Query("param")
 	if param == "" {
-		c.JSON(http.StatusBadRequest, response.Err(http.StatusBadRequest, "tickers_id cannot be empty", errors.New("tickers_id is required")))
+		c.JSON(http.StatusBadRequest, response.Err(http.StatusBadRequest, "param cannot be empty", errors.New("param is required")))
 		return
 	}
 	limit, errResp := GetLimit(c)
