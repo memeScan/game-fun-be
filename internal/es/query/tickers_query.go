@@ -58,7 +58,7 @@ func MarketQuery(req *request.TickersRequest) (string, error) {
 							},
 						},
 						"aggs": map[string]interface{}{
-							"total_swaps": map[string]interface{}{
+							"transaction_count": map[string]interface{}{
 								"value_count": map[string]interface{}{
 									"field": "transaction_hash.keyword", // 直接统计文档数量，更高效
 								},
