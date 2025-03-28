@@ -180,7 +180,7 @@ func MarketQuery(req *request.TickersRequest) (string, error) {
 							},
 						},
 					},
-					"last_transaction_24_price": map[string]interface{}{
+					"last_transaction_24h_price": map[string]interface{}{
 						"filter": map[string]interface{}{
 							"range": map[string]interface{}{
 								"transaction_time": map[string]interface{}{
