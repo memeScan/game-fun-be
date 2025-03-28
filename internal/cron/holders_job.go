@@ -3,6 +3,7 @@ package cron
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"game-fun-be/internal/constants"
 	"game-fun-be/internal/es"
 	"game-fun-be/internal/es/query"
@@ -26,44 +27,178 @@ func RefreshHotTokensHolderJob() {
 	req.SortDirection = "DESC"
 	req.SortedBy = "NATIVE_VOLUME_24H"
 
+	// 1. 生成查询JSON
 	queryJSON, err := query.MarketQuery(&req)
 	if err != nil {
-		log.Printf("Error searching documents: %v", err)
+		log.Printf("Error generating market query: %v", err)
+		return
 	}
-	taskName := "RefresHoldersJob"
+
+	// 2. 获取代币列表
+	tokenAddresses, _, err := getTokenList(queryJSON)
+	if err != nil {
+		log.Printf("Error getting token list: %v", err)
+		return
+	}
+
+	// 3. 设置任务参数
+	taskName := "RefreshHoldersJob"
 	lockKey := "lock:" + taskName
 	ttl := time.Now().Add(2 * time.Hour).Unix()
-	RefreshHotTokensJob(taskName, lockKey, queryJSON, redisKey, ttl)
+
+	// 4. 调用RefreshHotTokensJob
+	if err := RefreshHotTokensJob(taskName, lockKey, tokenAddresses, redisKey, ttl); err != nil {
+		log.Printf("Error refreshing hot tokens: %v", err)
+	}
 }
 
-func RefreshHotTokensJob(taskName string, lockKey string, queryJSON string, redisKey string, tokenTTL int64) error {
+// 获取代币列表
+func getTokenList(queryJSON string) ([]string, []map[string]string, error) {
+	result, err := es.SearchTokenTransactionsWithAggs(es.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS, queryJSON, es.UNIQUE_TOKENS)
+	if err != nil {
+		util.Log().Error("Error searching documents: %v", err)
+		return nil, nil, err
+	}
 
-	// 1. 先检查 key 是否存在
+	aggregationResult, err := es.UnmarshalAggregationResult(result)
+	if err != nil {
+		util.Log().Error("Error unmarshaling aggregation result: %v", err)
+		return nil, nil, err
+	}
+
+	if aggregationResult == nil || len(aggregationResult.Buckets) == 0 {
+		util.Log().Info("No completed tokens found")
+		return nil, nil, nil
+	}
+
+	var tokenAddresses []string
+	var tokens []map[string]string
+
+	for _, bucket := range aggregationResult.Buckets {
+		var tokenTransaction response.TokenTransaction
+		if len(bucket.LatestTransaction.Hits.Hits) > 0 &&
+			bucket.LatestTransaction.Hits.Hits[0].Source != nil {
+			if err := json.Unmarshal(bucket.LatestTransaction.Hits.Hits[0].Source, &tokenTransaction); err != nil {
+				util.Log().Error("Error unmarshaling hit source: %v", err)
+				continue
+			}
+			if tokenTransaction.ExtInfo == "" {
+				continue
+			}
+		}
+
+		tokenAddress := tokenTransaction.TokenAddress
+		var tokenPoolAddress string
+		if tokenTransaction.CreatedPlatformType != 1 {
+			tokenPoolAddress = tokenTransaction.PoolAddress
+		}
+
+		tokens = append(tokens, map[string]string{
+			"mints":         tokenAddress,
+			"poolAddresses": tokenPoolAddress,
+		})
+		tokenAddresses = append(tokenAddresses, tokenAddress)
+	}
+
+	return tokenAddresses, tokens, nil
+}
+
+// 操作Redis
+func processRedisOperations(redisKey string, tokenAddresses []string, tokenTTL int64) ([]string, error) {
+	// 1. 检查 key 是否存在
 	exists, err := redis.Exists(redisKey)
 	if err != nil {
 		util.Log().Error("检查 Redis key 是否存在失败: %v", err)
-		return err
+		return nil, err
 	}
 
 	// 2. 如果 key 不存在，先创建
 	if !exists {
-		// key 的 ttl 0 表示永久存储
-		keyTTL := 0
 		util.Log().Info("Redis key 不存在，创建新的 Sorted Set")
-		err = redis.CreateSortedSet(redisKey, int64(keyTTL))
-		if err != nil {
+		if err := redis.CreateSortedSet(redisKey, 0); err != nil {
 			util.Log().Error("创建 Sorted Set 失败: %v", err)
-			return err
+			return nil, err
 		}
 	}
 
 	// 3. 安全清理过期数据
-	err = redis.SafeCleanExpiredTokens(context.Background(), redisKey)
-	if err != nil {
+	if err := redis.SafeCleanExpiredTokens(context.Background(), redisKey); err != nil {
 		util.Log().Error("清理过期数据失败: %v", err)
-		// 不要直接返回，继续执行
 	}
 
+	// 4. 获取有效代币
+	hotTokens, err := redis.GetValidTokens(context.Background(), redisKey)
+	if err != nil {
+		util.Log().Error("Error getting token info: %v", err)
+		return nil, err
+	}
+
+	// 5. 如果需要初始化，直接使用新获取的代币列表
+	if len(hotTokens) == 0 {
+		hotTokens = tokenAddresses
+		util.Log().Info("No completed tokens found in Redis, initialized")
+	}
+
+	return hotTokens, nil
+}
+
+// 批量更新代币信息
+func batchUpdateTokenInfo(batch []string, tokens []map[string]string, tokenTTL int64) error {
+	// 批量查询代币信息
+	tokenInfoMap, err := tokenInfoService.GetTokenInfoMapByDB(batch, uint8(model.ChainTypeSolana))
+	if err != nil {
+		util.Log().Error("Error getting token info: %v", err)
+		return err
+	}
+
+	var tokenInfos []*model.TokenInfo
+	for _, tokenAddress := range batch {
+		solanaTrackerToken, err := httpUtil.GetTokenInfoByAddress(tokenAddress)
+		if err != nil {
+			log.Printf("Failed to get token info for %s: %v", tokenAddress, err)
+			continue
+		}
+
+		// 仅当 tokenInfoMap 中已存在该 tokenAddress 时，才更新数据
+		if tokenInfo, exists := tokenInfoMap[tokenAddress]; exists {
+			tokenInfo.Holder = solanaTrackerToken.Holders
+			tokenInfos = append(tokenInfos, tokenInfo)
+			log.Printf("Updated Token Info for %s: %+v", tokenAddress, tokenInfo)
+		} else {
+			log.Printf("Token %s not found in tokenInfoMap, skipping update", tokenAddress)
+		}
+	}
+
+	batchUpdateResp := tokenInfoService.BatchUpdateTokenInfo(tokenInfos)
+	if batchUpdateResp.Code != 0 {
+		util.Log().Error("job 批量更新代币信息失败: %v", batchUpdateResp.Error)
+		return fmt.Errorf("job 批量更新代币信息失败: %s", batchUpdateResp.Error)
+	}
+
+	util.Log().Info("job 批量更新代币信息成功: %d", len(tokenInfos))
+
+	updatedTokens, ok := batchUpdateResp.Data.([]*model.TokenInfo)
+	if !ok {
+		util.Log().Error("Invalid type assertion for batchUpdateResp.Data")
+		return fmt.Errorf("invalid type assertion for batchUpdateResp.Data")
+	}
+
+	updatedTokensString := make(map[string]int64)
+	for _, token := range updatedTokens {
+		if token != nil {
+			updatedTokensString[token.TokenAddress] = int64(tokenTTL)
+		}
+	}
+
+	if err := redis.SafeBatchAddTokens(context.Background(), redisKey, updatedTokensString, tokenTTL); err != nil {
+		util.Log().Error("Error adding tokens to Redis: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func RefreshHotTokensJob(taskName string, lockKey string, tokenAddresses []string, redisKey string, tokenTTL int64) error {
 	// 获取锁，设置过期时间为 30 分钟
 	locked, err := redis.SetNX(lockKey, "1", 30*time.Minute)
 	if err != nil {
@@ -82,82 +217,16 @@ func RefreshHotTokensJob(taskName string, lockKey string, queryJSON string, redi
 		util.Log().Info("%s 执行完成, 耗时 %v", taskName, time.Since(start))
 	}()
 
-	// 2. 解析查询结果
-	result, err := es.SearchTokenTransactionsWithAggs(es.ES_INDEX_TOKEN_TRANSACTIONS_ALIAS, queryJSON, es.UNIQUE_TOKENS)
+	// 操作Redis
+	hotTokens, err := processRedisOperations(redisKey, tokenAddresses, tokenTTL)
 	if err != nil {
-		log.Printf("Error searching documents: %v", err)
 		return err
-	}
-
-	// 3. 解析查询结果
-	aggregationResult, err := es.UnmarshalAggregationResult(result)
-
-	if err != nil {
-		log.Printf("Error unmarshaling aggregation result: %v", err)
-		util.Log().Error("Error unmarshaling aggregation result: %v", err)
-		return err
-	}
-
-	if aggregationResult == nil {
-		log.Println("aggregationResult is nil")
-		return nil
-	}
-
-	if len(aggregationResult.Buckets) == 0 {
-		util.Log().Info("No completed tokens found")
-		return nil
-	}
-
-	var tokenAddresses []string
-	var tokens []map[string]string
-
-	for _, bucket := range aggregationResult.Buckets {
-		var tokenTransaction response.TokenTransaction
-		if len(bucket.LatestTransaction.Hits.Hits) > 0 &&
-			bucket.LatestTransaction.Hits.Hits[0].Source != nil {
-			if err := json.Unmarshal(bucket.LatestTransaction.Hits.Hits[0].Source, &tokenTransaction); err != nil {
-				log.Printf("Error unmarshaling hit source: %v", err)
-				continue
-			}
-			if tokenTransaction.ExtInfo == "" {
-				continue
-			}
-		}
-
-		tokenAddress := tokenTransaction.TokenAddress
-
-		var tokenPoolAddress string
-		if tokenTransaction.CreatedPlatformType != 1 {
-			tokenPoolAddress = tokenTransaction.PoolAddress
-		}
-
-		tokens = append(tokens, map[string]string{
-			"mints":         tokenAddress,
-			"poolAddresses": tokenPoolAddress,
-		})
-		tokenAddresses = append(tokenAddresses, tokenAddress)
-	}
-
-	var hotTokens []string
-	isInit := true
-
-	hotTokens, err = redis.GetValidTokens(context.Background(), redisKey)
-	if err != nil {
-		util.Log().Error("Error getting token info: %v", err)
-		return err
-	}
-
-	if len(hotTokens) == 0 {
-		hotTokens = tokenAddresses
-		isInit = false
-		util.Log().Info("No completed tokens found in Redis, initialized")
 	}
 
 	// 需要检测的代币集合
 	var needCheckTokens []string
-
-	if !isInit {
-		needCheckTokens = hotTokens
+	if len(hotTokens) == 0 {
+		needCheckTokens = tokenAddresses
 	} else {
 		needCheckTokens = Difference(tokenAddresses, hotTokens)
 		if len(needCheckTokens) == 0 {
@@ -166,6 +235,7 @@ func RefreshHotTokensJob(taskName string, lockKey string, queryJSON string, redi
 		}
 	}
 
+	// 批量处理代币信息
 	batchSize := 20
 	for i := 0; i < len(needCheckTokens); i += batchSize {
 		end := i + batchSize
@@ -176,144 +246,10 @@ func RefreshHotTokensJob(taskName string, lockKey string, queryJSON string, redi
 
 		util.Log().Info("Processing batch %d to %d of %d tokens", i, end, len(needCheckTokens))
 
-		// 批量查询代币信息
-		tokenInfoMap, err := tokenInfoService.GetTokenInfoMapByDB(batch, uint8(model.ChainTypeSolana))
-		if err != nil {
-			util.Log().Error("Error getting token info: %v", err)
+		if err := batchUpdateTokenInfo(batch, nil, tokenTTL); err != nil {
+			util.Log().Error("Error processing batch: %v", err)
 			continue
 		}
-
-		var tokenInfos []*model.TokenInfo
-		// tokens 和 needCheckTokens 做差集，得到需要检测的代币地址池地址
-		var needCheckTokenAddressPoolAddresses []map[string]string
-		for _, token := range tokens {
-			if Contains(batch, token["mints"]) {
-				needCheckTokenAddressPoolAddresses = append(needCheckTokenAddressPoolAddresses, token)
-			}
-		}
-
-		for _, tokenAddress := range batch {
-			solanaTrackerToken, err := httpUtil.GetTokenInfoByAddress(tokenAddress)
-			if err != nil {
-				log.Printf("Failed to get token info for %s: %v", tokenAddress, err)
-				continue
-			}
-
-			// 仅当 tokenInfoMap 中已存在该 tokenAddress 时，才更新数据
-			if tokenInfo, exists := tokenInfoMap[tokenAddress]; exists {
-				tokenInfo.Holder = solanaTrackerToken.Holders
-				log.Printf("Updated Token Info for %s: %+v", tokenAddress, tokenInfo)
-			} else {
-				log.Printf("Token %s not found in tokenInfoMap, skipping update", tokenAddress)
-			}
-		}
-
-		// var wg sync.WaitGroup
-
-		// 用于存储结果
-		// var safetyCheckData *[]httpRespone.SafetyCheckPoolData
-		// var dexCheckData *[]httpRespone.DexCheckData
-		// var safetyCheckErr error
-		// var dexCheckErr error
-
-		// 启动 goroutine 获取安全检查数据
-		// wg.Add(1)
-		// go func() {
-		// 	defer wg.Done()
-		// 	safetyCheckData, safetyCheckErr = httpUtil.GetSafetyCheckPool(needCheckTokenAddressPoolAddresses)
-		// 	if safetyCheckErr != nil {
-		// 		util.Log().Error("Error getting safety check data: %v", safetyCheckErr)
-		// 	}
-		// }()
-
-		// // 启动 goroutine 获取 DEX 检查数据
-		// wg.Add(1)
-		// go func() {
-		// 	defer wg.Done()
-		// 	dexCheckData, dexCheckErr = httpUtil.GetDexCheck(batch)
-		// 	if dexCheckErr != nil {
-		// 		util.Log().Error("Error getting dex check data: %v", dexCheckErr)
-		// 	}
-		// }()
-
-		// wg.Wait()
-
-		// // 在处理 safetyCheckData 之前添加空指针检查
-		// if safetyCheckData != nil {
-		// 	for _, safetyData := range *safetyCheckData {
-		// 		tokenInfo := &model.TokenInfo{}
-		// 		tokenInfo.TokenAddress = safetyData.Mint
-		// 		if _, ok := tokenInfoMap[safetyData.Mint]; !ok {
-		// 			util.Log().Error("Token info not found for mint: %s", safetyData.Mint)
-		// 			continue
-		// 		}
-		// 		tokenInfo.ChainType = tokenInfoMap[safetyData.Mint].ChainType
-		// 		tokenInfo.TotalSupply = tokenInfoMap[safetyData.Mint].TotalSupply
-		// 		decimals := tokenInfoMap[safetyData.Mint].Decimals
-		// 		actualTotalSupply := float64(tokenInfo.TotalSupply) / math.Pow(10, float64(decimals))
-
-		// 		// 设置Top10持仓百分比
-		// 		if safetyData.Top10Holdings > 0 {
-		// 			percentage := float64(safetyData.Top10Holdings) / actualTotalSupply
-		// 			tokenInfo.Top10Percentage = percentage
-		// 			safetyData.Top10Holdings = percentage
-		// 		} else {
-		// 			tokenInfo.Top10Percentage = 0
-		// 		}
-		// 		if safetyData.LpBurnedPercentage > 0 {
-		// 			tokenInfo.BurnPercentage = safetyData.LpBurnedPercentage
-		// 			if safetyData.LpBurnedPercentage > 0.5 {
-		// 				tokenInfo.SetFlag(model.FLAG_BURNED_LP)
-		// 			}
-		// 		} else {
-		// 			tokenInfo.BurnPercentage = 0
-		// 		}
-		// 		if safetyData.Holders > 0 {
-		// 			tokenInfo.Holder = safetyData.Holders
-		// 			tokenInfos = append(tokenInfos, tokenInfo)
-		// 		}
-		// 		key := constants.RedisKeySafetyCheck + safetyData.Mint
-		// 		redis.Set(key, safetyData, 60*time.Minute)
-		// 	}
-		// }
-
-		// // 1. 检查 dexCheckData
-		// if dexCheckData != nil {
-		// 	for _, dexCheck := range *dexCheckData {
-		// 		for i, tokenInfo := range tokenInfos {
-		// 			if tokenInfo.TokenAddress == dexCheck.Address {
-		// 				if dexCheck.Websites != nil || dexCheck.Socials != nil {
-		// 					tokenInfos[i].SetFlag(model.FLAG_DEXSCR_UPDATE)
-		// 				}
-		// 				if dexCheck.Boosts != nil && dexCheck.Boosts.Active > 0 {
-		// 					tokenInfos[i].SetFlag(model.FLAG_DXSCR_AD)
-		// 				}
-		// 			}
-		// 		}
-		// 	}
-		// }
-
-		batchUpdateResp := tokenInfoService.BatchUpdateTokenInfo(tokenInfos)
-
-		if batchUpdateResp.Code != 0 {
-			util.Log().Error("job 批量更新代币信息失败: %v", batchUpdateResp.Error)
-			continue
-		}
-		util.Log().Info("job 批量更新代币信息成功: %d", len(tokenInfos))
-
-		updatedTokens, ok := batchUpdateResp.Data.([]*model.TokenInfo) // 添加类型断言检查
-		if !ok {
-			util.Log().Error("Invalid type assertion for batchUpdateResp.Data")
-			continue
-		}
-		updatedTokensString := make(map[string]int64)
-		for _, token := range updatedTokens {
-			if token != nil {
-				updatedTokensString[token.TokenAddress] = int64(tokenTTL)
-			}
-		}
-		redis.SafeBatchAddTokens(context.Background(), redisKey, updatedTokensString, tokenTTL)
-
 	}
 
 	return nil

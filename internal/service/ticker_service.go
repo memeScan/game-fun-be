@@ -20,7 +20,6 @@ import (
 	"log"
 	"math"
 	"net/http"
-	"reflect"
 	"sort"
 	"strconv"
 	"time"
@@ -340,51 +339,92 @@ func (s *TickerServiceImpl) TickerDetail(tokenAddress string, chainType model.Ch
 	return response.Success(tickerResponse)
 }
 
-func GetMarketData(tokenAddress, chainType string) (*httpRespone.TradeDataResponse, error) {
-	var TradeDataResponse *httpRespone.TradeDataResponse
+// func GetMarketData(tokenAddress, chainType string) (*httpRespone.TradeDataResponse, error) {
+// 	var TradeDataResponse *httpRespone.TradeDataResponse
+// 	marketDataKey := GetRedisKey(constants.TokenTradeData, tokenAddress)
+
+// 	// 从 Redis 获取市场数据
+// 	marketData, err := redis.Get(marketDataKey)
+// 	if err != nil {
+// 		util.Log().Error(fmt.Sprintf("Failed to get market data from Redis: %v", err))
+// 	} else if marketData != "" {
+// 		// 如果 Redis 中有数据，反序列化
+// 		err = redis.Unmarshal(marketData, &TradeDataResponse)
+// 		if err != nil {
+// 			util.Log().Error(fmt.Sprintf("Failed to unmarshal market data: %v", err))
+// 		} else {
+// 			// 使用 Redis 中的数据
+// 			return TradeDataResponse, nil
+// 		}
+// 	}
+
+// 	// 如果 Redis 中没有数据，通过 HTTP 请求获取交易数据
+// 	tokenTradeData, err := httpUtil.GetTradeData(tokenAddress, chainType)
+// 	if err != nil {
+// 		util.Log().Error(fmt.Sprintf("Failed to get trade data from HTTP: %v", err))
+// 		return nil, err
+// 	}
+
+// 	// 检查 tokenTradeData 是否为 nil
+// 	if tokenTradeData == nil {
+// 		util.Log().Error("Trade data is nil")
+// 		return nil, fmt.Errorf("trade data is nil")
+// 	}
+
+// 	// 检查 tokenTradeData.Data 是否为零值
+// 	if reflect.ValueOf(tokenTradeData.Data).IsZero() {
+// 		util.Log().Error("Trade data is empty")
+// 		return nil, fmt.Errorf("trade data is empty")
+// 	}
+
+// 	// 将交易数据存储到 Redis
+// 	err = redis.Set(marketDataKey, tokenTradeData, 10*time.Minute)
+// 	if err != nil {
+// 		util.Log().Error(fmt.Sprintf("Failed to set trade data to Redis: %v", err))
+// 	}
+
+// 	return tokenTradeData, nil
+// }
+
+func GetMarketData(tokenAddress string) (*httpRespone.SolanaTrackerToken, error) {
+	var marketData *httpRespone.SolanaTrackerToken
 	marketDataKey := GetRedisKey(constants.TokenTradeData, tokenAddress)
 
 	// 从 Redis 获取市场数据
-	marketData, err := redis.Get(marketDataKey)
+	marketDataStr, err := redis.Get(marketDataKey)
 	if err != nil {
 		util.Log().Error(fmt.Sprintf("Failed to get market data from Redis: %v", err))
-	} else if marketData != "" {
+	} else if marketDataStr != "" {
 		// 如果 Redis 中有数据，反序列化
-		err = redis.Unmarshal(marketData, &TradeDataResponse)
+		err = redis.Unmarshal(marketDataStr, &marketData)
 		if err != nil {
 			util.Log().Error(fmt.Sprintf("Failed to unmarshal market data: %v", err))
 		} else {
 			// 使用 Redis 中的数据
-			return TradeDataResponse, nil
+			return marketData, nil
 		}
 	}
 
 	// 如果 Redis 中没有数据，通过 HTTP 请求获取交易数据
-	tokenTradeData, err := httpUtil.GetTradeData(tokenAddress, chainType)
+	marketData, err = httpUtil.GetTokenInfoByAddress(tokenAddress)
 	if err != nil {
 		util.Log().Error(fmt.Sprintf("Failed to get trade data from HTTP: %v", err))
 		return nil, err
 	}
 
-	// 检查 tokenTradeData 是否为 nil
-	if tokenTradeData == nil {
+	// 检查 marketData 是否为 nil
+	if marketData == nil {
 		util.Log().Error("Trade data is nil")
 		return nil, fmt.Errorf("trade data is nil")
 	}
 
-	// 检查 tokenTradeData.Data 是否为零值
-	if reflect.ValueOf(tokenTradeData.Data).IsZero() {
-		util.Log().Error("Trade data is empty")
-		return nil, fmt.Errorf("trade data is empty")
-	}
-
 	// 将交易数据存储到 Redis
-	err = redis.Set(marketDataKey, tokenTradeData, 10*time.Minute)
+	err = redis.Set(marketDataKey, marketData, 10*time.Minute)
 	if err != nil {
 		util.Log().Error(fmt.Sprintf("Failed to set trade data to Redis: %v", err))
 	}
 
-	return tokenTradeData, nil
+	return marketData, nil
 }
 
 func (s *TickerServiceImpl) MarketTicker(tokenAddress string, chainType model.ChainType) response.Response {
@@ -413,9 +453,9 @@ func (s *TickerServiceImpl) MarketTicker(tokenAddress string, chainType model.Ch
 	}
 
 	tokenHolders := 0
-	tradeDataResponse, err := GetMarketData(tokenAddress, chainType.ToString())
+	tradeDataResponse, err := GetMarketData(tokenAddress)
 	if err == nil {
-		tokenHolders = tradeDataResponse.Data.Holder
+		tokenHolders = tradeDataResponse.Holders
 	}
 
 	buyVolume1m := decimal.NewFromInt(0)
@@ -708,39 +748,35 @@ func (s *TickerServiceImpl) TokenDistribution(tokenAddress string, chainType mod
 		}
 	}
 
-	tokenMarketDataRes, err := GetOrFetchTokenMarketData(tokenAddress, chainType.ToString())
-	if err != nil {
-		return response.Err(http.StatusInternalServerError, "Failed to get token market data", err)
-	}
+	// tokenMarketDataRes, err := GetOrFetchTokenMarketData(tokenAddress, chainType.ToString())
+	// if err != nil {
+	// 	return response.Err(http.StatusInternalServerError, "Failed to get token market data", err)
+	// }
 
-	CirculatingSupply := tokenMarketDataRes.Data.CirculatingSupply
+	// CirculatingSupply := tokenMarketDataRes.Data.CirculatingSupply
 
-	tokenHoldersRes, err := httpUtil.GetTokenHolders(tokenAddress, 0, 20, chainType.ToString())
+	// 修改成新的getTokenTop20HoldersRes 方案去构造返回值
+	getTokenTop20HoldersRes, err := httpUtil.GetTokenTop20Holders(tokenAddress)
 	if err != nil {
 		return response.Err(http.StatusInternalServerError, "Failed to get token holders", err)
 	}
-	if !tokenHoldersRes.Success {
-		return response.Err(http.StatusInternalServerError, "Failed to fetch token holders data", nil)
-	}
-	if len(tokenHoldersRes.Data.Items) == 0 {
+
+	if len(*getTokenTop20HoldersRes) == 0 {
 		return response.Success("No token holders found")
 	}
+
 	var tokenHolders []response.TokenHolder
-	for _, holder := range tokenHoldersRes.Data.Items {
+	for _, holder := range *getTokenTop20HoldersRes {
 		var tokenHolder response.TokenHolder
-		tokenHolder.Account = holder.Owner
-		amount, err := strconv.ParseFloat(holder.Amount, 64)
-		if err != nil {
-			log.Printf("Failed to parse amount for holder %s: %v\n", holder.Owner, err)
-			continue
-		}
-		percentage := (amount / math.Pow(10, float64(holder.Decimals))) / CirculatingSupply * 100
+		tokenHolder.Account = holder.Address
+		amount := holder.Amount
+		percentage := holder.Percentage
 
 		tokenHolder.Percentage = strconv.FormatFloat(percentage, 'f', 2, 64)
 		tokenHolder.IsAssociatedBondingCurve = false
 		tokenHolder.UserProfile = nil
-		tokenHolder.Amount = holder.Amount
-		tokenHolder.UIAmount = holder.UIAmount
+		tokenHolder.Amount = strconv.FormatFloat(amount, 'f', 0, 64)
+		tokenHolder.UIAmount = amount
 		var moderator response.Moderator
 		moderator.BannedModID = 0
 		moderator.Status = "NORMAL"
@@ -750,6 +786,35 @@ func (s *TickerServiceImpl) TokenDistribution(tokenAddress string, chainType mod
 		tokenHolder.IsBlackHole = false
 		tokenHolders = append(tokenHolders, tokenHolder)
 	}
+
+	// if len(getTokenTop20HoldersRes.Data.Items) == 0 {
+	// 	return response.Success("No token holders found")
+	// }
+	// var tokenHolders []response.TokenHolder
+	// for _, holder := range tokenHoldersRes.Data.Items {
+	// 	var tokenHolder response.TokenHolder
+	// 	tokenHolder.Account = holder.Owner
+	// 	amount, err := strconv.ParseFloat(holder.Amount, 64)
+	// 	if err != nil {
+	// 		log.Printf("Failed to parse amount for holder %s: %v\n", holder.Owner, err)
+	// 		continue
+	// 	}
+	// 	percentage := (amount / math.Pow(10, float64(holder.Decimals))) / CirculatingSupply * 100
+
+	// 	tokenHolder.Percentage = strconv.FormatFloat(percentage, 'f', 2, 64)
+	// 	tokenHolder.IsAssociatedBondingCurve = false
+	// 	tokenHolder.UserProfile = nil
+	// 	tokenHolder.Amount = holder.Amount
+	// 	tokenHolder.UIAmount = holder.UIAmount
+	// 	var moderator response.Moderator
+	// 	moderator.BannedModID = 0
+	// 	moderator.Status = "NORMAL"
+	// 	moderator.Banned = false
+	// 	tokenHolder.Moderator = moderator
+	// 	tokenHolder.IsCommunityVault = false
+	// 	tokenHolder.IsBlackHole = false
+	// 	tokenHolders = append(tokenHolders, tokenHolder)
+	// }
 	tokenDistributionResponse.TokenHolders = tokenHolders
 
 	if err := redis.Set(redisKey, tokenDistributionResponse, 10*time.Minute); err != nil {

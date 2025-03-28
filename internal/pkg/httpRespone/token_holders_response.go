@@ -25,3 +25,17 @@ type TokenHolder struct {
 	// 代币的 UI 显示数量
 	UIAmount float64 `json:"ui_amount"`
 }
+
+// Value 结构体表示代币持有者的资产价值
+type Value struct {
+	Quote float64 `json:"quote"`
+	USD   float64 `json:"usd"`
+}
+
+// Holder 结构体表示代币持有者的信息
+type Top20Holders struct {
+	Address    string  `json:"address"`
+	Amount     float64 `json:"amount"`
+	Percentage float64 `json:"percentage"`
+	Value      Value   `json:"value"`
+}

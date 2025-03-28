@@ -39,7 +39,7 @@ func ConsumePumpfunTopics() error {
 
 	// 初始化 TopicConsumer
 
-	topicConsumer, err := NewTopicConsumer(KafkaGroupDexProcessor)
+	topicConsumer, err := NewTopicConsumer(constants.KafkaGroupDexProcessor)
 	if err != nil {
 		util.Log().Error("Error creating TopicConsumer: %s", err)
 		return err
@@ -75,32 +75,32 @@ func ConsumePumpfunTopics() error {
 		batchTimeout,
 		os.Getenv("KAFKA_BROKERS"),
 		os.Getenv("KAFKA_CLIENT_ID"),
-		KafkaGroupDexProcessor)
+		constants.KafkaGroupDexProcessor)
 
 	// 添加 Pumpfun 相关的处理器
-	topicConsumer.AddHandler(TopicPumpCreate, PumpfunImmediateHandler)
-	topicConsumer.AddHandler(TopicPumpComplete, PumpfunImmediateHandler)
-	topicConsumer.AddHandler(TopicPumpSetParams, PumpfunImmediateHandler)
-	topicConsumer.AddBatchHandler(TopicPumpTrade, PumpfunBatchHandler, batchSize, minSize, batchTimeout)
+	topicConsumer.AddHandler(constants.TopicPumpCreate, PumpfunImmediateHandler)
+	topicConsumer.AddHandler(constants.TopicPumpComplete, PumpfunImmediateHandler)
+	topicConsumer.AddHandler(constants.TopicPumpSetParams, PumpfunImmediateHandler)
+	topicConsumer.AddBatchHandler(constants.TopicPumpTrade, PumpfunBatchHandler, batchSize, minSize, batchTimeout)
 
 	// 添加 Raydium 相关的处理器
-	topicConsumer.AddHandler(TopicRayCreate, RaydiumImmediateHandler)
-	topicConsumer.AddHandler(TopicRayAddLiquidity, RaydiumImmediateHandler)
-	topicConsumer.AddHandler(TopicRayRemoveLiquidity, RaydiumImmediateHandler)
-	topicConsumer.AddBatchHandler(TopicRaySwap, RaydiumBatchHandler, batchSize, minSize, batchTimeout)
+	topicConsumer.AddHandler(constants.TopicRayCreate, RaydiumImmediateHandler)
+	topicConsumer.AddHandler(constants.TopicRayAddLiquidity, RaydiumImmediateHandler)
+	topicConsumer.AddHandler(constants.TopicRayRemoveLiquidity, RaydiumImmediateHandler)
+	topicConsumer.AddBatchHandler(constants.TopicRaySwap, RaydiumBatchHandler, batchSize, minSize, batchTimeout)
 
 	// 添加未知代币处理器
-	topicConsumer.AddHandler(TopicUnknownToken, UnknownTokenHandler)
+	topicConsumer.AddHandler(constants.TopicUnknownToken, UnknownTokenHandler)
 
 	// 添加game相关处理器
-	topicConsumer.AddHandler(TopicGameOutTrade, gameOutTradeHandler)
-	topicConsumer.AddHandler(TopicGameInTrade, gameInTradeHandler)
+	topicConsumer.AddHandler(constants.TopicGameOutTrade, gameOutTradeHandler)
+	topicConsumer.AddHandler(constants.TopicGameInTrade, gameInTradeHandler)
 
 	// 添加积分交易状态检测处理器
-	topicConsumer.AddHandler(TopicPointTxStatus, pointTxStatusHandler)
+	topicConsumer.AddHandler(constants.TopicPointTxStatus, pointTxStatusHandler)
 
 	// 开始消费主题
-	return topicConsumer.ConsumeTopics(AllTopics)
+	return topicConsumer.ConsumeTopics(constants.AllTopics)
 }
 
 func initSolPrice() error {
@@ -119,11 +119,11 @@ func PumpfunImmediateHandler(message []byte, topic string) error {
 	util.Log().Info("PumpfunImmediateHandler: Processing message from topic %s", topic)
 
 	switch topic {
-	case TopicPumpCreate:
+	case constants.TopicPumpCreate:
 		return handlePumpfunCreate(message)
-	case TopicPumpComplete:
+	case constants.TopicPumpComplete:
 		return handlePumpfunComplete(message)
-	case TopicPumpSetParams:
+	case constants.TopicPumpSetParams:
 		return handlePumpfunSetParams(message)
 	default:
 		util.Log().Warning("Unknown topic: %s", topic)
@@ -219,7 +219,7 @@ func PumpfunBatchHandler(topic string, messages []sarama.ConsumerMessage, partit
 	util.Log().Info("Processing batch messages for topic %s: %d messages", topic, len(messages))
 
 	switch topic {
-	case TopicPumpTrade:
+	case constants.TopicPumpTrade:
 		return handlePumpTradeMessages(messages)
 	default:
 		util.Log().Warning("Unknown topic for batch processing: %s", topic)
@@ -385,7 +385,7 @@ func updateTokensInfo(transactions []*model.TokenTransaction) (map[string]*model
 
 		for _, addr := range missingTokens {
 			msg := &sarama.ProducerMessage{
-				Topic: TopicUnknownToken,
+				Topic: constants.TopicUnknownToken,
 				Value: sarama.StringEncoder(addr),
 			}
 			messages = append(messages, msg)
@@ -631,7 +631,7 @@ func RaydiumBatchHandler(topic string, messages []sarama.ConsumerMessage, partit
 	util.Log().Info("Processing batch messages for topic %s: %d messages", topic, len(messages))
 
 	switch topic {
-	case TopicRaySwap:
+	case constants.TopicRaySwap:
 		return handleRaydiumSwapMessages(messages)
 	default:
 		util.Log().Warning("Unknown topic for batch processing: %s", topic)
@@ -820,11 +820,11 @@ func RaydiumImmediateHandler(message []byte, topic string) error {
 	util.Log().Info("RaydiumImmediateHandler: Processing message from topic %s", topic)
 
 	switch topic {
-	case TopicRayCreate:
+	case constants.TopicRayCreate:
 		return handleRaydiumCreate(message)
-	case TopicRayAddLiquidity:
+	case constants.TopicRayAddLiquidity:
 		return handleRaydiumAddLiquidity(message)
-	case TopicRayRemoveLiquidity:
+	case constants.TopicRayRemoveLiquidity:
 		return handleRaydiumRemoveLiquidity(message)
 	default:
 		util.Log().Warning("Unknown topic: %s", topic)
