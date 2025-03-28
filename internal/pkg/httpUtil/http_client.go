@@ -37,6 +37,7 @@ var (
 	ApiRaydiumTrade           string
 	ApiTransactionSend        string
 	ApiGameFunTransactionSend string
+	ApiClaimTransactionSend   string
 	ApiTransactionStatus      string
 	ApiTokensBatch            string
 	ApiSafetyCheckPool        string
@@ -92,6 +93,7 @@ func InitAPI(endpoint *string) {
 	ApiGetGameFunGInstruction = *endpoint + "/block/api/v1/gamefun/swap-g-instruction"
 	ApiBuyGWithPoints = *endpoint + "/block/api/v1/gamefun/buy-g-with-points"
 	ApiGameFunTransactionSend = *endpoint + "/block/api/v1/gamefun/send-transaction"
+	ApiClaimTransactionSend = *endpoint + "/block/api/v1/gamefun/send-claim-transaction"
 }
 
 // FetchURIWithRetry adds retry mechanism for fetching URI
@@ -392,6 +394,39 @@ func SendGameFunTransaction(swapTransaction string, isJito bool, isUsePoint bool
 		"signedTransaction": swapTransaction,
 		"mev":               isJito,
 		"usePoint":          isUsePoint,
+	}
+
+	resp, err := postRequest(url, body, false)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send swap transaction: %w", err)
+	}
+
+	defer resp.Body.Close()
+
+	resBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read priority fee response body: %w", err)
+	}
+
+	var apiResp *httpRespone.SendResponse
+	if err := json.Unmarshal(resBody, &apiResp); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal priority fee response: %w", err)
+	}
+
+	if apiResp.Code != 2000 {
+		return nil, fmt.Errorf("failed to unmarshal priority fee response: %w", apiResp.Message)
+	}
+
+	return apiResp, nil
+}
+
+func SendClaimTransaction(address string, amount uint64) (*httpRespone.SendResponse, error) {
+	log.Print(address)
+
+	url := ApiClaimTransactionSend
+	body := map[string]interface{}{
+		"address": address,
+		"amount":  amount,
 	}
 
 	resp, err := postRequest(url, body, false)

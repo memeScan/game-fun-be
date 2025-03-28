@@ -118,6 +118,9 @@ func NewRouter(producer sarama.SyncProducer) *gin.Engine {
 		auth.GET("points/:chain_type/detail", pointsHandler.PointsDetail)
 		auth.GET("points/:chain_type/invite/detail", pointsHandler.InvitedPointsDetail)
 		auth.GET("points/:chain_type/estimated", pointsHandler.PointsEstimated)
+		auth.GET("points/:chain_type/get_transaction", pointsHandler.GetTransaction)
+		auth.POST("points/:chain_type/send_claim_transaction", pointsHandler.SendTransaction)
+
 		auth.GET("global/:chain_type/native_balance", globalHandler.NativeBalance)
 		auth.GET("global/:chain_type/ticker_balance/:ticker_address", globalHandler.TickerBalance)
 		auth.GET("swap/:chain_type/get_transaction", swapHandler.GetTransaction)

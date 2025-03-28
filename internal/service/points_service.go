@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"net/http"
@@ -9,10 +10,13 @@ import (
 	"strconv"
 	"time"
 
+	"game-fun-be/internal/conf"
 	"game-fun-be/internal/model"
+	"game-fun-be/internal/pkg/httpUtil"
 	"game-fun-be/internal/pkg/util"
 	"game-fun-be/internal/response"
 
+	"github.com/IBM/sarama"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
@@ -21,7 +25,6 @@ type PointsServiceImpl struct {
 	userInfoRepo               *model.UserInfoRepo
 	pointRecordsRecord         *model.PointRecordsRepo
 	platformTokenStatisticRepo *model.PlatformTokenStatisticRepo
-	//
 }
 
 type PointCalculate struct {
@@ -48,8 +51,15 @@ type TransactionAmountDetailByTime struct {
 	EndTime                  time.Time
 }
 
-func NewPointsServiceImpl(userInfoRepo *model.UserInfoRepo, pointRecordsRecord *model.PointRecordsRepo, platformTokenStatisticRepo *model.PlatformTokenStatisticRepo) *PointsServiceImpl {
-	return &PointsServiceImpl{userInfoRepo: userInfoRepo, pointRecordsRecord: pointRecordsRecord, platformTokenStatisticRepo: platformTokenStatisticRepo}
+func NewPointsServiceImpl(userInfoRepo *model.UserInfoRepo,
+	pointRecordsRecord *model.PointRecordsRepo,
+	platformTokenStatisticRepo *model.PlatformTokenStatisticRepo,
+) *PointsServiceImpl {
+	return &PointsServiceImpl{
+		userInfoRepo:               userInfoRepo,
+		pointRecordsRecord:         pointRecordsRecord,
+		platformTokenStatisticRepo: platformTokenStatisticRepo,
+	}
 }
 
 /**
@@ -518,6 +528,91 @@ func (s *PointsServiceImpl) PointsEstimated(userID string, vaultAmount uint64, c
 	return response.Success(pointsEstimatedResponse)
 }
 
+func (s *PointsServiceImpl) IncrementStatisticsAndUpdateTime(address string, amounts map[model.StatisticType]uint64) error {
+	return s.platformTokenStatisticRepo.IncrementStatisticsAndUpdateTime(address, amounts)
+}
+
+func (s *PointsServiceImpl) CheckRebate(address string, rebateAmount uint64) response.Response {
+	user, err := s.userInfoRepo.GetUserByAddress(address, model.ChainTypeSolana.Uint8())
+	if err != nil {
+		return response.Err(http.StatusBadRequest, "用户不存在", err)
+	}
+
+	if user.WithdrawableRebate < rebateAmount {
+		return response.Err(http.StatusBadRequest, "提现金额不足", errors.New("提现金额不足"))
+	}
+
+	return response.Success("有足够的提现金额")
+}
+
+func (s *PointsServiceImpl) SendClaimTransaction(address string) response.Response {
+	user, err := s.userInfoRepo.GetUserByAddress(address, model.ChainTypeSolana.Uint8())
+	if err != nil {
+		return response.Err(http.StatusBadRequest, "用户不存在", err)
+	}
+
+	isTrue, err := s.userInfoRepo.DeductRebateWithOptimisticLock(uint64(user.ID), user.WithdrawableRebate)
+	if err != nil {
+		util.Log().Error("Failed to deduct points with optimistic lock: %v", err)
+		return response.Err(http.StatusInternalServerError, "Failed to deduct points, please try again later", err)
+	}
+	if !isTrue {
+		util.Log().Error("Optimistic lock failed, points deduction unsuccessful for user: %d", user.ID)
+		return response.Err(http.StatusConflict, "Points deduction failed due to concurrent update, please try again", nil)
+	}
+
+	resp, err := httpUtil.SendClaimTransaction(address, user.WithdrawableRebate)
+	if err != nil || resp == nil || resp.Code != 2000 {
+
+		// 交易发送失败，恢复用户积分
+		userInfoRepo := model.NewUserInfoRepo()
+		if err := userInfoRepo.IncrementWithdrawableRebateByUserID(uint(user.ID), user.WithdrawableRebate); err != nil {
+			util.Log().Error("Failed to restore points for user %d after transaction %s failed: %v",
+				user.ID, resp.Data.Signature, err)
+			return response.Err(http.StatusInternalServerError, "Failed to restore points, please try again later", err)
+		}
+		util.Log().Info("Transaction %s failed, restored %d points to user %d",
+			resp.Data.Signature, user.WithdrawableRebate, user.ID)
+		return response.Err(http.StatusInternalServerError, "Failed to get send transaction", err)
+	}
+	pointTxStatusMsg := model.PointTxStatusMessage{
+		Signature: resp.Data.Signature,
+		UserId:    uint(user.ID),
+		Points:    0,
+		Rebate:    user.WithdrawableRebate,
+		TxType:    2,
+	}
+
+	msgBytes, err := json.Marshal(pointTxStatusMsg)
+	if err != nil {
+		util.Log().Error("Failed to marshal point transaction status message: %v", err)
+	} else {
+		// 发送消息到Kafka
+		var topic string
+		if conf.IsTest() {
+			topic = "market.point.tx.status.test"
+		} else {
+			topic = "market.point.tx.status.prod"
+		}
+
+		msg := &sarama.ProducerMessage{
+			Topic: topic,
+			Value: sarama.ByteEncoder(msgBytes),
+		}
+		fmt.Println(msg)
+		// producer
+		// _, _, err := &sarama.SendMessage(msg)
+		// if err != nil {
+		// 	util.Log().Error("Failed to send point transaction status message to Kafka: %v", err)
+		// } else {
+		// 	util.Log().Info("Sent point transaction status check message for transaction %s, user %d, points %d",
+		// 		resp.Data.Signature, user.ID, user.WithdrawableRebate)
+		// }
+	}
+
+	return response.Success(resp.Data)
+}
+
 func formatPoints(points uint64) string {
 	return fmt.Sprintf("%.6f", float64(points)/1e6)
 }
@@ -530,8 +625,4 @@ func formatSolUsd(solUsdPrice decimal.Decimal) string {
 	price := solUsdPrice.Shift(-9)
 	// Use 6 decimal places instead if needed for crypto prices
 	return price.Round(6).StringFixed(6)
-}
-
-func (s *PointsServiceImpl) IncrementStatisticsAndUpdateTime(address string, amounts map[model.StatisticType]uint64) error {
-	return s.platformTokenStatisticRepo.IncrementStatisticsAndUpdateTime(address, amounts)
 }
