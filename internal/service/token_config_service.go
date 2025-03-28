@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"game-fun-be/internal/model"
 	"game-fun-be/internal/response"
 	"net/http"
@@ -114,17 +115,17 @@ func (s *TokenConfigServiceImpl) CreateTokenConfig(name, symbol, address string,
 
 		// 解析挖矿开始时间
 		if miningStartTime != "" {
-			startTime, err := time.Parse("2006-01-02 15:04:05", miningStartTime)
+			startTime, err := parseTime(miningStartTime)
 			if err == nil {
-				config.MiningStartTime = &startTime
+				config.MiningStartTime = startTime
 			}
 		}
 
 		// 解析挖矿结束时间
 		if miningEndTime != "" {
-			endTime, err := time.Parse("2006-01-02 15:04:05", miningEndTime)
+			endTime, err := parseTime(miningEndTime)
 			if err == nil {
-				config.MiningEndTime = &endTime
+				config.MiningEndTime = endTime
 			}
 		}
 	}
@@ -181,17 +182,17 @@ func (s *TokenConfigServiceImpl) UpdateTokenConfig(id uint, name, symbol, addres
 	if enableMining {
 		// 解析挖矿开始时间
 		if miningStartTime != "" {
-			startTime, err := time.Parse("2006-01-02 15:04:05", miningStartTime)
+			startTime, err := parseTime(miningStartTime)
 			if err == nil {
-				config.MiningStartTime = &startTime
+				config.MiningStartTime = startTime
 			}
 		}
 
 		// 解析挖矿结束时间
 		if miningEndTime != "" {
-			endTime, err := time.Parse("2006-01-02 15:04:05", miningEndTime)
+			endTime, err := parseTime(miningEndTime)
 			if err == nil {
-				config.MiningEndTime = &endTime
+				config.MiningEndTime = endTime
 			}
 		}
 	}
@@ -209,6 +210,26 @@ func (s *TokenConfigServiceImpl) UpdateTokenConfig(id uint, name, symbol, addres
 		Data: config,
 		Msg:  "Token config updated successfully",
 	}
+}
+
+// 尝试解析多种时间格式
+func parseTime(timeStr string) (*time.Time, error) {
+	// 尝试不同的时间格式
+	formats := []string{
+		"2006-01-02 15:04:05",  // 标准格式
+		time.RFC3339,           // ISO 8601格式 (2006-01-02T15:04:05Z07:00)
+		"2006-01-02T15:04:05",  // 不带时区的ISO格式
+		"2006-01-02T15:04:05Z", // UTC时区ISO格式
+	}
+
+	for _, format := range formats {
+		t, err := time.Parse(format, timeStr)
+		if err == nil {
+			return &t, nil
+		}
+	}
+
+	return nil, fmt.Errorf("无法解析时间格式: %s", timeStr)
 }
 
 // DeleteTokenConfig 删除代币配置
