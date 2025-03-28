@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"game-fun-be/internal/conf"
 	"game-fun-be/internal/constants"
 	"game-fun-be/internal/model"
 	"game-fun-be/internal/pkg/httpRequest"
@@ -605,13 +604,7 @@ func (s *SwapServiceImpl) SendTransaction(userID string, userAddress string, swa
 			util.Log().Error("Failed to marshal point transaction status message: %v", err)
 		} else {
 			// 发送消息到Kafka
-			var topic string
-			if conf.IsTest() {
-				topic = "market.point.tx.status.test"
-			} else {
-				topic = "market.point.tx.status.prod"
-			}
-			if err := s.SendMessage(topic, msgBytes); err != nil {
+			if err := s.SendMessage(constants.TopicPointTxStatus, msgBytes); err != nil {
 				util.Log().Error("Failed to send point transaction status message to Kafka: %v", err)
 			} else {
 				util.Log().Info("Sent point transaction status check message for transaction %s, user %d, points %d",
