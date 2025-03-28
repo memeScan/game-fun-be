@@ -100,3 +100,12 @@ func GetTokenConfigList(page, limit int) ([]TokenConfig, int64, error) {
 
 	return configs, total, nil
 }
+
+// GetAllTokenConfigs 获取所有TokenConfig数据
+func GetAllTokenConfigs() ([]TokenConfig, error) {
+	var configs []TokenConfig
+	if err := DB.Find(&configs).Error; err != nil {
+		return nil, err
+	}
+	return configs, nil
+}

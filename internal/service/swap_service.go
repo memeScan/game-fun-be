@@ -4,6 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"math"
+	"net/http"
+	"os"
+	"strconv"
+	"time"
+
 	"game-fun-be/internal/constants"
 	"game-fun-be/internal/model"
 	"game-fun-be/internal/pkg/httpRequest"
@@ -13,12 +20,6 @@ import (
 	"game-fun-be/internal/redis"
 	"game-fun-be/internal/request"
 	"game-fun-be/internal/response"
-	"io"
-	"math"
-	"net/http"
-	"os"
-	"strconv"
-	"time"
 
 	"github.com/IBM/sarama"
 	"github.com/shopspring/decimal"
@@ -37,7 +38,6 @@ func NewSwapService(producer sarama.SyncProducer) *SwapServiceImpl {
 }
 
 func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType uint8) response.Response {
-
 	startTime := time.Now().UnixNano()
 
 	solPriceUSD, priceErr := getSolPrice()
@@ -360,7 +360,6 @@ func (s *SwapServiceImpl) buildSwapRaydiumStruct(req request.SwapRouteRequest, t
 }
 
 func (s *SwapServiceImpl) getRaydiumTradeTx(swapStruct httpRequest.SwapRaydiumStruct) (*httpRespone.SwapTransactionResponse, error) {
-
 	resp, err := httpUtil.GetRaydiumTradeTx(swapStruct)
 	if err != nil {
 		return nil, err
@@ -380,7 +379,6 @@ func (s *SwapServiceImpl) getRaydiumTradeTx(swapStruct httpRequest.SwapRaydiumSt
 }
 
 func (s *SwapServiceImpl) getPumpFunTradeTx(swapStruct httpRequest.SwapPumpStruct) (*httpRespone.SwapTransactionResponse, error) {
-
 	resp, err := httpUtil.GetPumpFunTradeTx(swapStruct)
 	if err != nil {
 		return nil, err
@@ -484,7 +482,6 @@ func (s *SwapServiceImpl) calculateSwapAmounts(
 }
 
 func ConstructSwapRouteResponse(req request.SwapRouteRequest, swapResponse *httpRespone.SwapTransactionResponse, inDecimals, outDecimals uint8, amountOut, amountInUSD, amountOutUSD decimal.Decimal, startTime int64, jitoOrderId string, estimatedPoints decimal.Decimal) response.Response {
-
 	swapRouteResponse := response.Response{
 		Code: http.StatusOK,
 		Msg:  swapResponse.Message,
@@ -627,7 +624,6 @@ func (s *SwapServiceImpl) SendMessage(topic string, message []byte) error {
 }
 
 func (s *SwapServiceImpl) GetSwapStatusBySignature(swapTransaction string) response.Response {
-
 	resp, err := httpUtil.GetSwapStatusBySignature(swapTransaction)
 	if err != nil || resp == nil || resp.Code != 2000 {
 		return response.Err(http.StatusInternalServerError, "Failed to get swap request status", err)
@@ -648,5 +644,59 @@ func (s *SwapServiceImpl) GetSwapStatusBySignature(swapTransaction string) respo
 			"status": status,
 		},
 	)
+}
 
+// SendClaimTransaction 发送积分提现交易
+func (s *SwapServiceImpl) SendClaimTransaction(address string) response.Response {
+	user, err := s.userInfoRepo.GetUserByAddress(address, model.ChainTypeSolana.Uint8())
+	if err != nil {
+		return response.Err(http.StatusBadRequest, "用户不存在", err)
+	}
+
+	isTrue, err := s.userInfoRepo.DeductRebateWithOptimisticLock(uint64(user.ID), user.WithdrawableRebate)
+	if err != nil {
+		util.Log().Error("Failed to deduct points with optimistic lock: %v", err)
+		return response.Err(http.StatusInternalServerError, "Failed to deduct points, please try again later", err)
+	}
+	if !isTrue {
+		util.Log().Error("Optimistic lock failed, points deduction unsuccessful for user: %d", user.ID)
+		return response.Err(http.StatusConflict, "Points deduction failed due to concurrent update, please try again", nil)
+	}
+
+	resp, err := httpUtil.SendClaimTransaction(address, user.WithdrawableRebate)
+	if err != nil || resp == nil || resp.Code != 2000 {
+
+		// 交易发送失败，恢复用户积分
+		userInfoRepo := model.NewUserInfoRepo()
+		if err := userInfoRepo.IncrementWithdrawableRebateByUserID(uint(user.ID), user.WithdrawableRebate); err != nil {
+			util.Log().Error("Failed to restore points for user %d after transaction %s failed: %v",
+				user.ID, resp.Data.Signature, err)
+			return response.Err(http.StatusInternalServerError, "Failed to restore points, please try again later", err)
+		}
+		util.Log().Info("Transaction %s failed, restored %d points to user %d",
+			resp.Data.Signature, user.WithdrawableRebate, user.ID)
+		return response.Err(http.StatusInternalServerError, "Failed to get send transaction", err)
+	}
+	pointTxStatusMsg := model.PointTxStatusMessage{
+		Signature: resp.Data.Signature,
+		UserId:    uint(user.ID),
+		Points:    0,
+		Rebate:    user.WithdrawableRebate,
+		TxType:    2,
+	}
+
+	msgBytes, err := json.Marshal(pointTxStatusMsg)
+	if err != nil {
+		util.Log().Error("Failed to marshal point transaction status message: %v", err)
+	} else {
+		// 发送消息到Kafka
+		if err := s.SendMessage(constants.TopicPointTxStatus, msgBytes); err != nil {
+			util.Log().Error("Failed to send point transaction status message to Kafka: %v", err)
+		} else {
+			util.Log().Info("Sent point transaction status check message for transaction %s, user %d, points %d",
+				resp.Data.Signature, user.ID, user.WithdrawableRebate)
+		}
+	}
+
+	return response.Success(resp.Data)
 }

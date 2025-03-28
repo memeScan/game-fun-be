@@ -2,10 +2,12 @@ package api
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"strconv"
 
 	"game-fun-be/internal/pkg/httpUtil"
+	"game-fun-be/internal/request"
 	"game-fun-be/internal/service"
 
 	"github.com/gin-gonic/gin"
@@ -14,10 +16,11 @@ import (
 type PointsHandler struct {
 	pointsService *service.PointsServiceImpl
 	globalService *service.GlobalServiceImpl
+	swapService   *service.SwapServiceImpl
 }
 
-func NewPointsHandler(pointsService *service.PointsServiceImpl, globalService *service.GlobalServiceImpl) *PointsHandler {
-	return &PointsHandler{pointsService: pointsService, globalService: globalService}
+func NewPointsHandler(pointsService *service.PointsServiceImpl, globalService *service.GlobalServiceImpl, swapService *service.SwapServiceImpl) *PointsHandler {
+	return &PointsHandler{pointsService: pointsService, globalService: globalService, swapService: swapService}
 }
 
 // Points 获取用户积分数据
@@ -186,5 +189,62 @@ func (p *PointsHandler) PointsEstimated(c *gin.Context) {
 	vaultAmount, _ := strconv.ParseUint(balanceStr, 0, 64)
 
 	res := p.pointsService.PointsEstimated(userID, vaultAmount, chainType)
+	c.JSON(res.Code, res)
+}
+
+// GetSwapRoute 获取 Swap 路由
+// security:
+//   - Bearer: []
+//
+// @Summary 获取 Swap 路由
+// @Description 根据链类型、交易类型和请求参数获取 Swap 路由。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。
+// @Tags Swap
+// @Accept json
+// @Produce json
+// @Param chain_type path string true "链类型（sol、eth、bsc）"
+// @Param address query string true "钱包地址"
+// @Param rebate_amount query string true "返利金额"
+// @Success 200 {object} response.Response "成功返回 Swap 路由信息"
+// @Failure 500 {object} response.Response "服务器内部错误"
+// @Router /swap/{chain_type}/get_transaction [get]
+func (p *PointsHandler) GetTransaction(c *gin.Context) {
+	var req request.RebateClaimRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	res := p.pointsService.CheckRebate(req.Address, req.RebateAmount)
+	c.JSON(res.Code, res)
+}
+
+// SendSwapRequest 发送 Swap 请求
+// security:
+//   - Bearer: []
+//
+// @Summary 发送 Swap 请求
+// @Description 根据链类型和 Swap 交易数据发送 Swap 请求。支持的链类型：sol（Solana）、eth（Ethereum）、bsc（Binance Smart Chain）。
+// @Tags Swap
+// @Accept json
+// @Produce json
+// @Param chain_type path string true "链类型（sol、eth、bsc）"
+// @Success 200 {object} response.Response "成功返回交易结果"
+// @Failure 500 {object} response.Response "服务器内部错误"
+// @Router /swap/{chain_type}/send_transaction [post]
+func (p *PointsHandler) SendTransaction(c *gin.Context) {
+	userAddress, errResp := GetAddressFromContext(c)
+	if errResp != nil {
+		c.JSON(errResp.Code, errResp)
+		return
+	}
+	// 定义请求体结构
+	var req request.RebateClaimRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request body",
+		})
+		return
+	}
+
+	res := p.swapService.SendClaimTransaction(userAddress)
 	c.JSON(res.Code, res)
 }

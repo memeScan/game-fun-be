@@ -1,6 +1,8 @@
 package response
 
 import (
+	"time"
+
 	"github.com/shopspring/decimal"
 )
 
@@ -19,6 +21,9 @@ type Market struct {
 	URI             string          `json:"uri" example:"https://static.super.exchange/m/official/super.json"`   // URI
 	Price           decimal.Decimal `json:"price" example:"0.000050417320729"`                                   // 当前价格
 	CreateTimestamp int64           `json:"create_timestamp" example:"1740033455"`
+	EnableMining    bool            `gorm:"column:enable_mining;type:boolean;default:false" json:"enable_mining"`
+	MiningStartTime *time.Time      `gorm:"column:mining_start_time;type:datetime;null" json:"mining_start_time"`
+	MiningEndTime   *time.Time      `gorm:"column:mining_end_time;type:datetime;null" json:"mining_end_time"`
 }
 
 // MarketMetadata 市场元数据

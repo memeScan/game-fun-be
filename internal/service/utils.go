@@ -154,3 +154,13 @@ func parseISOTimeToUnix(timestampStr string) int64 {
 	}
 	return parsedTime.Unix()
 }
+
+// contains 检查某个字符串是否存在于字符串切片中
+func contains(slice []string, item string) bool {
+	for _, s := range slice {
+		if s == item {
+			return true
+		}
+	}
+	return false
+}

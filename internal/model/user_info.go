@@ -274,6 +274,32 @@ func (r *UserInfoRepo) DeductPointsWithOptimisticLock(userID uint64, amount uint
 	return true, nil
 }
 
+func (r *UserInfoRepo) DeductRebateWithOptimisticLock(userID uint64, amount uint64) (bool, error) {
+	if amount <= 0 {
+		return false, fmt.Errorf("扣减积分必须为正数")
+	}
+
+	// 使用原子UPDATE操作，确保只有当积分足够时才扣减
+	result := DB.Exec(`
+        UPDATE user_info 
+        SET withdrawable_rebate = withdrawable_rebate - ?, 
+            update_time = ? 
+        WHERE id = ? 
+          AND withdrawable_rebate >= ?
+    `, amount, time.Now(), userID, amount)
+
+	if result.Error != nil {
+		return false, result.Error
+	}
+
+	// 检查是否有行被更新，如果没有行被更新，说明积分不足
+	if result.RowsAffected == 0 {
+		return false, nil
+	}
+
+	return true, nil
+}
+
 func (r *UserInfoRepo) WithTx(tx *gorm.DB) *UserInfoRepo {
 	return &UserInfoRepo{db: tx}
 }
@@ -287,6 +313,31 @@ func (r *UserInfoRepo) IncrementAvailablePointsByUserID(userID uint, points uint
 	updates := map[string]interface{}{
 		"available_points": gorm.Expr("available_points + ?", points),
 		"update_time":      time.Now(),
+	}
+
+	result := DB.Model(&UserInfo{}).
+		Where("id = ?", userID).
+		Updates(updates)
+
+	if result.Error != nil {
+		return fmt.Errorf("failed to increment available points: %w", result.Error)
+	}
+
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("user with ID %d not found", userID)
+	}
+
+	return nil
+}
+
+func (r *UserInfoRepo) IncrementWithdrawableRebateByUserID(userID uint, amount uint64) error {
+	if amount == 0 {
+		return nil
+	}
+
+	updates := map[string]interface{}{
+		"withdrawable_rebate": gorm.Expr("withdrawable_rebate + ?", amount),
+		"update_time":         time.Now(),
 	}
 
 	result := DB.Model(&UserInfo{}).

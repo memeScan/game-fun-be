@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"net/http"
@@ -21,7 +22,6 @@ type PointsServiceImpl struct {
 	userInfoRepo               *model.UserInfoRepo
 	pointRecordsRecord         *model.PointRecordsRepo
 	platformTokenStatisticRepo *model.PlatformTokenStatisticRepo
-	//
 }
 
 type PointCalculate struct {
@@ -48,8 +48,15 @@ type TransactionAmountDetailByTime struct {
 	EndTime                  time.Time
 }
 
-func NewPointsServiceImpl(userInfoRepo *model.UserInfoRepo, pointRecordsRecord *model.PointRecordsRepo, platformTokenStatisticRepo *model.PlatformTokenStatisticRepo) *PointsServiceImpl {
-	return &PointsServiceImpl{userInfoRepo: userInfoRepo, pointRecordsRecord: pointRecordsRecord, platformTokenStatisticRepo: platformTokenStatisticRepo}
+func NewPointsServiceImpl(userInfoRepo *model.UserInfoRepo,
+	pointRecordsRecord *model.PointRecordsRepo,
+	platformTokenStatisticRepo *model.PlatformTokenStatisticRepo,
+) *PointsServiceImpl {
+	return &PointsServiceImpl{
+		userInfoRepo:               userInfoRepo,
+		pointRecordsRecord:         pointRecordsRecord,
+		platformTokenStatisticRepo: platformTokenStatisticRepo,
+	}
 }
 
 /**
@@ -518,6 +525,23 @@ func (s *PointsServiceImpl) PointsEstimated(userID string, vaultAmount uint64, c
 	return response.Success(pointsEstimatedResponse)
 }
 
+func (s *PointsServiceImpl) IncrementStatisticsAndUpdateTime(address string, amounts map[model.StatisticType]uint64) error {
+	return s.platformTokenStatisticRepo.IncrementStatisticsAndUpdateTime(address, amounts)
+}
+
+func (s *PointsServiceImpl) CheckRebate(address string, rebateAmount uint64) response.Response {
+	user, err := s.userInfoRepo.GetUserByAddress(address, model.ChainTypeSolana.Uint8())
+	if err != nil {
+		return response.Err(http.StatusBadRequest, "用户不存在", err)
+	}
+
+	if user.WithdrawableRebate < rebateAmount {
+		return response.Err(http.StatusBadRequest, "提现金额不足", errors.New("提现金额不足"))
+	}
+
+	return response.Success("有足够的提现金额")
+}
+
 func formatPoints(points uint64) string {
 	return fmt.Sprintf("%.6f", float64(points)/1e6)
 }
@@ -530,8 +554,4 @@ func formatSolUsd(solUsdPrice decimal.Decimal) string {
 	price := solUsdPrice.Shift(-9)
 	// Use 6 decimal places instead if needed for crypto prices
 	return price.Round(6).StringFixed(6)
-}
-
-func (s *PointsServiceImpl) IncrementStatisticsAndUpdateTime(address string, amounts map[model.StatisticType]uint64) error {
-	return s.platformTokenStatisticRepo.IncrementStatisticsAndUpdateTime(address, amounts)
 }

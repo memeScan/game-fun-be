@@ -119,5 +119,6 @@ type PointTxStatusMessage struct {
 	Signature string `json:"signature"` // 交易签名
 	UserId    uint   `json:"userId"`    // 用户ID
 	Points    uint64 `json:"points"`    // 积分数量
+	Rebate    uint64 `json:"rebate"`    // 提现金额
 	TxType    uint   `json:"txType"`    // 交易类型 1:积分兑换 2:手续费提取
 }
