@@ -90,6 +90,7 @@ func (s *TickerServiceImpl) Tickers(req request.TickersRequest, chainType model.
 	solDecimals := response.SolDecimals
 
 	var tickers []response.TickerItem
+
 	for _, bucket := range aggregationResult.Buckets {
 
 		var ticker response.TickerItem
@@ -183,6 +184,69 @@ func (s *TickerServiceImpl) Tickers(req request.TickersRequest, chainType model.
 		ticker.MarketMetadata = marketMetadata
 		ticker.MarketTicker = marketTicker
 		tickers = append(tickers, ticker)
+	}
+
+	TokenConfigs, err := GetTokenConfigsFromRedis()
+	if err != nil {
+		return response.Err(http.StatusInternalServerError, "Failed to get token configs from Redis", err)
+	}
+
+	// 需要展示挖矿的tokenAddress的string列表变量
+	var isListedTokenAddresses []string
+
+	// 有挖矿标签的string列表变量
+	var miningLabelTokenAddresses []string
+
+	// 检查TokenConfigs是否为空
+	if len(TokenConfigs) != 0 {
+		// 遍历TokenConfigs
+		for _, tokenConfig := range TokenConfigs {
+			// 将IsListed为true的代币地址添加到isListedTokenAddresses列表
+			if tokenConfig.IsListed {
+				isListedTokenAddresses = append(isListedTokenAddresses, tokenConfig.Address)
+			}
+
+			// 将EnableMining为true的代币地址添加到miningLabelTokenAddresses列表
+			if tokenConfig.EnableMining {
+				miningLabelTokenAddresses = append(miningLabelTokenAddresses, tokenConfig.Address)
+			}
+		}
+	}
+
+	// 检查tickers是否为空
+	if len(tickers) != 0 {
+		// 遍历tickers
+		for _, ticker := range tickers {
+			// 检查mintAddress是否不存在于isListedTokenAddresses
+			if !contains(isListedTokenAddresses, ticker.Market.TokenMint) {
+				// 责要查询基础的代币信息和市场信息
+
+			} else {
+				// 从TokenConfigs中查找对应的tokenConfig，设置MiningStartTime和MiningEndTime
+				for _, tokenConfig := range TokenConfigs {
+					if tokenConfig.Address == ticker.Market.TokenMint {
+						ticker.Market.MiningStartTime = tokenConfig.MiningStartTime
+						ticker.Market.MiningEndTime = tokenConfig.MiningEndTime
+						break
+					}
+				}
+			}
+
+			// 检查mintAddress是否存在于miningLabelTokenAddresses
+			if contains(miningLabelTokenAddresses, ticker.Market.TokenMint) {
+				// 如果存在，设置ticker.Market的相关字段
+				ticker.Market.EnableMining = true
+
+				// 从TokenConfigs中查找对应的tokenConfig，设置MiningStartTime和MiningEndTime
+				for _, tokenConfig := range TokenConfigs {
+					if tokenConfig.Address == ticker.Market.TokenMint {
+						ticker.Market.MiningStartTime = tokenConfig.MiningStartTime
+						ticker.Market.MiningEndTime = tokenConfig.MiningEndTime
+						break
+					}
+				}
+			}
+		}
 	}
 
 	if req.SortedBy != "" {
