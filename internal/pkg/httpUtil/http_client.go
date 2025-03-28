@@ -490,6 +490,35 @@ func GetTokenInfoByAddress(tokenAddress string) (*httpRespone.SolanaTrackerToken
 	return &tokenInfo, nil
 }
 
+// GetTokenHolders 获取代币持有者信息
+func GetTokenTop20Holders(tokenAddress string) (*[]httpRespone.Top20Holders, error) {
+	BASE_URL := os.Getenv("BASE_URL")
+	SOLANA_TRACKER_API_KEY := os.Getenv("SOLANA_TRACKER_API_KEY")
+
+	url := BASE_URL + "/tokens/" + tokenAddress + "/holders/top"
+
+	resp, err := GetHTTPClient().GetWithHeaders(url, map[string]string{
+		"x-api-key": SOLANA_TRACKER_API_KEY,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get token info by address: %w", err)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read token info by address response body: %w", err)
+	}
+
+	defer resp.Body.Close()
+
+	var top20Holders []httpRespone.Top20Holders
+	if err := json.Unmarshal(body, &top20Holders); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal token info response: %w", err)
+	}
+
+	return &top20Holders, nil
+}
+
 func GetWalletPNL(walletAddress string) (*httpRespone.PNLResponse, error) {
 	BASE_URL := os.Getenv("BASE_URL")
 	SOLANA_TRACKER_API_KEY := os.Getenv("SOLANA_TRACKER_API_KEY")
