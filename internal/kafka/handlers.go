@@ -448,13 +448,13 @@ func updateTokensInfo(transactions []*model.TokenTransaction) (map[string]*model
 		tokenInfos = append(tokenInfos, tokenInfo)
 
 		// 计算市值需要考虑代币度
-		actualSupply := decimal.NewFromInt(int64(tokenInfo.TotalSupply)).Shift(-int32(tokenInfo.Decimals))
+		actualSupply := decimal.NewFromUint64(tokenInfo.TotalSupply).Shift(-int32(tokenInfo.Decimals))
 
 		marketCap := tx.Price.Mul(actualSupply)
 		tokenInfo.MarketCap = marketCap
 
 		// 设置流通市值
-		actualCirculatingSupply := decimal.NewFromInt(int64(tokenInfo.CirculatingSupply)).Shift(-int32(tokenInfo.Decimals))
+		actualCirculatingSupply := decimal.NewFromUint64(tokenInfo.CirculatingSupply).Shift(-int32(tokenInfo.Decimals))
 		circulatingMarketCap := tx.Price.Mul(actualCirculatingSupply)
 		tokenInfo.CirculatingMarketCap = circulatingMarketCap
 
