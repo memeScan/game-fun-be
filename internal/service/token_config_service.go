@@ -1,8 +1,13 @@
 package service
 
 import (
+	"game-fun-be/internal/constants"
 	"game-fun-be/internal/model"
+	"game-fun-be/internal/pkg/util"
+	"game-fun-be/internal/redis"
 	"game-fun-be/internal/response"
+
+	"encoding/json"
 	"net/http"
 	"time"
 )
@@ -241,4 +246,29 @@ func (s *TokenConfigServiceImpl) DeleteTokenConfig(id uint) response.Response {
 		Code: http.StatusOK,
 		Msg:  "Token config deleted successfully",
 	}
+}
+
+// GetTokenConfigsFromRedis 从Redis中获取TokenConfig数据
+func GetTokenConfigsFromRedis() ([]model.TokenConfig, error) {
+	// 1. 从Redis获取数据
+	tokenConfigsJSON, err := redis.Get(constants.TokenConfigRedisKey)
+	if err != nil {
+		util.Log().Error("从Redis获取TokenConfig数据失败: %v", err)
+		return nil, err
+	}
+
+	// 2. 如果数据为空，返回空切片
+	if tokenConfigsJSON == "" {
+		util.Log().Info("Redis中未找到TokenConfig数据")
+		return []model.TokenConfig{}, nil
+	}
+
+	// 3. 反序列化为TokenConfig切片
+	var tokenConfigs []model.TokenConfig
+	if err := json.Unmarshal([]byte(tokenConfigsJSON), &tokenConfigs); err != nil {
+		util.Log().Error("反序列化TokenConfig数据失败: %v", err)
+		return nil, err
+	}
+
+	return tokenConfigs, nil
 }

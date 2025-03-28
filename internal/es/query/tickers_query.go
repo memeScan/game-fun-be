@@ -604,3 +604,219 @@ func SearchTokenBySymbol(token string, chainType uint8, isTokenAddress bool) (st
 
 	return string(queryBytes), nil
 }
+
+func MarketBuyTokenQuery(tokenAddresses []string) (string, error) {
+	query := map[string]interface{}{
+		"size": 0,
+		"query": map[string]interface{}{
+			"bool": map[string]interface{}{
+				"filter": []map[string]interface{}{
+					{
+						"terms": map[string]interface{}{
+							"token_address.keyword": tokenAddresses, // 根据代币列表过滤
+						},
+					},
+				},
+			},
+		},
+		"aggs": map[string]interface{}{
+			"unique_tokens": map[string]interface{}{
+				"terms": map[string]interface{}{
+					"field": "token_address.keyword",
+					"size":  len(tokenAddresses), // 确保返回所有传入的代币
+				},
+				"aggs": map[string]interface{}{
+					"latest_transaction": map[string]interface{}{
+						"top_hits": map[string]interface{}{
+							"size": 1,
+							"sort": []map[string]interface{}{
+								{
+									"transaction_time": map[string]interface{}{
+										"order": "desc",
+									},
+								},
+							},
+						},
+					},
+					"swaps_24h": map[string]interface{}{
+						"filter": map[string]interface{}{
+							"range": map[string]interface{}{
+								"transaction_time": map[string]interface{}{
+									"gte": "now-1d", // 过去 24 小时
+								},
+							},
+						},
+						"aggs": map[string]interface{}{
+							"transaction_count": map[string]interface{}{
+								"value_count": map[string]interface{}{
+									"field": "transaction_hash.keyword", // 直接统计文档数量，更高效
+								},
+							},
+						},
+					},
+					"sell_count_24h": map[string]interface{}{
+						"filter": map[string]interface{}{
+							"bool": map[string]interface{}{
+								"must": []map[string]interface{}{
+									{
+										"term": map[string]interface{}{
+											"is_buy": false,
+										},
+									},
+									{
+										"range": map[string]interface{}{
+											"transaction_time": map[string]interface{}{
+												"gte": "now-1d",
+											},
+										},
+									},
+								},
+							},
+						},
+						"aggs": map[string]interface{}{
+							"sell_volume": map[string]interface{}{
+								"value_count": map[string]interface{}{
+									"field": "transaction_hash.keyword",
+								},
+							},
+						},
+					},
+					"volume_1h": map[string]interface{}{
+						"filter": map[string]interface{}{
+							"range": map[string]interface{}{
+								"transaction_time": map[string]interface{}{
+									"gte": "now-1h",
+								},
+							},
+						},
+						"aggs": map[string]interface{}{
+							"total_volume": map[string]interface{}{
+								"sum": map[string]interface{}{
+									"script": map[string]interface{}{
+										"source": "doc['native_token_amount'].size() > 0 ? Double.parseDouble(doc['native_token_amount'].value) : 0",
+									},
+								},
+							},
+						},
+					},
+					"volume_24h": map[string]interface{}{
+						"filter": map[string]interface{}{
+							"range": map[string]interface{}{
+								"transaction_time": map[string]interface{}{
+									"gte": "now-1d",
+								},
+							},
+						},
+						"aggs": map[string]interface{}{
+							"total_volume": map[string]interface{}{
+								"sum": map[string]interface{}{
+									"script": map[string]interface{}{
+										"source": "doc['native_token_amount'].size() > 0 ? Double.parseDouble(doc['native_token_amount'].value) : 0",
+									},
+								},
+							},
+						},
+					},
+					"last_transaction_5m_price": map[string]interface{}{
+						"filter": map[string]interface{}{
+							"range": map[string]interface{}{
+								"transaction_time": map[string]interface{}{
+									"gte": "now-5m",
+								},
+							},
+						},
+						"aggs": map[string]interface{}{
+							"latest": map[string]interface{}{
+								"top_hits": map[string]interface{}{
+									"size": 1,
+									"sort": []map[string]interface{}{
+										{
+											"transaction_time": map[string]interface{}{
+												"order": "asc",
+											},
+										},
+									},
+									"_source": map[string]interface{}{
+										"includes": []string{"price"}, // 只返回价格字段
+									},
+								},
+							},
+						},
+					},
+					"last_transaction_1h_price": map[string]interface{}{
+						"filter": map[string]interface{}{
+							"range": map[string]interface{}{
+								"transaction_time": map[string]interface{}{
+									"gte": "now-1h",
+								},
+							},
+						},
+						"aggs": map[string]interface{}{
+							"latest": map[string]interface{}{
+								"top_hits": map[string]interface{}{
+									"size": 1,
+									"sort": []map[string]interface{}{
+										{
+											"transaction_time": map[string]interface{}{
+												"order": "asc",
+											},
+										},
+									},
+									"_source": map[string]interface{}{
+										"includes": []string{"price"}, // 只返回价格字段
+									},
+								},
+							},
+						},
+					},
+					"last_transaction_24h_price": map[string]interface{}{
+						"filter": map[string]interface{}{
+							"range": map[string]interface{}{
+								"transaction_time": map[string]interface{}{
+									"gte": "now-1d",
+								},
+							},
+						},
+						"aggs": map[string]interface{}{
+							"latest": map[string]interface{}{
+								"top_hits": map[string]interface{}{
+									"size": 1,
+									"sort": []map[string]interface{}{
+										{
+											"transaction_time": map[string]interface{}{
+												"order": "asc",
+											},
+										},
+									},
+									"_source": map[string]interface{}{
+										"includes": []string{"price"}, // 只返回价格字段
+									},
+								},
+							},
+						},
+					},
+					"bucket_sort": map[string]interface{}{
+						"bucket_sort": map[string]interface{}{
+							"sort": []map[string]interface{}{
+								{
+									"volume_24h.total_volume": map[string]interface{}{
+										"order": "desc",
+									},
+								},
+							},
+							"from": 0,
+							"size": len(tokenAddresses), // 确保返回所有传入的代币
+						},
+					},
+				},
+			},
+		},
+	}
+
+	queryBytes, err := json.Marshal(query)
+	if err != nil {
+		return "", err
+	}
+
+	return string(queryBytes), nil
+}
