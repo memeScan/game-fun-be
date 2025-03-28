@@ -15,7 +15,6 @@ import (
 	"game-fun-be/internal/request"
 	"game-fun-be/internal/response"
 	"io"
-	"log"
 	"math"
 	"net/http"
 	"os"
@@ -102,7 +101,7 @@ func (s *SwapServiceImpl) GetSwapRoute(req request.SwapRouteRequest, chainType u
 			return s.getRaydiumTradeTx(swapStruct)
 		},
 		"g_external": func() (*httpRespone.SwapTransactionResponse, error) {
-			swapStruct := s.buildGameFunGInstructionStruct(req, poolDetail, inAmountStr)
+			swapStruct := s.buildGameFunGInstructionStruct(req, poolDetail, inAmountStr, mev, jitotip)
 			if isCanBuyflag {
 				return s.getGameFunGInstruction(swapStruct)
 			}
@@ -290,15 +289,19 @@ func (s *SwapServiceImpl) processAntiMev(req request.SwapRouteRequest) (bool, st
 		}
 	}
 
-	tipFloor := tipFloorResponse.Data[0].EmaLandedTips50thPercentile * math.Pow(10, float64(response.SolDecimals))
-	tipFloor = math.Floor(tipFloor)
+	var tipFloor float64 = 10000 // 默认值
+
+	if len(tipFloorResponse.Data) > 0 {
+		tipFloor = tipFloorResponse.Data[0].EmaLandedTips50thPercentile * math.Pow(10, float64(response.SolDecimals))
+		tipFloor = math.Floor(tipFloor)
+	}
 	jitotip := strconv.FormatFloat(tipFloor, 'f', -1, 64)
 	jitoOrderId := httpUtil.GenerateJitoOrderId(req.TokenOutAddress, req.TokenInAddress, req.InAmount.String(), jitotip)
 
 	return true, jitotip, jitoOrderId, nil
 }
 
-func (s *SwapServiceImpl) buildGameFunGInstructionStruct(req request.SwapRouteRequest, poolDetail *model.TokenLiquidityPool, inAmount string) httpRequest.SwapGInstructionStruct {
+func (s *SwapServiceImpl) buildGameFunGInstructionStruct(req request.SwapRouteRequest, poolDetail *model.TokenLiquidityPool, inAmount string, mev bool, jitotip string) httpRequest.SwapGInstructionStruct {
 	return httpRequest.SwapGInstructionStruct{
 		User:            req.FromAddress,
 		InputAmount:     inAmount,
@@ -314,6 +317,8 @@ func (s *SwapServiceImpl) buildGameFunGInstructionStruct(req request.SwapRouteRe
 		Market:          os.Getenv("MARKET_ADDRESS"),
 		GAmm:            os.Getenv("GAMM_ADDRESS"),
 		GMarket:         os.Getenv("GMARKET_ADDRESS"),
+		Mev:             mev,
+		Jitotip:         jitotip,
 	}
 }
 
@@ -396,7 +401,6 @@ func (s *SwapServiceImpl) getPumpFunTradeTx(swapStruct httpRequest.SwapPumpStruc
 }
 
 func (s *SwapServiceImpl) getGameFunGInstruction(swapStruct httpRequest.SwapGInstructionStruct) (*httpRespone.SwapTransactionResponse, error) {
-	log.Print(swapStruct)
 	resp, err := httpUtil.GetGameFunGInstruction(swapStruct)
 	if err != nil {
 		return nil, err
