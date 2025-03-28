@@ -37,15 +37,15 @@ func NewRouter(producer sarama.SyncProducer) *gin.Engine {
 	tokenHoldingsService := service.NewTokenHoldingsServiceImpl()
 	tokenHoldingsHandler := api.NewTokenHoldingsHandler(tokenHoldingsService)
 
-	pointRecordsRepo := model.NewPointRecordsRepo()
-
-	pointsService := service.NewPointsServiceImpl(userInfoRepo, pointRecordsRepo, platformTokenStatisticRepo)
-	pointsHandler := api.NewPointsHandler(pointsService, globalService)
-
 	swapService := service.NewSwapService(producer)
 	swapHandler := api.NewSwapHandler(swapService)
 	tokenConfigService := service.NewTokenConfigServiceImpl(tickerInfoRepo)
 	tokenConfigHandler := apiadmin.NewAdminTokenConfigHandler(tokenConfigService)
+
+	pointRecordsRepo := model.NewPointRecordsRepo()
+
+	pointsService := service.NewPointsServiceImpl(userInfoRepo, pointRecordsRepo, platformTokenStatisticRepo)
+	pointsHandler := api.NewPointsHandler(pointsService, globalService, swapService)
 
 	r := gin.New()
 

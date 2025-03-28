@@ -16,10 +16,11 @@ import (
 type PointsHandler struct {
 	pointsService *service.PointsServiceImpl
 	globalService *service.GlobalServiceImpl
+	swapService   *service.SwapServiceImpl
 }
 
-func NewPointsHandler(pointsService *service.PointsServiceImpl, globalService *service.GlobalServiceImpl) *PointsHandler {
-	return &PointsHandler{pointsService: pointsService, globalService: globalService}
+func NewPointsHandler(pointsService *service.PointsServiceImpl, globalService *service.GlobalServiceImpl, swapService *service.SwapServiceImpl) *PointsHandler {
+	return &PointsHandler{pointsService: pointsService, globalService: globalService, swapService: swapService}
 }
 
 // Points 获取用户积分数据
@@ -244,6 +245,6 @@ func (p *PointsHandler) SendTransaction(c *gin.Context) {
 		return
 	}
 
-	res := p.pointsService.SendClaimTransaction(userAddress)
+	res := p.swapService.SendClaimTransaction(userAddress)
 	c.JSON(res.Code, res)
 }
