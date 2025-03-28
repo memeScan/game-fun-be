@@ -161,8 +161,8 @@ func (s *TickerServiceImpl) Tickers(req request.TickersRequest, chainType model.
 		priceChange24h := calculatePriceChange(tx.Price, price24h)
 
 		marketTicker.PriceChange5M = FormatPercent(priceChange5m)
-		marketTicker.BuyTokenVolume1H = FormatPercent(priceChange1h)
-		marketTicker.BuyTokenVolume24H = FormatPercent(priceChange24h)
+		marketTicker.PriceChange1H = FormatPercent(priceChange1h)
+		marketTicker.PriceChange24H = FormatPercent(priceChange24h)
 
 		marketTicker.TxCount24H = bucket.Swaps24h.TransactionCount.Value
 		marketTicker.SellTxCount24H = bucket.SellCount24h.SellVolume.Value
