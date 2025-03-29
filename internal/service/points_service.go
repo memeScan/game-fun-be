@@ -2,7 +2,6 @@ package service
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math"
 	"net/http"
@@ -527,19 +526,6 @@ func (s *PointsServiceImpl) PointsEstimated(userID string, vaultAmount uint64, c
 
 func (s *PointsServiceImpl) IncrementStatisticsAndUpdateTime(address string, amounts map[model.StatisticType]uint64) error {
 	return s.platformTokenStatisticRepo.IncrementStatisticsAndUpdateTime(address, amounts)
-}
-
-func (s *PointsServiceImpl) CheckRebate(address string, rebateAmount uint64) response.Response {
-	user, err := s.userInfoRepo.GetUserByAddress(address, model.ChainTypeSolana.Uint8())
-	if err != nil {
-		return response.Err(http.StatusBadRequest, "用户不存在", err)
-	}
-
-	if user.WithdrawableRebate < rebateAmount {
-		return response.Err(http.StatusBadRequest, "提现金额不足", errors.New("提现金额不足"))
-	}
-
-	return response.Success("有足够的提现金额")
 }
 
 func formatPoints(points uint64) string {

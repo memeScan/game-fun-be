@@ -77,7 +77,7 @@ func addJobs() {
 	// 每5分钟去更新redis代币配置
 	_, err = cronJob.AddFunc("0 */5 * * * *", syncTokenConfigToRedis)
 	if err != nil {
-		util.Log().Error("Failed to add searchDocumentsJob: %v", err)
+		util.Log().Error("Failed to add syncTokenConfigToRedis: %v", err)
 	}
 
 	// 每5分执行一次积分任务

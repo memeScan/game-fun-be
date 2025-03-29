@@ -8,6 +8,7 @@ type TokenHolding struct {
 	ImageURI     string `json:"image_uri"`     // 代币图片 URI
 	Balance      string `json:"balance"`       // 持仓数量
 	TotalValue   string `json:"total_value"`   // 持仓总价值
+	MarketCap    string `json:"market_cap"`    // 市值
 	ID           int64  `json:"id"`            // 代币 ID
 	HoldersCount int    `json:"holders_count"` // 持有者数量
 	Profit       string `json:"profit"`        // 收益

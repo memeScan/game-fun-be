@@ -187,6 +187,8 @@ definitions:
         description: 代币铸造地址
         example: 6
         type: integer
+      enable_mining:
+        type: boolean
       market:
         description: 市场地址
         example: B3o198GX45DZ9HeJZ56wuruyWWCfGVBSn5qC71q5AHZz
@@ -195,6 +197,10 @@ definitions:
         description: 市场ID
         example: 1
         type: integer
+      mining_end_time:
+        type: string
+      mining_start_time:
+        type: string
       native_vault:
         description: 原生代币金库地址
         example: 98J2RACW3wk8u36k1cPmDenzHdPjhcd5qXsm5g471kdh
@@ -668,6 +674,9 @@ definitions:
         type: integer
       image_uri:
         description: 代币图片 URI
+        type: string
+      market_cap:
+        description: 市值
         type: string
       price:
         description: 当前价格

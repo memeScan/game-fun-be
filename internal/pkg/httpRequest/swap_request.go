@@ -67,3 +67,8 @@ type BuyGWithPointsStruct struct {
 	GAmm        string `json:"gAmm"`
 	GMarket     string `json:"gMarket"`
 }
+
+type ClaimRebateStruct struct {
+	User   string `json:"user"`
+	Amount string `json:"amount"`
+}
