@@ -213,7 +213,7 @@ func (p *PointsHandler) GetTransaction(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	res := p.pointsService.CheckRebate(req.Address, req.RebateAmount)
+	res := p.swapService.CheckRebate(req.Address, req.RebateAmount)
 	c.JSON(res.Code, res)
 }
 
@@ -231,11 +231,6 @@ func (p *PointsHandler) GetTransaction(c *gin.Context) {
 // @Failure 500 {object} response.Response "服务器内部错误"
 // @Router /swap/{chain_type}/send_transaction [post]
 func (p *PointsHandler) SendTransaction(c *gin.Context) {
-	userAddress, errResp := GetAddressFromContext(c)
-	if errResp != nil {
-		c.JSON(errResp.Code, errResp)
-		return
-	}
 	// 定义请求体结构
 	var req request.RebateClaimRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -245,6 +240,6 @@ func (p *PointsHandler) SendTransaction(c *gin.Context) {
 		return
 	}
 
-	res := p.swapService.SendClaimTransaction(userAddress)
+	res := p.swapService.SendClaimTransaction(req)
 	c.JSON(res.Code, res)
 }

@@ -38,6 +38,7 @@ var (
 	ApiTransactionSend        string
 	ApiGameFunTransactionSend string
 	ApiClaimTransactionSend   string
+	ApiClaimRebate            string
 	ApiTransactionStatus      string
 	ApiTokensBatch            string
 	ApiSafetyCheckPool        string
@@ -94,6 +95,7 @@ func InitAPI(endpoint *string) {
 	ApiBuyGWithPoints = *endpoint + "/block/api/v1/gamefun/buy-g-with-points"
 	ApiGameFunTransactionSend = *endpoint + "/block/api/v1/gamefun/send-transaction"
 	ApiClaimTransactionSend = *endpoint + "/block/api/v1/gamefun/send-claim-transaction"
+	ApiClaimRebate = *endpoint + "/block/api/v1/gamefun/claim-rebate"
 }
 
 // FetchURIWithRetry adds retry mechanism for fetching URI
@@ -208,6 +210,15 @@ func GetGameFunGInstruction(swapGInstructionStruct httpRequest.SwapGInstructionS
 func GetBuyGWithPointsInstruction(buyGWithPointsStruct httpRequest.BuyGWithPointsStruct) (*http.Response, error) {
 	url := ApiBuyGWithPoints
 	resp, err := postRequest(url, buyGWithPointsStruct, false)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send swap request: %w", err)
+	}
+	return resp, nil
+}
+
+func GetClaimRebateInstruction(claimRebateStruct httpRequest.ClaimRebateStruct) (*http.Response, error) {
+	url := ApiClaimRebate
+	resp, err := postRequest(url, claimRebateStruct, false)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send swap request: %w", err)
 	}
@@ -420,13 +431,14 @@ func SendGameFunTransaction(swapTransaction string, isJito bool, isUsePoint bool
 	return apiResp, nil
 }
 
-func SendClaimTransaction(address string, amount uint64) (*httpRespone.SendResponse, error) {
+func SendClaimTransaction(address string, swapTransaction string, amount uint64) (*httpRespone.SendResponse, error) {
 	log.Print(address)
 
 	url := ApiClaimTransactionSend
 	body := map[string]interface{}{
-		"address": address,
-		"amount":  amount,
+		"address":         address,
+		"swapTransaction": swapTransaction,
+		"amount":          amount,
 	}
 
 	resp, err := postRequest(url, body, false)

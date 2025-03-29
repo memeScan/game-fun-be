@@ -2122,6 +2122,9 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 6
                 },
+                "enable_mining": {
+                    "type": "boolean"
+                },
                 "market": {
                     "description": "市场地址",
                     "type": "string",
@@ -2131,6 +2134,12 @@ const docTemplate = `{
                     "description": "市场ID",
                     "type": "integer",
                     "example": 1
+                },
+                "mining_end_time": {
+                    "type": "string"
+                },
+                "mining_start_time": {
+                    "type": "string"
                 },
                 "native_vault": {
                     "description": "原生代币金库地址",
@@ -2792,6 +2801,10 @@ const docTemplate = `{
                 },
                 "image_uri": {
                     "description": "代币图片 URI",
+                    "type": "string"
+                },
+                "market_cap": {
+                    "description": "市值",
                     "type": "string"
                 },
                 "price": {

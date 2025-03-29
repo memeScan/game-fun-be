@@ -449,6 +449,62 @@ func (s *SwapServiceImpl) getGetBuyGWithPointsInstruction(points float64, swapSt
 	return &swapTxResponse, nil
 }
 
+func (s *SwapServiceImpl) CheckRebate(address string, rebateAmount uint64) response.Response {
+	startTime := time.Now().UnixNano()
+	user, err := s.userInfoRepo.GetUserByAddress(address, model.ChainTypeSolana.Uint8())
+	if err != nil {
+		return response.Err(http.StatusBadRequest, "用户不存在", err)
+	}
+
+	if user.WithdrawableRebate < rebateAmount {
+		return response.Err(http.StatusBadRequest, "提现金额不足", errors.New("提现金额不足"))
+	}
+
+	swapStruct := httpRequest.ClaimRebateStruct{
+		User:   address,
+		Amount: strconv.FormatUint(rebateAmount, 10),
+	}
+	resp, err := s.getClaimRebateInstruction(swapStruct, startTime)
+	if err != nil {
+		return response.Err(http.StatusInternalServerError, "Failed to get claim rebate instruction", err)
+	}
+
+	return response.Success(resp.Data)
+}
+
+func (s *SwapServiceImpl) getClaimRebateInstruction(swapStruct httpRequest.ClaimRebateStruct, startTime int64) (*httpRespone.SwapTransactionResponse, error) {
+	// 使用 GetBuyGWithPointsInstruction 函数发起请求
+	resp, err := httpUtil.GetClaimRebateInstruction(swapStruct)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	// 读取响应体
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	// 解析 JSON 响应体
+	var swapTxResponse httpRespone.SwapTransactionResponse
+	if err := json.Unmarshal(respBody, &swapTxResponse); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal JSON: %w", err)
+	}
+	// startTimeStr := strconv.FormatInt(startTime, 10)
+	// SwapGPointsKey := GetRedisKey(constants.SwapGPoints, swapStruct.User, startTimeStr)
+	// multiplier := math.Pow10(model.PointsDecimal)
+	// scaledPoints := uint64(points * multiplier)
+
+	// // 将 scaledPoints 存入 Redis
+	// err = redis.Set(SwapGPointsKey, scaledPoints, 5*time.Minute)
+	// if err != nil {
+	// 	util.Log().Error("Failed to set key in Redis: %v", err)
+	// }
+
+	return &swapTxResponse, nil
+}
+
 func (s *SwapServiceImpl) calculateSwapAmounts(
 	req request.SwapRouteRequest,
 	tokenDetail *model.TokenInfo,
@@ -647,13 +703,13 @@ func (s *SwapServiceImpl) GetSwapStatusBySignature(swapTransaction string) respo
 }
 
 // SendClaimTransaction 发送积分提现交易
-func (s *SwapServiceImpl) SendClaimTransaction(address string) response.Response {
-	user, err := s.userInfoRepo.GetUserByAddress(address, model.ChainTypeSolana.Uint8())
+func (s *SwapServiceImpl) SendClaimTransaction(req request.RebateClaimRequest) response.Response {
+	user, err := s.userInfoRepo.GetUserByAddress(req.Address, model.ChainTypeSolana.Uint8())
 	if err != nil {
 		return response.Err(http.StatusBadRequest, "用户不存在", err)
 	}
 
-	isTrue, err := s.userInfoRepo.DeductRebateWithOptimisticLock(uint64(user.ID), user.WithdrawableRebate)
+	isTrue, err := s.userInfoRepo.DeductRebateWithOptimisticLock(uint64(user.ID), req.RebateAmount)
 	if err != nil {
 		util.Log().Error("Failed to deduct points with optimistic lock: %v", err)
 		return response.Err(http.StatusInternalServerError, "Failed to deduct points, please try again later", err)
@@ -663,7 +719,7 @@ func (s *SwapServiceImpl) SendClaimTransaction(address string) response.Response
 		return response.Err(http.StatusConflict, "Points deduction failed due to concurrent update, please try again", nil)
 	}
 
-	resp, err := httpUtil.SendClaimTransaction(address, user.WithdrawableRebate)
+	resp, err := httpUtil.SendClaimTransaction(req.Address, req.SwapTransaction, req.RebateAmount)
 	if err != nil || resp == nil || resp.Code != 2000 {
 
 		// 交易发送失败，恢复用户积分
