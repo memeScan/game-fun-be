@@ -32,9 +32,9 @@ const (
 type PlatformType uint8
 
 const (
-	PlatformTypePump    PlatformType = iota + 1 // 1
-	PlatformTypeRaydium                         // 2
-
+	PlatformTypePump     PlatformType = iota + 1 // 1
+	PlatformTypeRaydium                          // 2
+	PlatformTypePumpSwap                         // 3
 )
 
 // String 方法用于返回 PlatformType 的字符串表示
@@ -44,6 +44,8 @@ func (p PlatformType) String() string {
 		return "Pump"
 	case PlatformTypeRaydium:
 		return "Raydium"
+	case PlatformTypePumpSwap:
+		return "PumpSwap"
 	default:
 		return "Unknown"
 	}

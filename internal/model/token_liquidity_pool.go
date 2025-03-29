@@ -28,6 +28,7 @@ type TokenLiquidityPool struct {
 	UserAddress        string    `gorm:"column:user_address;type:varchar(64)" json:"user_address"`
 	Block              uint64    `gorm:"column:block;type:bigint unsigned" json:"block"`
 	BlockTime          time.Time `gorm:"column:block_time;type:datetime" json:"block_time"`
+	IsStandardOrder    bool      `gorm:"column:is_standard_order;type:boolean;not null;default:0" json:"is_standard_order"`
 	CreateTime         time.Time `gorm:"column:create_time;type:datetime;not null;default:CURRENT_TIMESTAMP" json:"create_time"`
 	UpdateTime         time.Time `gorm:"column:update_time;type:datetime;not null;default:CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" json:"update_time"`
 }

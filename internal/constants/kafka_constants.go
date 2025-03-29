@@ -24,6 +24,12 @@ const (
 	GameOutTradePrefix  = "market.game.out.trade."
 	GameInTradePrefix   = "market.game.in.trade."
 	PointTxStatusPrefix = "market.point.tx.status." // 积分交易链上状态检测
+
+	// PumpSwap DEX 相关
+	PumpAmmNewPoolPrefix         = "market.pump.amm.newpool."
+	PumpAmmSwapPrefix            = "market.pump.amm.swap."
+	PumpAmmAddLiquidityPrefix    = "market.pump.amm.addliquidity."
+	PumpAmmRemoveLiquidityPrefix = "market.pump.amm.removeliquidity."
 )
 
 var (
@@ -56,6 +62,12 @@ var (
 	// 积分交易状态检测
 	TopicPointTxStatus = PointTxStatusPrefix + envSuffix // 积分交易链上状态检测
 
+	// PumpSwap DEX 相关
+	TopicPumpAmmNewPool         = PumpAmmNewPoolPrefix + envSuffix
+	TopicPumpAmmSwap            = PumpAmmSwapPrefix + envSuffix
+	TopicPumpAmmAddLiquidity    = PumpAmmAddLiquidityPrefix + envSuffix
+	TopicPumpAmmRemoveLiquidity = PumpAmmRemoveLiquidityPrefix + envSuffix
+
 	// 所有需要监听的 topics
 	AllTopics = []string{
 		TopicRayCreate,
@@ -70,5 +82,9 @@ var (
 		TopicGameOutTrade,
 		TopicGameInTrade,
 		TopicPointTxStatus,
+		TopicPumpAmmNewPool,
+		TopicPumpAmmSwap,
+		TopicPumpAmmAddLiquidity,
+		TopicPumpAmmRemoveLiquidity,
 	}
 )
