@@ -89,6 +89,12 @@ func ConsumePumpfunTopics() error {
 	topicConsumer.AddHandler(constants.TopicRayRemoveLiquidity, RaydiumImmediateHandler)
 	topicConsumer.AddBatchHandler(constants.TopicRaySwap, RaydiumBatchHandler, batchSize, minSize, batchTimeout)
 
+	// 添加 PumpSwap DEX 相关的处理器
+	topicConsumer.AddHandler(constants.TopicPumpAmmNewPool, PumpAmmImmediateHandler)
+	// topicConsumer.AddHandler(constants.TopicPumpAmmAddLiquidity, PumpAmmImmediateHandler)
+	// topicConsumer.AddHandler(constants.TopicPumpAmmRemoveLiquidity, PumpAmmImmediateHandler)
+	topicConsumer.AddBatchHandler(constants.TopicPumpAmmSwap, PumpAmmBatchHandler, batchSize, minSize, batchTimeout)
+
 	// 添加未知代币处理器
 	topicConsumer.AddHandler(constants.TopicUnknownToken, UnknownTokenHandler)
 
@@ -246,16 +252,6 @@ func handlePumpTradeMessages(messages []sarama.ConsumerMessage) error {
 	}
 
 	// 处理交易消息
-	if err := handlePumpfunTokenTransactions(tokenTradeMessages); err != nil {
-		util.Log().Error("处理交易消息失败: %v", err)
-		return fmt.Errorf("处理交易消息失败: %v", err)
-	}
-
-	return nil
-}
-
-// 处理交易消息
-func handlePumpfunTokenTransactions(tokenTradeMessages []*model.TokenTradeMessage) error {
 	tokenTxService := &service.TokenTransactionService{}
 
 	// 转换消息到交易
@@ -276,14 +272,14 @@ func handlePumpfunTokenTransactions(tokenTradeMessages []*model.TokenTradeMessag
 
 	// 处理今的数据
 	if len(todayTxs) > 0 {
-		if err := processCurrentDayPumpfunTransactions(todayTxs); err != nil {
+		if err := processCurrentDayTokenTransactions(todayTxs); err != nil {
 			return fmt.Errorf("处理当天交易失败: %v", err)
 		}
 	}
 
 	// 处理历史数据
 	if len(oldTxs) > 0 {
-		if err := processHistoricalPumpfunTransactions(oldTxs); err != nil {
+		if err := processHistoricalTokenTransactions(oldTxs); err != nil {
 			return fmt.Errorf("处理历史交易失败: %v", err)
 		}
 	}
@@ -292,7 +288,7 @@ func handlePumpfunTokenTransactions(tokenTradeMessages []*model.TokenTradeMessag
 }
 
 // 处理当天交易数据
-func processCurrentDayPumpfunTransactions(transactions []*model.TokenTransaction) error {
+func processCurrentDayTokenTransactions(transactions []*model.TokenTransaction) error {
 	tokenTxService := &service.TokenTransactionService{}
 	tokenTxIndexService := &service.TokenTxIndexService{}
 
@@ -586,7 +582,7 @@ func processCreatorTransaction(tokenInfo *model.TokenInfo, tx *model.TokenTransa
 }
 
 // 处理历史交易数据
-func processHistoricalPumpfunTransactions(transactions []*model.TokenTransaction) error {
+func processHistoricalTokenTransactions(transactions []*model.TokenTransaction) error {
 	tokenTxService := &service.TokenTransactionService{}
 	tokenTxIndexService := &service.TokenTxIndexService{}
 
@@ -639,6 +635,72 @@ func RaydiumBatchHandler(topic string, messages []sarama.ConsumerMessage, partit
 	}
 }
 
+func PumpAmmBatchHandler(topic string, messages []sarama.ConsumerMessage, partition int32, goroutineID uint64) error {
+	util.Log().Info("Processing batch messages for topic %s: %d messages", topic, len(messages))
+	switch topic {
+	case constants.TopicPumpAmmSwap:
+		return handlePumpAmmSwapMessages(messages)
+	default:
+		util.Log().Warning("Unknown topic for batch processing: %s", topic)
+		return nil
+	}
+}
+
+func handlePumpAmmSwapMessages(messages []sarama.ConsumerMessage) error {
+	var pumpAmmSwapMessages []*model.PumpAmmSwapMessage
+	for _, msg := range messages {
+		var swapMsg model.PumpAmmSwapMessage
+		err := json.Unmarshal(msg.Value, &swapMsg)
+		if err != nil {
+			util.Log().Error("Failed to unmarshal PumpAmm swap message: %v", err)
+			continue
+		}
+		pumpAmmSwapMessages = append(pumpAmmSwapMessages, &swapMsg)
+	}
+
+	// 如果没有有效的交易消息,直接返回
+	if len(pumpAmmSwapMessages) == 0 {
+		util.Log().Info("No valid PumpAmm swap messages to process")
+		return nil
+	}
+
+	// 处理 PumpAmm 交易消息
+	tokenTxService := &service.TokenTransactionService{}
+
+	// 换消息到交易
+	tokenTransactions := tokenTxService.ConvertPumpAmmSwapMessagesToTransactions(pumpAmmSwapMessages)
+
+	// 分离新旧数据
+	currentDate := time.Now().Format("2006-01-02")
+	var todayTxs, oldTxs []*model.TokenTransaction
+
+	for _, tx := range tokenTransactions {
+		txDate := tx.TransactionTime.Format("2006-01-02")
+		if txDate == currentDate {
+			todayTxs = append(todayTxs, tx)
+		} else {
+			oldTxs = append(oldTxs, tx)
+		}
+	}
+
+	// 处理今天的数据
+	if len(todayTxs) > 0 {
+		if err := processCurrentDayTokenTransactions(todayTxs); err != nil {
+			return fmt.Errorf("处理当天 Token 交易失败: %v", err)
+		}
+	}
+
+	// 处理历史数据
+	if len(oldTxs) > 0 {
+		if err := processHistoricalTokenTransactions(oldTxs); err != nil {
+			return fmt.Errorf("处理历史 Token 交易失败: %v", err)
+		}
+	}
+
+	util.Log().Info("成功处理 %d 条交易", len(tokenTransactions))
+	return nil
+}
+
 func handleRaydiumSwapMessages(messages []sarama.ConsumerMessage) error {
 	var raydiumSwapMessages []*model.RaydiumSwapMessage
 	for _, msg := range messages {
@@ -658,20 +720,10 @@ func handleRaydiumSwapMessages(messages []sarama.ConsumerMessage) error {
 	}
 
 	// 处理 Raydium 交易消息
-	if err := handleRaydiumSwapTransactions(raydiumSwapMessages); err != nil {
-		util.Log().Error("处理 Raydium 交易消息失败: %v", err)
-		return fmt.Errorf("处理 Raydium 交易消息失败: %v", err)
-	}
-
-	return nil
-}
-
-// 处理 Raydium 交易消息
-func handleRaydiumSwapTransactions(swapMessages []*model.RaydiumSwapMessage) error {
 	tokenTxService := &service.TokenTransactionService{}
 
 	// 换消息到交易
-	tokenTransactions := tokenTxService.ConvertRaydiumSwapMessagesToTransactions(swapMessages)
+	tokenTransactions := tokenTxService.ConvertRaydiumSwapMessagesToTransactions(raydiumSwapMessages)
 
 	// 分离新旧数据
 	currentDate := time.Now().Format("2006-01-02")
@@ -688,129 +740,16 @@ func handleRaydiumSwapTransactions(swapMessages []*model.RaydiumSwapMessage) err
 
 	// 处理今天的数据
 	if len(todayTxs) > 0 {
-		if err := processCurrentDayRaydiumTransactions(todayTxs); err != nil {
+		if err := processCurrentDayTokenTransactions(todayTxs); err != nil {
 			return fmt.Errorf("处理当天 Raydium 交易失败: %v", err)
 		}
 	}
 
 	// 处理历史数据
 	if len(oldTxs) > 0 {
-		if err := processHistoricalRaydiumTransactions(oldTxs); err != nil {
+		if err := processHistoricalTokenTransactions(oldTxs); err != nil {
 			return fmt.Errorf("处理历史 Raydium 交易失败: %v", err)
 		}
-	}
-
-	return nil
-}
-
-// 处理当天 Raydium 交易数据
-func processCurrentDayRaydiumTransactions(transactions []*model.TokenTransaction) error {
-	totalStart := time.Now()
-	tokenTxService := &service.TokenTransactionService{}
-	tokenTxIndexService := &service.TokenTxIndexService{}
-
-	// 1. 批量创建交易记录
-	txCreateStart := time.Now()
-	currentDate := time.Now().Format("20060102")
-	resp := tokenTxService.ProcessBatchTokenTransactionCreation(transactions, currentDate)
-	if resp.Code != 0 {
-		util.Log().Error("批量创建代币交易失败: %v", resp.Error)
-		return fmt.Errorf("failed to create transactions: %v", resp.Error)
-	}
-	util.Log().Info("1. 批量创建交易记录耗时: %v, 交易数量: %d",
-		time.Since(txCreateStart),
-		len(transactions))
-
-	// 2. 批量创建交易索引
-	indexStart := time.Now()
-	indexResp := tokenTxIndexService.BatchCreateIndexFromTransactions(transactions)
-	if indexResp.Code != 0 {
-		util.Log().Error("批量创建代币交易索引失败: %v", indexResp.Error)
-		return fmt.Errorf("failed to create indices: %v", indexResp.Error)
-	}
-	util.Log().Info("2. 批量创建交易索引耗时: %v", time.Since(indexStart))
-
-	// 3. 更新代币信息
-	tokenStart := time.Now()
-	tokenInfoMap, err := updateTokensInfo(transactions)
-	if err != nil {
-		util.Log().Error("更新代币信息失败: %v", err)
-		// 不返回错误，继续处理其他逻辑
-	}
-	util.Log().Info("3. 更新代币信息耗时: %v, 更新代币数量: %d",
-		time.Since(tokenStart),
-		len(tokenInfoMap))
-
-	// 4. 更新池子信息
-	poolStart := time.Now()
-	poolInfoMap, err := updatePoolsInfo(transactions)
-	if err != nil {
-		util.Log().Error("更新池子信息失败: %v", err)
-		// 不返回错误，继续处理其他逻辑
-	}
-	util.Log().Info("4. 更新池子信息耗时: %v, 更新池子数量: %d",
-		time.Since(poolStart),
-		len(poolInfoMap))
-
-	// 5. 处理 Elasticsearch 数据
-	esStart := time.Now()
-	if err := processElasticsearchData(transactions, tokenInfoMap, poolInfoMap); err != nil {
-		return err
-	}
-	util.Log().Info("5. 处理 Elasticsearch 数据耗时: %v", time.Since(esStart))
-
-	// 6. 处理 ClickHouse 数据
-	chStart := time.Now()
-	processClickHouseData(transactions)
-	util.Log().Info("6. 处理 ClickHouse 数据耗时: %v", time.Since(chStart))
-
-	// 总耗时统计
-	totalTime := time.Since(totalStart)
-	util.Log().Info("Raydium交易处理总耗时: %v, 处理交易数: %d (平均: %v/笔)",
-		totalTime,
-		len(transactions),
-		totalTime/time.Duration(len(transactions)))
-
-	return nil
-}
-
-// 处理历史 Raydium 交易数据
-func processHistoricalRaydiumTransactions(transactions []*model.TokenTransaction) error {
-	tokenTxService := &service.TokenTransactionService{}
-	tokenTxIndexService := &service.TokenTxIndexService{}
-
-	// 按日期分组
-	txsByDate := make(map[string][]*model.TokenTransaction)
-	for _, tx := range transactions {
-		date := time.Unix(tx.TransactionTime.Unix(), 0).Format("20060102")
-		txsByDate[date] = append(txsByDate[date], tx)
-	}
-
-	// 按日期处理历史数据
-	for date, txs := range txsByDate {
-		util.Log().Info("处理 %s 的 Raydium 历史数据,共 %d 条", date, len(txs))
-
-		// 检查日期表是否存在,不存在则创建
-		if err := model.CreateTableForDate(date); err != nil {
-			util.Log().Error("确保表存在失败: %v", err)
-			continue
-		}
-
-		// 批量创建历史交易记录
-		resp := tokenTxService.ProcessBatchTokenTransactionCreation(txs, date)
-		if resp.Code != 0 {
-			util.Log().Error("创建 %s 的历史交易失败: %v", date, resp.Error)
-			continue
-		}
-
-		// 批量创建历史交易索引
-		indexResp := tokenTxIndexService.BatchCreateIndexFromTransactions(txs)
-		if indexResp.Code != 0 {
-			util.Log().Error("创建 %s 的历史交易索引失败: %v", date, indexResp.Error)
-			continue
-		}
-
-		util.Log().Info("成功处理 %s 的 Raydium 历史数据", date)
 	}
 
 	return nil
@@ -832,6 +771,37 @@ func RaydiumImmediateHandler(message []byte, topic string) error {
 	}
 }
 
+func PumpAmmImmediateHandler(message []byte, topic string) error {
+	util.Log().Info("PumpAmmImmediateHandler: Processing message from topic %s", topic)
+
+	switch topic {
+	case constants.TopicPumpAmmNewPool:
+		return handlePumpAmmNewPool(message)
+	default:
+		util.Log().Warning("Unknown topic: %s", topic)
+		return nil
+	}
+}
+
+func handlePumpAmmNewPool(message []byte) error {
+	var createMsg model.PumpAmmCreateMessage
+	if err := json.Unmarshal(message, &createMsg); err != nil {
+		util.Log().Error("Failed to unmarshal pump-amm-create message: %v", err)
+		return fmt.Errorf("failed to unmarshal pump-amm-create message: %v", err)
+	}
+
+	// 创建流动性池记录
+	liquidityPoolService := &service.TokenLiquidityPoolService{}
+	rsp := liquidityPoolService.CreatePumpAmmLiquidityPoolFromMessage(&createMsg)
+	if rsp.Code != 0 {
+		util.Log().Error("创建流动性池失败: %v", rsp.Error)
+		return fmt.Errorf("failed to create liquidity pool: %v", rsp.Error)
+	}
+
+	util.Log().Info("成功创建流动性池: %s", createMsg.PoolAddress)
+	return nil
+}
+
 func handleRaydiumCreate(message []byte) error {
 	var createMsg model.RaydiumCreateMessage
 	if err := json.Unmarshal(message, &createMsg); err != nil {
@@ -841,7 +811,7 @@ func handleRaydiumCreate(message []byte) error {
 
 	// 创建流动性池记录
 	liquidityPoolService := &service.TokenLiquidityPoolService{}
-	resp := liquidityPoolService.CreateLiquidityPoolFromMessage(&createMsg)
+	resp := liquidityPoolService.CreateRaydiumLiquidityPoolFromMessage(&createMsg)
 	if resp.Code != 0 {
 		util.Log().Error("创建流动性池失败: %v", resp.Error)
 		return fmt.Errorf("failed to create liquidity pool: %v", resp.Error)
@@ -1252,7 +1222,7 @@ func saveRaydiumPool(tokenAddress string) error {
 	// raydiumMsg.Timestamp = (*resp)[0].Data.ReturnPoolData.PoolOpenTime
 
 	// 转换并保存到数据库
-	pool := liquidityPoolService.ConvertMessageToLiquidityPool(&raydiumMsg)
+	pool := liquidityPoolService.ConvertRaydiumMessageToLiquidityPool(&raydiumMsg)
 
 	serviceResponse := liquidityPoolService.ProcessTokenLiquidityPoolCreation(pool)
 	if serviceResponse.Code != 0 {

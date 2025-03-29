@@ -529,6 +529,100 @@ func (service *TokenTransactionService) ConvertRaydiumSwapMessagesToTransactions
 	return transactions
 }
 
+func (service *TokenTransactionService) ConvertPumpAmmSwapMessagesToTransactions(pumpAmmSwapMessages []*model.PumpAmmSwapMessage) []*model.TokenTransaction {
+	transactions := make([]*model.TokenTransaction, 0, len(pumpAmmSwapMessages))
+	for _, msg := range pumpAmmSwapMessages {
+		tx := &model.TokenTransaction{}
+
+		// 设置基本字段
+		tx.TransactionHash = msg.Signature
+		tx.TokenAddress = msg.QuoteToken
+		tx.TransactionTime = time.Unix(msg.Timestamp, 0)
+		tx.Block = msg.Block
+		tx.CreateTime = time.Now()
+		tx.UpdateTime = time.Now()
+		tx.PlatformType = uint8(model.PlatformTypePumpSwap)
+		tx.ChainType = uint8(model.ChainTypeSolana)
+
+		// 转换 BaseAmount
+		baseAmount, err := strconv.ParseUint(msg.BaseAmount, 10, 64)
+		if err != nil {
+			util.Log().Error("Error parsing BaseAmount: %v", err)
+			baseAmount = 0
+		}
+		tx.NativeTokenAmount = baseAmount
+
+		// 转换 QuoteAmount
+		quoteAmount, err := strconv.ParseUint(msg.QuoteAmount, 10, 64)
+		if err != nil {
+			util.Log().Error("Error parsing QuoteAmount: %v", err)
+			quoteAmount = 0
+		}
+		tx.TokenAmount = quoteAmount
+
+		tx.UserAddress = msg.User
+		tx.IsBuy = msg.IsBuy
+
+		// 设置地址相关字段
+		tx.PoolAddress = msg.PoolAddress
+		tx.NativeTokenAddress = msg.BaseToken
+
+		// 设置交易类型
+		if msg.IsBuy {
+			tx.TransactionType = 1 // 买入
+		} else {
+			tx.TransactionType = 2 // 卖出
+		}
+
+		// 设置虚拟储备
+		baseReserve, err := decimal.NewFromString(msg.PoolBaseReserve)
+		if err != nil {
+			baseReserve = decimal.Zero // 如果解析失败，设置为零值
+		}
+		quoteReserve, err := decimal.NewFromString(msg.PoolQuoteReserve)
+		if err != nil {
+			quoteReserve = decimal.Zero // 如果解析失败，设置为零值
+		}
+		tx.VirtualNativeReserves = uint64(baseReserve.IntPart())
+		tx.VirtualTokenReserves = uint64(quoteReserve.IntPart())
+
+		// 计算池子流动性
+		const baseDecimals = 9
+		var quoteDecimals = msg.Decimals
+		tx.Decimals = uint8(msg.Decimals)
+
+		// 获取SOL价格
+		solPrice, err := getSolPrice()
+		if err != nil {
+			util.Log().Error("Error getting SOL price: %v", err)
+			solPrice = decimal.Zero
+		}
+		tx.NativePriceUSD = solPrice
+
+		// 使用统一的价格计算方法
+		service.calculateAndSetPrices(tx, baseDecimals, quoteDecimals, solPrice)
+
+		// 设置交易完成
+		tx.Progress = decimal.NewFromInt(100)
+		tx.IsComplete = true
+
+		// 判断是否是回购地址
+		if tx.UserAddress == model.TreasuryAddress {
+			tx.IsBuyback = true //是回购交易
+		} else {
+			tx.IsBuyback = false
+		}
+
+		// 判断是否是game代理地址
+		if msg.ParentInstAddress == model.GameProxyAddress {
+			tx.ProxyType = uint8(model.ProxyTypeGame)
+		}
+
+		transactions = append(transactions, tx)
+	}
+	return transactions
+}
+
 // 新增方法
 func (service *TokenTransactionService) calculateAndSetPrices(tx *model.TokenTransaction, solDecimals, tokenDecimals int, solPrice decimal.Decimal) {
 	if tx.TokenAmount == 0 {
@@ -540,8 +634,8 @@ func (service *TokenTransactionService) calculateAndSetPrices(tx *model.TokenTra
 		return
 	}
 
-	actualSolAmount := decimal.NewFromInt(int64(tx.NativeTokenAmount)).Shift(-int32(solDecimals))
-	actualTokenAmount := decimal.NewFromInt(int64(tx.TokenAmount)).Shift(-int32(tokenDecimals))
+	actualSolAmount := decimal.NewFromUint64(tx.NativeTokenAmount).Shift(-int32(solDecimals))
+	actualTokenAmount := decimal.NewFromUint64(tx.TokenAmount).Shift(-int32(tokenDecimals))
 	tx.NativePrice = actualSolAmount.Div(actualTokenAmount)
 
 	if !solPrice.IsZero() {

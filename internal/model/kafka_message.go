@@ -122,3 +122,41 @@ type PointTxStatusMessage struct {
 	Rebate    uint64 `json:"rebate"`    // 提现金额
 	TxType    uint   `json:"txType"`    // 交易类型 1:积分兑换 2:手续费提取
 }
+
+// PumpAmmCreateMessage Pump AMM 创建池子的消息结构体
+type PumpAmmCreateMessage struct {
+	Timestamp             int64  `json:"timestamp"`             // 时间戳
+	Block                 uint64 `json:"block"`                 // 区块高度
+	Signature             string `json:"signature"`             // 签名
+	User                  string `json:"user"`                  // 用户地址
+	MarketAddress         string `json:"marketAddress"`         // 市场地址
+	PoolAddress           string `json:"poolAddress"`           // 交易对池子地址，由 marketId 生成
+	PoolState             int    `json:"poolState"`             // 0: 初始化池子, 1: 往池子添加流动性, 2: 往池子移除流动性
+	QuoteToken            string `json:"quoteToken"`            // 询价代币, 为 Meme 代币
+	BaseToken             string `json:"baseToken"`             // 基础代币, 为 SOL
+	PoolQuoteReserve      string `json:"poolQuoteReserve"`      // 池子中询价代币的当前总量
+	PoolBaseReserve       string `json:"poolBaseReserve"`       // 池子中基础代币的当前总量
+	ChangePoolQuoteAmount string `json:"changePoolQuoteAmount"` // 询价代币数量的变化值
+	ChangePoolBaseAmount  string `json:"changePoolBaseAmount"`  // 基础代币数量的变化值
+	Decimals              int    `json:"decimals"`              // 交易代币精度
+}
+
+// PumpAmmSwapMessage Pump AMM 交易池子的消息结构体
+type PumpAmmSwapMessage struct {
+	Type              string `json:"type"`              // 消息类型，例如："PumpAmmSwap"
+	Signature         string `json:"signature"`         // 交易签名
+	Timestamp         int64  `json:"timestamp"`         // 时间戳
+	Block             uint64 `json:"block"`             // 区块高度
+	PoolAddress       string `json:"poolAddress"`       // 池子地址
+	User              string `json:"user"`              // 用户地址
+	IsBuy             bool   `json:"isBuy"`             // 是否为买入操作
+	QuoteToken        string `json:"quoteToken"`        // 询价代币地址(Meme代币)
+	BaseToken         string `json:"baseToken"`         // 基础代币地址(通常为SOL)
+	QuoteAmount       string `json:"quoteAmount"`       // 询价代币数量
+	BaseAmount        string `json:"baseAmount"`        // 基础代币数量
+	PoolQuoteReserve  string `json:"poolQuoteReserve"`  // 池子中询价代币的当前总量
+	PoolBaseReserve   string `json:"poolBaseReserve"`   // 池子中基础代币的当前总量
+	Decimals          int    `json:"decimals"`          // 交易代币精度
+	IsStandardOrder   bool   `json:"isStandardOrder"`   // 是否为标准订单
+	ParentInstAddress string `json:"parentInstAddress"` // 父指令地址
+}

@@ -104,7 +104,7 @@ func (service *TokenLiquidityPoolService) ProcessTokenLiquidityPoolList(limit, o
 }
 
 // ConvertMessageToLiquidityPool 将 RaydiumCreateMessage 转换为 TokenLiquidityPool
-func (service *TokenLiquidityPoolService) ConvertMessageToLiquidityPool(msg *model.RaydiumCreateMessage) *model.TokenLiquidityPool {
+func (service *TokenLiquidityPoolService) ConvertRaydiumMessageToLiquidityPool(msg *model.RaydiumCreateMessage) *model.TokenLiquidityPool {
 	// 转换代币数量为 decimal
 	poolPcReserve, err := decimal.NewFromString(msg.PoolBaseReserve)
 	if err != nil {
@@ -162,8 +162,81 @@ func (service *TokenLiquidityPoolService) ConvertMessageToLiquidityPool(msg *mod
 }
 
 // CreateLiquidityPoolFromMessage 从 Kafka 消息创建流动性池记录
-func (service *TokenLiquidityPoolService) CreateLiquidityPoolFromMessage(msg *model.RaydiumCreateMessage) response.Response {
-	pool := service.ConvertMessageToLiquidityPool(msg)
+func (service *TokenLiquidityPoolService) CreateRaydiumLiquidityPoolFromMessage(msg *model.RaydiumCreateMessage) response.Response {
+	pool := service.ConvertRaydiumMessageToLiquidityPool(msg)
+
+	if err := model.UpsertTokenLiquidityPool(pool); err != nil {
+		return response.Err(response.CodeDBError, "Failed to upsert liquidity pool", err)
+	}
+
+	return response.Response{
+		Code: 0,
+		Data: pool,
+		Msg:  "Liquidity pool created successfully",
+	}
+}
+
+// ConvertPumpAmmMessageToLiquidityPool 将 Pump AMM 消息转换为流动性池
+func (service *TokenLiquidityPoolService) ConvertPumpAmmMessageToLiquidityPool(msg *model.PumpAmmCreateMessage) *model.TokenLiquidityPool {
+	// 转换代币数量为 decimal
+	poolPcReserve, err := decimal.NewFromString(msg.PoolBaseReserve)
+	if err != nil {
+		util.Log().Error("Error parsing PoolPcReserve: %v", err)
+		poolPcReserve = decimal.Zero
+	}
+
+	poolCoinReserve, err := decimal.NewFromString(msg.PoolQuoteReserve)
+	if err != nil {
+		util.Log().Error("Error parsing PoolCoinReserve: %v", err)
+		poolCoinReserve = decimal.Zero
+	}
+
+	// 如果类型是初始化，则使用 ChangePoolBaseAmount 作为初始化定价代币数量
+	var initialPcReserve, initialCoinReserve decimal.Decimal
+	if msg.PoolState == 0 {
+		initialPcReserve, err = decimal.NewFromString(msg.ChangePoolBaseAmount)
+		if err != nil {
+			util.Log().Error("Error parsing ChangePoolBaseAmount: %v", err)
+			initialPcReserve = decimal.Zero
+		}
+		initialCoinReserve, err = decimal.NewFromString(msg.ChangePoolQuoteAmount)
+		if err != nil {
+			util.Log().Error("Error parsing ChangePoolQuoteAmount: %v", err)
+			initialCoinReserve = decimal.Zero
+		}
+	}
+
+	pool := &model.TokenLiquidityPool{}
+
+	// 设置链类型和平台类型
+	pool.ChainType = uint8(model.ChainTypeSolana)         // Solana 链
+	pool.PlatformType = uint8(model.PlatformTypePumpSwap) // PumpSwap 平台
+
+	// 设置地址��关字段
+	pool.MarketAddress = msg.MarketAddress // 市场地址
+	pool.PoolAddress = msg.PoolAddress     // 池子地址
+	pool.PcAddress = msg.BaseToken         // 定价代币地址
+	pool.CoinAddress = msg.QuoteToken      // 交易代币地址
+	pool.UserAddress = msg.User            // 创建者地址
+
+	// 设置代币储备量
+	pool.PoolPcReserve = uint64(poolPcReserve.IntPart())           // 池子中定价代币的当前总量
+	pool.PoolCoinReserve = uint64(poolCoinReserve.IntPart())       // 池子中交易代币的当前总量
+	pool.InitialPcReserve = uint64(initialPcReserve.IntPart())     // 池子初始定价代币总量
+	pool.InitialCoinReserve = uint64(initialCoinReserve.IntPart()) // 池子初始交易代币总量
+	// 设置区块信息
+	pool.Block = msg.Block                       // 区块高度
+	pool.BlockTime = time.Unix(msg.Timestamp, 0) // 区块时间
+
+	// 计算交易对哈希值
+	pool.PairHash = calculatePairHash(msg.QuoteToken, msg.BaseToken)
+
+	return pool
+}
+
+// CreateLiquidityPoolFromMessage 从 Kafka 消息创建流动性池记录
+func (service *TokenLiquidityPoolService) CreatePumpAmmLiquidityPoolFromMessage(msg *model.PumpAmmCreateMessage) response.Response {
+	pool := service.ConvertPumpAmmMessageToLiquidityPool(msg)
 
 	if err := model.UpsertTokenLiquidityPool(pool); err != nil {
 		return response.Err(response.CodeDBError, "Failed to upsert liquidity pool", err)
@@ -287,7 +360,7 @@ func QueryAndCheckPool(tokenAddress string, chainType uint8, platformType uint8)
 			}
 		}
 		var service TokenLiquidityPoolService
-		pool = service.ConvertMessageToLiquidityPool(&raydiumMsg)
+		pool = service.ConvertRaydiumMessageToLiquidityPool(&raydiumMsg)
 		if err := model.UpsertTokenLiquidityPool(pool); err != nil {
 			return nil, err
 		}
